@@ -1,0 +1,2 @@
+/Users/virpalsinhjadeja/Desktop/eschool-saas /eschool-saas-staff/android/app/.cxx/Debug/5y01o292/x86/CMakeFiles/edit_cache.dir
+/Users/virpalsinhjadeja/Desktop/eschool-saas /eschool-saas-staff/android/app/.cxx/Debug/5y01o292/x86/CMakeFiles/rebuild_cache.dir
