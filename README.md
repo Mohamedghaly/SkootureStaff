@@ -1,4 +1,4 @@
-# eschool_saas_staff
+# Skooture Staff APP
 
 A new Flutter project.
 
