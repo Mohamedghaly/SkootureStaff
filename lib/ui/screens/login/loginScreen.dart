@@ -16,6 +16,9 @@ import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/route_manager.dart';
+import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -41,6 +44,33 @@ class _LoginScreenState extends State<LoginScreen> {
   late final TextEditingController _passwordTextEditingController =
       TextEditingController();
 
+  final LocalAuthentication _localAuthentication = LocalAuthentication();
+  IconData? _supportedBiometricIcon;
+
+  @override
+  void initState() {
+    super.initState();
+    _determineBiometricIcon();
+  }
+
+  Future<void> _determineBiometricIcon() async {
+    final availableBiometrics =
+        await _localAuthentication.getAvailableBiometrics();
+    if (availableBiometrics.contains(BiometricType.face)) {
+      setState(() {
+        _supportedBiometricIcon = Icons.face;
+      });
+    } else if (availableBiometrics.contains(BiometricType.fingerprint)) {
+      setState(() {
+        _supportedBiometricIcon = Icons.fingerprint;
+      });
+    } else if (availableBiometrics.contains(BiometricType.iris)) {
+      setState(() {
+        _supportedBiometricIcon = Icons.remove_red_eye;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _schoolCodeController.dispose();
@@ -49,26 +79,61 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _biometricLogin() async {
+    try {
+      final bool canAuthenticateWithBiometrics =
+          await _localAuthentication.canCheckBiometrics;
+      if (canAuthenticateWithBiometrics) {
+        final bool didAuthenticate = await _localAuthentication.authenticate(
+          localizedReason: 'Please authenticate to login',
+        );
+        if (didAuthenticate) {
+          final prefs = await SharedPreferences.getInstance();
+          final email = prefs.getString('email') ?? '';
+          final password = prefs.getString('password') ?? '';
+          final schoolCode = prefs.getString('schoolCode') ?? '';
+
+          if (email.isNotEmpty && password.isNotEmpty && schoolCode.isNotEmpty) {
+            context.read<SignInCubit>().signInUser(
+                  email: email,
+                  password: password,
+                  schoolCode: schoolCode,
+                );
+          } else {
+            Utils.showSnackBar(
+              message: 'Please login with your credentials first',
+              context: context,
+            );
+          }
+        }
+      }
+    } catch (e) {
+      // Handle error
+    }
+  }
+
   Widget _buildForgotPasswordButton() {
-    return Align(
-      alignment: AlignmentDirectional.centerEnd,
-      child: SafeArea(
-        child: CustomTextButton(
-            textStyle: TextStyle(
-                color: Theme.of(context).colorScheme.primary, fontSize: 16.0),
-            buttonTextKey: forgotPasswordKey,
-            onTapButton: () {
-              if (context.read<SignInCubit>().state is SignInInProgress) {
-                return;
-              }
-              Utils.showBottomSheet(
-                  child: BlocProvider(
-                    create: (context) => SendPasswordResetEmailCubit(),
-                    child: const ForgotPasswordBottomsheet(),
-                  ),
-                  context: context);
-            }),
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        SafeArea(
+          child: CustomTextButton(
+              textStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.primary, fontSize: 16.0),
+              buttonTextKey: forgotPasswordKey,
+              onTapButton: () {
+                if (context.read<SignInCubit>().state is SignInInProgress) {
+                  return;
+                }
+                Utils.showBottomSheet(
+                    child: BlocProvider(
+                      create: (context) => SendPasswordResetEmailCubit(),
+                      child: const ForgotPasswordBottomsheet(),
+                    ),
+                    context: context);
+              }),
+        ),
+      ],
     );
   }
 
@@ -172,14 +237,48 @@ class _LoginScreenState extends State<LoginScreen> {
                       textEditingController: _schoolCodeController,
                       hintTextKey: schoolCodeKey,
                     ),
-                    CustomTextFieldContainer(
-                      prefixWidget: Icon(
-                        Icons.email_outlined,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      textEditingController: _emailTextEditingController,
-                      hintTextKey: emailKey,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: CustomTextFieldContainer(
+                            height: 55.0,
+                            bottomPadding: 0.0,
+                            prefixWidget: Icon(
+                              Icons.email_outlined,
+                              color: Theme.of(context).colorScheme.secondary,
+                            ),
+                            textEditingController: _emailTextEditingController,
+                            hintTextKey: emailKey,
+                          ),
+                        ),
+                        if (_supportedBiometricIcon != null) ...[
+                          const SizedBox(width: 10),
+                          Container(
+                            height: 55.0,
+                            width: 55.0,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surface,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .tertiary,
+                              ),
+                            ),
+                            child: InkWell(
+                              onTap: _biometricLogin,
+                              child: Icon(
+                                _supportedBiometricIcon,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
+                    const SizedBox(height: 15),
                     CustomTextFieldContainer(
                       prefixWidget: Icon(
                         Icons.lock_outline,
@@ -197,10 +296,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           }),
                     ),
                     SafeArea(child: _buildForgotPasswordButton()),
-                    const SizedBox(height: 25),
+                    const SizedBox(height: 10),
                     BlocConsumer<SignInCubit, SignInState>(
-                      listener: (context, state) {
+                      listener: (context, state) async {
                         if (state is SignInSuccess) {
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setString('email', _emailTextEditingController.text.trim());
+                          await prefs.setString('password', _passwordTextEditingController.text.trim());
+                          await prefs.setString('schoolCode', _schoolCodeController.text.trim());
+
                           context.read<AuthCubit>().authenticateUser(
                                 authToken: state.authToken,
                                 schoolCode: state.schoolCode,
