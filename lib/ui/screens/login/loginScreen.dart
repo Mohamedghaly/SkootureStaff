@@ -18,6 +18,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/route_manager.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -45,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
       TextEditingController();
 
   final LocalAuthentication _localAuthentication = LocalAuthentication();
-  IconData? _supportedBiometricIcon;
+  String? _supportedBiometricIcon;
 
   @override
   void initState() {
@@ -58,15 +59,11 @@ class _LoginScreenState extends State<LoginScreen> {
         await _localAuthentication.getAvailableBiometrics();
     if (availableBiometrics.contains(BiometricType.face)) {
       setState(() {
-        _supportedBiometricIcon = Icons.face;
+        _supportedBiometricIcon = "assets/images/faceID.svg";
       });
     } else if (availableBiometrics.contains(BiometricType.fingerprint)) {
       setState(() {
-        _supportedBiometricIcon = Icons.fingerprint;
-      });
-    } else if (availableBiometrics.contains(BiometricType.iris)) {
-      setState(() {
-        _supportedBiometricIcon = Icons.remove_red_eye;
+        _supportedBiometricIcon = "assets/images/fingerprint.svg";
       });
     }
   }
@@ -221,7 +218,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 75),
+                    const SizedBox(height: 65),
+                    Image(
+                      image: AssetImage('assets/images/skootureLogo.png'),
+                      width:  MediaQuery.of(context).size.width * 0.6,
+                    ),
+                    const SizedBox(height: 10),
                     const CustomTextContainer(
                       textKey: letSignInKey,
                       style:
@@ -268,10 +270,12 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             child: InkWell(
                               onTap: _biometricLogin,
-                              child: Icon(
-                                _supportedBiometricIcon,
-                                color: Theme.of(context).colorScheme.primary,
-                                size: 30,
+                              child: SvgPicture.asset(
+                                _supportedBiometricIcon!,
+                                colorFilter: ColorFilter.mode(
+                                  Theme.of(context).colorScheme.primary,
+                                  BlendMode.srcIn,
+                                ),
                               ),
                             ),
                           ),

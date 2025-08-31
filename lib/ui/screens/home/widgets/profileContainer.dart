@@ -92,27 +92,27 @@ class ProfileContainer extends StatelessWidget {
                           Get.toNamed(Routes.termsAndConditionScreen);
                         },
                         titleKey: termsAndConditionKey),
-                    MenuTile(
-                        iconImageName: "rate_us.svg",
-                        onTap: () {
-                          Utils.openLinkInBrowser(
-                              url: context
-                                  .read<AppConfigurationCubit>()
-                                  .getAppLink(),
-                              context: context);
-                        },
-                        titleKey: rateUsKey),
-                    MenuTile(
-                        iconImageName: "share.svg",
-                        onTap: () {
-                          Utils.openLinkInBrowser(
-                              isShareAppLink: true,
-                              url: context
-                                  .read<AppConfigurationCubit>()
-                                  .getAppLink(),
-                              context: context);
-                        },
-                        titleKey: shareAppKey),
+                    // MenuTile(
+                    //     iconImageName: "rate_us.svg",
+                    //     onTap: () {
+                    //       Utils.openLinkInBrowser(
+                    //           url: context
+                    //               .read<AppConfigurationCubit>()
+                    //               .getAppLink(),
+                    //           context: context);
+                    //     },
+                    //     titleKey: rateUsKey),
+                    // MenuTile(
+                    //     iconImageName: "share.svg",
+                    //     onTap: () {
+                    //       Utils.openLinkInBrowser(
+                    //           isShareAppLink: true,
+                    //           url: context
+                    //               .read<AppConfigurationCubit>()
+                    //               .getAppLink(),
+                    //           context: context);
+                    //     },
+                    //     titleKey: shareAppKey),
                   ], title: personalSettingsKey),
                   CustomRoundedButton(
                     widthPercentage: 1.0,
