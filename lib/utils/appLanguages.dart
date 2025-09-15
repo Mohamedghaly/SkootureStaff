@@ -11,6 +11,8 @@ const List<AppLanguage> appLanguages = [
   AppLanguage(languageCode: "en", languageName: "English"),
   AppLanguage(languageCode: "hi", languageName: "हिन्दी - Hindi"),
   AppLanguage(languageCode: "ur", languageName: "اردو - Urdu"),
+  AppLanguage(languageCode: "ar", languageName: "عربي - Arabic"),
+  AppLanguage(languageCode: "fr", languageName: "Français - French"),
   //
   //For example you are adding gujarati language
   //AppLanguage(languageCode: "gu", languageName: "ગુજરાતી - Gujarati"),
