@@ -1,4 +1,4 @@
-package com.wrteam.saas.staff
+package com.skooture.staff.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

@@ -167,43 +167,60 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildRadioselection(String title) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 15.0),
-      decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: BorderRadius.circular(5),
-          border: Border.all(color: Theme.of(context).colorScheme.tertiary)),
-      alignment: Alignment.center,
-      padding: EdgeInsetsDirectional.only(start: appContentHorizontalPadding),
+  Widget _buildGenderSelector() {
+    return RadioGroup<String>(
+      groupValue: selectedGender,
+      onChanged: (value) {
+        setState(() {
+          selectedGender = value ?? '';
+        });
+      },
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Text(title),
-          Radio(
-            value: title,
-            groupValue: selectedGender,
-            onChanged: (value) {
-              setState(() {
-                selectedGender = value.toString();
-              });
-            },
+          Expanded(
+            flex: 1,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 15.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: Theme.of(context).colorScheme.tertiary),
+              ),
+              alignment: Alignment.center,
+              padding: EdgeInsetsDirectional.only(start: appContentHorizontalPadding),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const <Widget>[
+                  Text("male"),
+                  Radio<String>(value: "male"),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            flex: 1,
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 15.0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: Theme.of(context).colorScheme.tertiary),
+              ),
+              alignment: Alignment.center,
+              padding: EdgeInsetsDirectional.only(start: appContentHorizontalPadding),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const <Widget>[
+                  Text("female"),
+                  Radio<String>(value: "female"),
+                ],
+              ),
+            ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildGenderSelector() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Expanded(flex: 1, child: _buildRadioselection("male")),
-        const SizedBox(
-          width: 20,
-        ),
-        Expanded(flex: 1, child: _buildRadioselection("female")),
-      ],
     );
   }
 
