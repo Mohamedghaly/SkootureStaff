@@ -47,6 +47,7 @@ class _AddStudyMaterialBottomsheetState
   PlatformFile? addedFile;
   PlatformFile? addedVideoThumbnailFile;
   PlatformFile? addedVideoFile;
+  OverlayEntry? _currentOverlayEntry;
 
   @override
   void initState() {
@@ -96,6 +97,8 @@ class _AddStudyMaterialBottomsheetState
 
   @override
   void dispose() {
+    _currentOverlayEntry?.remove();
+    _currentOverlayEntry = null;
     _fileNameEditingController.dispose();
     _youtubeLinkEditingController.dispose();
     _otherLinkEditingController.dispose();
@@ -103,10 +106,33 @@ class _AddStudyMaterialBottomsheetState
   }
 
   void showErrorMessage(String messageKey) {
-    Utils.showSnackBar(
-      context: context,
-      message: Utils.getTranslatedLabel(messageKey),
+    // Remove any existing overlay first
+    _currentOverlayEntry?.remove();
+    _currentOverlayEntry = null;
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+
+    _currentOverlayEntry = OverlayEntry(
+      builder: (overlayContext) => _ErrorSnackbarOverlay(
+        message: Utils.getTranslatedLabel(messageKey),
+        onDismiss: () {
+          _currentOverlayEntry?.remove();
+          _currentOverlayEntry = null;
+        },
+      ),
     );
+
+    overlay.insert(_currentOverlayEntry!);
+  }
+
+  /// Validates if the given URL is a valid YouTube video URL.
+  /// Supports formats: youtube.com/watch, youtu.be, youtube.com/embed, youtube.com/shorts
+  bool _isValidYoutubeUrl(String url) {
+    final youtubeRegex = RegExp(
+      r'^(https?://)?(www\.)?(youtube\.com/(watch\?v=|embed/|shorts/)|youtu\.be/)[\w-]+',
+      caseSensitive: false,
+    );
+    return youtubeRegex.hasMatch(url);
   }
 
   void addStudyMaterial() {
@@ -128,11 +154,16 @@ class _AddStudyMaterialBottomsheetState
       return;
     }
 
-    if (pickedStudyMaterialId == 2 &&
-        (_youtubeLinkEditingController.text.trim().isEmpty ||
-            !Uri.parse(_youtubeLinkEditingController.text.trim()).isAbsolute)) {
-      showErrorMessage(pleaseEnterYoutubeLinkKey);
-      return;
+    if (pickedStudyMaterialId == 2) {
+      final youtubeLink = _youtubeLinkEditingController.text.trim();
+      if (youtubeLink.isEmpty) {
+        showErrorMessage(pleaseEnterYoutubeLinkKey);
+        return;
+      }
+      if (!_isValidYoutubeUrl(youtubeLink)) {
+        showErrorMessage(invalidYoutubeLinkKey);
+        return;
+      }
     }
     if (pickedStudyMaterialId == 3 && addedVideoFile == null) {
       showErrorMessage(pleaseSelectVideoKey);
@@ -181,29 +212,30 @@ class _AddStudyMaterialBottomsheetState
               CustomSelectionDropdownSelectionButton(
                 onTap: () {
                   Utils.showBottomSheet(
-                      child: FilterSelectionBottomsheet<StudyMaterialTypeItem>(
-                        selectedValue: _selectedStudyMaterial,
-                        showFilterByLabel: false,
-                        titleKey: studyMaterialTypeKey,
-                        values: allStudyMaterialTypeItems,
-                        onSelection: (value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedStudyMaterial = value;
+                    child: FilterSelectionBottomsheet<StudyMaterialTypeItem>(
+                      selectedValue: _selectedStudyMaterial,
+                      showFilterByLabel: false,
+                      titleKey: studyMaterialTypeKey,
+                      values: allStudyMaterialTypeItems,
+                      onSelection: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedStudyMaterial = value;
 
-                              addedFile = null;
-                              addedVideoFile = null;
-                              addedVideoThumbnailFile = null;
+                            addedFile = null;
+                            addedVideoFile = null;
+                            addedVideoThumbnailFile = null;
 
-                              _fileNameEditingController.clear();
-                              _youtubeLinkEditingController.clear();
-                              _otherLinkEditingController.clear();
-                            });
-                          }
-                          Get.back();
-                        },
-                      ),
-                      context: context);
+                            _fileNameEditingController.clear();
+                            _youtubeLinkEditingController.clear();
+                            _otherLinkEditingController.clear();
+                          });
+                        }
+                        Get.back();
+                      },
+                    ),
+                    context: context,
+                  );
                 },
                 titleKey: _selectedStudyMaterial.title,
                 backgroundColor: Theme.of(context).colorScheme.surface,
@@ -318,6 +350,138 @@ class _AddStudyMaterialBottomsheetState
                 showBorder: false,
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Custom overlay snackbar widget that displays above BottomSheets
+class _ErrorSnackbarOverlay extends StatefulWidget {
+  final String message;
+  final VoidCallback onDismiss;
+
+  const _ErrorSnackbarOverlay({
+    required this.message,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_ErrorSnackbarOverlay> createState() => _ErrorSnackbarOverlayState();
+}
+
+class _ErrorSnackbarOverlayState extends State<_ErrorSnackbarOverlay>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _animationController.forward();
+
+    // Auto dismiss after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () {
+      if (mounted) {
+        _dismissSnackbar();
+      }
+    });
+  }
+
+  void _dismissSnackbar() {
+    _animationController.reverse().then((_) {
+      if (mounted) {
+        widget.onDismiss();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 16,
+      left: 16,
+      right: 16,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Material(
+            color: Colors.transparent,
+            child: GestureDetector(
+              onTap: _dismissSnackbar,
+              onHorizontalDragEnd: (_) => _dismissSnackbar(),
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.error,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.message,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: _dismissSnackbar,
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

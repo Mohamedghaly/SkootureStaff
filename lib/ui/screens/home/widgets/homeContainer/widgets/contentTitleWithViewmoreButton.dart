@@ -57,6 +57,7 @@ class ContentTitleWithViewMoreButton extends StatelessWidget {
                                 .colorScheme
                                 .secondary
                                 .withValues(alpha: 0.76),
+                            size: 12,
                           )
                         ],
                       )),

@@ -13,6 +13,7 @@ import 'package:eschool_saas_staff/ui/screens/home/widgets/chatContainer/widgets
 import 'package:eschool_saas_staff/ui/widgets/customCircularProgressIndicator.dart';
 import 'package:eschool_saas_staff/ui/widgets/errorContainer.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:eschool_saas_staff/utils/notificationUtility.dart';
 import 'package:eschool_saas_staff/utils/api.dart';
@@ -136,6 +137,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 );
           }
         }
+        if (state is SocketReconnectSuccess) {
+          // Silently fetch and merge missed messages after reconnection
+          context.read<ChatMessagesCubit>().silentFetchAndMerge(
+                receiverId: widget.receiverId,
+              );
+        }
       },
       child: Scaffold(
         body: Column(
@@ -147,21 +154,44 @@ class _ChatScreenState extends State<ChatScreen> {
                   if (state.status == SendMessageStatus.success) {
                     final message = state.message!;
 
-                    /// Update the message locally in the cubit and send it to the socket.
+                    /// Update the message locally in the cubit.
+                    /// (Reverb handles broadcasting to the receiver automatically)
                     context.read<ChatMessagesCubit>().messageSent(message);
-                    context.read<SocketSettingCubit>().sendMessage(
-                          userId: message.senderId,
-                          receiverId: widget.receiverId,
-                          message: message,
-                        );
 
                     _messageController.clear();
                     selectedAttachments.clear();
                     setState(() {
-                      lastMessage = message.message;
+                      // If message text is empty but has attachments, show "attachment" label
+                      lastMessage = (message.message == null ||
+                                  message.message!.isEmpty) &&
+                              message.attachments.isNotEmpty
+                          ? Utils.getTranslatedLabel(attachmentKey)
+                          : message.message;
                       lastMessageTime =
                           Utils.parseDateSafely(message.updatedAt) ??
                               DateTime.now();
+                    });
+                  } else if (state.status == SendMessageStatus.failure) {
+                    // Show error message to user
+                    String errorMessage = state.errorMessage ??
+                        Utils.getTranslatedLabel("defaultErrorMessage");
+
+                    // Handle specific error types with user-friendly messages
+                    if (state.errorMessage?.contains("noInternet") == true) {
+                      errorMessage = Utils.getTranslatedLabel("noInternet");
+                    }
+                    FocusScope.of(context).unfocus();
+
+                    // Show error message using the same pattern as download errors in this file
+                    Future.delayed(Duration(milliseconds: 100), () {
+                      if (context.mounted) {
+                        Utils.showSnackBar(
+                          snackDuration: const Duration(seconds: 3),
+                          backgroundColor: Colors.red.withValues(alpha: 0.75),
+                          context: context,
+                          message: errorMessage,
+                        );
+                      }
                     });
                   }
                 },
@@ -366,37 +396,37 @@ class _ChatScreenState extends State<ChatScreen> {
 
                                 ///
                                 Align(
-                                  alignment: AlignmentDirectional.topEnd,
-                                  child: InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        selectedAttachments.remove(e);
-                                      });
-                                    },
-                                    child: Container(
-                                      height: 24,
-                                      width: 24,
-                                      margin: const EdgeInsetsDirectional.only(
-                                        end: 8,
-                                        top: 8,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        color: Colors.white,
-                                        border: Border.all(
+                                    alignment: AlignmentDirectional.topEnd,
+                                    child: InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          selectedAttachments.remove(e);
+                                        });
+                                      },
+                                      child: Container(
+                                        height: 24,
+                                        width: 24,
+                                        margin:
+                                            const EdgeInsetsDirectional.only(
+                                          end: 8,
+                                          top: 8,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.white,
+                                          border: Border.all(
+                                            color: Colors.red,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: const Icon(
+                                          Icons.close_rounded,
                                           color: Colors.red,
-                                          width: 1,
+                                          size: 15,
                                         ),
                                       ),
-                                      alignment: Alignment.center,
-                                      child: const Icon(
-                                        Icons.close_rounded,
-                                        color: Colors.red,
-                                        size: 15,
-                                      ),
-                                    ),
-                                  ),
-                                ),
+                                    )),
                               ],
                             ),
                           ),
@@ -407,9 +437,7 @@ class _ChatScreenState extends State<ChatScreen> {
               ),
 
             ///
-            SafeArea(
-              child: _buildSendMessage(),
-            ),
+            _buildSendMessage(),
           ],
         ),
       ),
@@ -585,26 +613,33 @@ class _ChatScreenState extends State<ChatScreen> {
 
                   ///
                   const SizedBox(width: 16.0),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.receiverName,
-                        style: const TextStyle(
-                          fontSize: 14.0,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 4.0),
-                      if (widget.classSection != null)
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
                         Text(
-                          widget.classSection!,
+                          widget.receiverName,
                           style: const TextStyle(
-                            fontSize: 12.0,
-                            fontWeight: FontWeight.w400,
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.w500,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                    ],
+                        const SizedBox(height: 4.0),
+                        if (widget.classSection != null)
+                          Text(
+                            widget.classSection!,
+                            style: const TextStyle(
+                              fontSize: 12.0,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -965,13 +1000,15 @@ class _ChatScreenState extends State<ChatScreen> {
                     color: colorScheme.secondary.withValues(alpha: 0.75),
                   ),
                 ),
-                const SizedBox(width: 2.5),
-                Icon(
-                  message.readAt != null
-                      ? Icons.done_all_rounded
-                      : Icons.done_rounded,
-                  size: 15,
-                ),
+                if (sendByMe) ...[
+                  const SizedBox(width: 2.5),
+                  Icon(
+                    message.readAt != null
+                        ? Icons.done_all_rounded
+                        : Icons.done_rounded,
+                    size: 15,
+                  ),
+                ],
               ],
             ),
           ],

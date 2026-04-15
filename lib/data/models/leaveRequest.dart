@@ -13,8 +13,9 @@ class LeaveRequest {
   final String? updatedAt;
   final User? user;
   final List<LeaveDetail>? leaveDetail;
-  final int? fullLeave;
-  final int? halfLeave;
+  final num? fullLeave;
+  final num? halfLeave;
+  final num? total;
   final double? days;
   final List<StudyMaterial>? attachments;
 
@@ -33,6 +34,7 @@ class LeaveRequest {
       this.user,
       this.leaveDetail,
       this.days,
+      this.total,
       this.fullLeave,
       this.halfLeave});
 
@@ -49,10 +51,11 @@ class LeaveRequest {
       String? updatedAt,
       User? user,
       List<LeaveDetail>? leaveDetail,
-      int? fullLeave,
-      int? halfLeave,
+      num? fullLeave,
+      num? halfLeave,
       List<StudyMaterial>? attachments,
-      double? days}) {
+      double? days,
+      num? total}) {
     return LeaveRequest(
       id: id ?? this.id,
       attachments: attachments ?? this.attachments,
@@ -70,6 +73,7 @@ class LeaveRequest {
       updatedAt: updatedAt ?? this.updatedAt,
       user: user ?? this.user,
       leaveDetail: leaveDetail ?? this.leaveDetail,
+      total: total ?? this.total,
     );
   }
 
@@ -91,8 +95,9 @@ class LeaveRequest {
             ? User.fromJson(json['user'] as Map<String, dynamic>)
             : null,
         days = double.parse((json['days'] ?? 0).toString()),
-        fullLeave = json['full_leave'] as int?,
-        halfLeave = json['half_leave'] as int?,
+        fullLeave = num.tryParse(json['full_leave']?.toString() ?? ''),
+        halfLeave = num.tryParse(json['half_leave']?.toString() ?? ''),
+        total = num.tryParse(json['total']?.toString() ?? ''),
         leaveDetail = (json['leave_detail'] as List?)
             ?.map(
                 (dynamic e) => LeaveDetail.fromJson(e as Map<String, dynamic>))
@@ -112,6 +117,7 @@ class LeaveRequest {
         'days': days,
         'full_leave': fullLeave,
         'half_leave': halfLeave,
+        'total': total,
         'user': user?.toJson(),
         'leave_detail': leaveDetail?.map((e) => e.toJson()).toList()
       };

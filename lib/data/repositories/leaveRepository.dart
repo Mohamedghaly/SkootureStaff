@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:eschool_saas_staff/data/models/leaveDetails.dart';
 import 'package:eschool_saas_staff/data/models/leaveRequest.dart';
 import 'package:eschool_saas_staff/data/models/leaveSettings.dart';
+import 'package:eschool_saas_staff/data/models/publicHoliday.dart';
 import 'package:eschool_saas_staff/utils/api.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
 
@@ -98,14 +99,41 @@ class LeaveRepository {
     }
   }
 
-  Future<LeaveSettings> getLeaveSettings() async {
+  Future<({LeaveSettings leaveSettings, List<PublicHoliday> publicHolidays})>
+      getLeaveSettings() async {
     try {
       final result = await Api.get(url: Api.getLeaveSettings);
-      final dataList = (result['data'] as List);
+      final data = result['data'];
 
-      return dataList.isEmpty
-          ? LeaveSettings.fromJson({})
-          : LeaveSettings.fromJson(Map.from(dataList.first ?? {}));
+      // Parse leave_settings
+      LeaveSettings leaveSettings;
+      if (data is Map) {
+        final leaveSettingsList = (data['leave_settings'] as List?) ?? [];
+        leaveSettings = leaveSettingsList.isEmpty
+            ? LeaveSettings.fromJson({})
+            : LeaveSettings.fromJson(Map.from(leaveSettingsList.first ?? {}));
+      } else if (data is List) {
+        // Backward compatibility: if data is still a List
+        leaveSettings = (data).isEmpty
+            ? LeaveSettings.fromJson({})
+            : LeaveSettings.fromJson(Map.from(data.first ?? {}));
+      } else {
+        leaveSettings = LeaveSettings.fromJson({});
+      }
+
+      // Parse public_holidays
+      List<PublicHoliday> publicHolidays = [];
+      if (data is Map && data['public_holidays'] != null) {
+        publicHolidays = ((data['public_holidays'] as List?) ?? [])
+            .map((holiday) => PublicHoliday.fromJson(Map.from(holiday ?? {})))
+            .where((holiday) => holiday.date != null)
+            .toList();
+      }
+
+      return (
+        leaveSettings: leaveSettings,
+        publicHolidays: publicHolidays,
+      );
     } catch (e, _) {
       throw ApiException(e.toString());
     }

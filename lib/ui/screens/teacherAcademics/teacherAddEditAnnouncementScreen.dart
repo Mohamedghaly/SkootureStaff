@@ -334,15 +334,10 @@ class _TeacherAddEditAnnouncementScreenState
                 TeacherCreateAnnouncementState>(
                 listener: (context, state) {
                   if (state is TeacherCreateAnnouncementSuccess) {
+                    Get.back(result: true);
                     Utils.showSnackBar(
                         context: context,
                         message: announcementAddedSuccessfullyKey);
-                    _announcementTitleTextEditingController.text = "";
-                    _announcementDescriptionTextEditingController.text = "";
-                    uploadedFiles = [];
-                    announcementAttachments = [];
-                    refreshAnnouncementsInPreviousPage = true;
-                    setState(() {});
                   } else if (state is TeacherCreateAnnouncementFailure) {
                     Utils.showSnackBar(
                       context: context,

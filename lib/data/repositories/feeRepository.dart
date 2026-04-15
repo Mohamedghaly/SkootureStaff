@@ -37,19 +37,32 @@ class FeeRepository {
         "status": status
       });
 
+      // Handle null data response
+      if (result['data'] == null) {
+        return (
+          students: <StudentDetails>[],
+          currentPage: 1,
+          totalPage: 1,
+          compolsoryFeeAmount: 0.0,
+          optionalFeeAmount: 0.0,
+        );
+      }
+
       return (
         students: ((result['data']['data'] ?? []) as List)
             .map((studentDetails) =>
                 StudentDetails.fromJson(Map.from(studentDetails ?? {})))
             .toList(),
-        currentPage: result['data']['current_page'] as int,
-        totalPage: result['data']['last_page'] as int,
+        currentPage: result['data']['current_page'] as int? ?? 1,
+        totalPage: result['data']['last_page'] as int? ?? 1,
         compolsoryFeeAmount:
             double.parse((result['compolsory_fees'] ?? 0.0).toString()),
         optionalFeeAmount:
             double.parse((result['optional_fees'] ?? 0.0).toString()),
       );
-    } catch (e) {
+    } catch (e, st) {
+      print("The error is $e");
+      print("The stack trace is $st");
       throw ApiException(e.toString());
     }
   }

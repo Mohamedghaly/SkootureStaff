@@ -102,7 +102,7 @@ class AssignmentRepository {
         useAuthToken: true,
       );
     } catch (e) {
-      ApiException(e.toString());
+      throw ApiException(e.toString());
     }
   }
 

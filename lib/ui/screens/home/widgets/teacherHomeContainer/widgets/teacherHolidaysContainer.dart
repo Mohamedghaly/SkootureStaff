@@ -17,7 +17,7 @@ class TeacherHolidaysContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     List<Holiday> holidays = context.read<HomeScreenDataCubit>().getHolidays();
 
-    holidays = holidays.length > 5 ? holidays.sublist(0, 5) : holidays;
+    holidays = holidays.length > 2 ? holidays.sublist(0, 2) : holidays;
     return holidays.isEmpty
         ? const SizedBox()
         : Column(

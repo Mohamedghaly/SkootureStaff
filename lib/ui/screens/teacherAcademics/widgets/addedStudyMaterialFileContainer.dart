@@ -96,6 +96,7 @@ class AddedStudyMaterialContainer extends StatelessWidget {
           ),
           GestureDetector(
             onTap: () {
+            
               Utils.showBottomSheet(
                 child: AddStudyMaterialBottomsheet(
                   editFileDetails: true,
@@ -103,6 +104,7 @@ class AddedStudyMaterialContainer extends StatelessWidget {
                   onTapSubmit: (updatedFile) {
                     onEdit(fileIndex, updatedFile);
                   },
+                 
                 ),
                 context: context,
               );

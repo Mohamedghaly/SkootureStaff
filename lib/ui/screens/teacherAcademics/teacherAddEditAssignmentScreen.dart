@@ -114,177 +114,83 @@ class _TeacherAddEditAssignmentScreenState
       widget.assignment?.resubmission == 1;
 
   late DateTime? dueDate = widget.assignment != null
-      ? _parseDateFromApiDate(widget.assignment!.dueDate)
+      ? _parseDateFromCustomFormat(widget.assignment!.dueDate)
       : null;
 
+  // Helper method for date parsing
+  DateTime? _parseDateFromCustomFormat(String dateString) {
+    try {
+      // Parse the custom format "20-09-2025 01:14 PM"
+      final DateFormat formatter = DateFormat('dd-MM-yyyy hh:mm a');
+      return formatter.parse(dateString);
+    } catch (e) {
+      debugPrint('Error parsing date: $e');
+      return null;
+    }
+  }
+
   late TimeOfDay? dueTime = widget.assignment != null
-      ? _parseTimeFromApiDate(widget.assignment!.dueDate)
+      ? _parseTimeFromCustomFormat(widget.assignment!.dueDate)
       : null;
+
+  // Helper method to parse the custom date format
+  TimeOfDay? _parseTimeFromCustomFormat(String dateString) {
+    try {
+      // Parse the custom format "20-09-2025 01:14 PM"
+      final DateFormat formatter = DateFormat('dd-MM-yyyy hh:mm a');
+      final DateTime parsedDate = formatter.parse(dateString);
+      return TimeOfDay.fromDateTime(parsedDate);
+    } catch (e) {
+      debugPrint('Error parsing date: $e');
+      return null;
+    }
+  }
+
+  // Helper method to format TimeOfDay to 12-hour format with AM/PM for display
+  String formatTimeOfDayFor12Hour(TimeOfDay timeOfDay) {
+    final now = DateTime.now();
+    final dateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      timeOfDay.hour,
+      timeOfDay.minute,
+    );
+    return DateFormat('hh:mm a').format(dateTime);
+  }
+
+  // Helper method to format TimeOfDay for API (12-hour with AM/PM)
+  String formatTimeOfDayForAPI(TimeOfDay timeOfDay) {
+    final now = DateTime.now();
+    final dateTime = DateTime(
+      now.year,
+      now.month,
+      now.day,
+      timeOfDay.hour,
+      timeOfDay.minute,
+    );
+    return DateFormat('hh:mm a').format(dateTime);
+  }
+
+  // URL validation method
+  bool _isValidUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      return uri.hasScheme &&
+          (uri.scheme == 'http' || uri.scheme == 'https') &&
+          uri.hasAuthority;
+    } catch (e) {
+      return false;
+    }
+  }
 
   List<PlatformFile> uploadedFiles = [];
 
   late List<StudyMaterial> assignmentAttachments =
       widget.assignment?.studyMaterial ?? [];
 
-  // Helper method to safely parse date from API date string
-  DateTime? _parseDateFromApiDate(String apiDateString) {
-    try {
-      // Extract date part using the utility method
-      String datePart = Utils.extractDateFromDateString(apiDateString);
-
-      // Handle slash-separated dates
-      if (datePart.contains('/')) {
-        final dateParts = datePart.split('/');
-        if (dateParts.length == 3) {
-          // Check if first part is a year (4 digits) - Y/d/m format like "2025/21/07"
-          if (dateParts[0].length == 4) {
-            int year = int.parse(dateParts[0]);
-            int day = int.parse(dateParts[1]);
-            int month = int.parse(dateParts[2]);
-
-            // Ensure valid ranges
-            if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-              try {
-                return DateTime(year, month, day);
-              } catch (e) {
-                print('Error creating DateTime from Y/d/m format: $e');
-              }
-            }
-          } else {
-            // d/m/Y format like "21/07/2025"
-            int day = int.parse(dateParts[0]);
-            int month = int.parse(dateParts[1]);
-            int year = int.parse(dateParts[2]);
-
-            // Ensure valid ranges
-            if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-              try {
-                return DateTime(year, month, day);
-              } catch (e) {
-                print('Error creating DateTime from d/m/Y format: $e');
-              }
-            }
-          }
-        }
-      }
-
-      // Handle formats like "2025-07-18" (YYYY-MM-DD with hyphens)
-      if (datePart.contains('-')) {
-        final dateParts = datePart.split('-');
-        if (dateParts.length == 3) {
-          int year = int.parse(dateParts[0]);
-          int month = int.parse(dateParts[1]);
-          int day = int.parse(dateParts[2]);
-
-          // Fix common date format issues (like swapped day/month)
-          if (month > 12 && day <= 12) {
-            // Swap month and day if month is invalid
-            int temp = month;
-            month = day;
-            day = temp;
-          }
-
-          // Ensure valid ranges
-          if (month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-            try {
-              return DateTime(year, month, day);
-            } catch (e) {
-              print('Error creating DateTime from hyphen format: $e');
-            }
-          }
-        }
-      }
-
-      // Try standard parsing as fallback
-      final parsedDate = DateTime.tryParse(datePart);
-      if (parsedDate != null) {
-        return parsedDate;
-      }
-
-      return null;
-    } catch (e) {
-      print('Error parsing date from API: $e');
-      return null;
-    }
-  }
-
-  // Helper method to safely parse time from API date string
-  TimeOfDay? _parseTimeFromApiDate(String apiDateString) {
-    try {
-      // Try to parse the date string using DateTime.tryParse first
-      final parsedDate = DateTime.tryParse(apiDateString);
-      if (parsedDate != null) {
-        return TimeOfDay.fromDateTime(parsedDate);
-      }
-
-      // If standard parsing fails, try to extract time from common formats
-      // Handle formats like "2025-17-07 03:33 PM" or similar
-      final timeRegex =
-          RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)?', caseSensitive: false);
-      final match = timeRegex.firstMatch(apiDateString);
-
-      if (match != null) {
-        int hour = int.parse(match.group(1)!);
-        int minute = int.parse(match.group(2)!);
-        String? amPm = match.group(3)?.toUpperCase();
-
-        // Convert to 24-hour format if AM/PM is present
-        if (amPm != null) {
-          if (amPm == 'PM' && hour != 12) {
-            hour += 12;
-          } else if (amPm == 'AM' && hour == 12) {
-            hour = 0;
-          }
-        }
-
-        return TimeOfDay(hour: hour, minute: minute);
-      }
-
-      return null;
-    } catch (e) {
-      print('Error parsing time from API date: $e');
-      return null;
-    }
-  }
-
-  // Helper method to get the date part from API due_date string
-  String _getDateFromApiDueDate() {
-    if (widget.assignment?.dueDate != null &&
-        widget.assignment!.dueDate.isNotEmpty) {
-      // Extract date part from the API due_date string (e.g., "23-07-2025 02:36 PM" -> "23-07-2025")
-      final parts = widget.assignment!.dueDate.split(' ');
-      if (parts.isNotEmpty) {
-        return parts[0]; // Return the date part
-      }
-    }
-    return '';
-  }
-
-  // Helper method to get the time part from API due_date string
-  String _getTimeFromApiDueDate() {
-    if (widget.assignment?.dueDate != null &&
-        widget.assignment!.dueDate.isNotEmpty) {
-      // Extract time part from the API due_date string (e.g., "23-07-2025 02:36 PM" -> "02:36 PM")
-      final parts = widget.assignment!.dueDate.split(' ');
-      if (parts.length >= 2) {
-        // Combine time and AM/PM if present
-        if (parts.length >= 3) {
-          return '${parts[1]} ${parts[2]}';
-        }
-        return parts[1];
-      }
-    }
-    return '';
-  }
-
   @override
   void initState() {
-    // Initialize URL controller with existing assignment URL if editing
-    if (widget.assignment != null) {
-      _urlController.text = widget.assignment!.url;
-      isUrlSelected = widget.assignment!.url.isNotEmpty;
-    }
-
     Future.delayed(Duration.zero, () {
       if (mounted) {
         context
@@ -419,18 +325,28 @@ class _TeacherAddEditAssignmentScreenState
       return;
     }
 
-    if (isUrlSelected && _urlController.text.trim().isEmpty) {
-      showErrorMessage(pleaseAddaValidUrl);
-      return;
+    // Updated URL validation
+    if (isUrlSelected) {
+      if (_urlController.text.trim().isEmpty) {
+        showErrorMessage("Please enter a URL");
+        return;
+      }
+      if (!_isValidUrl(_urlController.text.trim())) {
+        showErrorMessage("Please enter a valid URL");
+        return;
+      }
     }
+
+    // Updated datetime format to match your expected format
+    final formattedDateTime =
+        "${DateFormat('dd-MM-yyyy').format(dueDate!)} ${formatTimeOfDayForAPI(dueTime!)}";
 
     context.read<CreateAssignmentCubit>().createAssignment(
           classSectionId:
               _selectedClassSections!.map((e) => e.id ?? 0).toList(),
           classSubjectId: _selectedSubject?.classSubjectId ?? 0,
           name: _assignmentNameTextEditingController.text.trim(),
-          dateTime:
-              "${DateFormat('dd-MM-yyyy').format(dueDate!).toString()} ${dueTime!.hour}:${dueTime!.minute}",
+          dateTime: formattedDateTime,
           extraDayForResubmission:
               _extraResubmissionDaysTextEditingController.text.trim(),
           instruction: _assignmentInstructionTextEditingController.text.trim(),
@@ -445,9 +361,11 @@ class _TeacherAddEditAssignmentScreenState
     FocusManager.instance.primaryFocus?.unfocus();
     if (_assignmentNameTextEditingController.text.trim().isEmpty) {
       showErrorMessage(pleaseEnterAssignmentNameKey);
+      return;
     }
     if (dueDate == null) {
       showErrorMessage(pleaseSelectDateKey);
+      return;
     }
     if (_assignmentPointsTextEditingController.text.length >= 10) {
       showErrorMessage(invalidPointsLengthKey);
@@ -455,6 +373,7 @@ class _TeacherAddEditAssignmentScreenState
     }
     if (dueTime == null) {
       showErrorMessage(pleaseSelectDateKey);
+      return;
     }
     if (_extraResubmissionDaysTextEditingController.text.trim().isEmpty &&
         _allowedReSubmissionOfRejectedAssignment) {
@@ -462,13 +381,28 @@ class _TeacherAddEditAssignmentScreenState
       return;
     }
 
+    // Updated URL validation for edit
+    if (isUrlSelected) {
+      if (_urlController.text.trim().isEmpty) {
+        showErrorMessage("Please enter a URL");
+        return;
+      }
+      if (!_isValidUrl(_urlController.text.trim())) {
+        showErrorMessage("Please enter a valid URL");
+        return;
+      }
+    }
+
+    // Updated datetime format to match your expected format
+    final formattedDateTime =
+        "${DateFormat('dd-MM-yyyy').format(dueDate!)} ${formatTimeOfDayForAPI(dueTime!)}";
+
     context.read<EditAssignmentCubit>().editAssignment(
           classSelectionId:
               _selectedClassSections!.map((e) => e.id ?? 0).toList(),
           classSubjectId: _selectedSubject?.classSubjectId ?? 0,
           name: _assignmentNameTextEditingController.text.trim(),
-          dateTime:
-              "${DateFormat('dd-MM-yyyy').format(dueDate!).toString()} ${dueTime!.hour}:${dueTime!.minute}",
+          dateTime: formattedDateTime,
           extraDayForResubmission:
               _extraResubmissionDaysTextEditingController.text.trim(),
           instruction: _assignmentInstructionTextEditingController.text.trim(),
@@ -502,11 +436,26 @@ class _TeacherAddEditAssignmentScreenState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
+              Text(Utils.getTranslatedLabel(addUrlTitleKey)),
+              const SizedBox(height: 5),
               CustomTextFieldContainer(
                 textEditingController: _urlController,
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 hintTextKey: addUrlFiedKey,
               ),
+              // Optional: Show URL format hint for invalid URLs
+              if (_urlController.text.isNotEmpty &&
+                  !_isValidUrl(_urlController.text))
+                Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Text(
+                    "Please enter a valid URL (e.g., https://example.com)",
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
             ],
           )
         : const SizedBox();
@@ -525,12 +474,15 @@ class _TeacherAddEditAssignmentScreenState
         child: widget.assignment != null
             ? BlocConsumer<EditAssignmentCubit, EditAssignmentState>(
                 listener: (context, state) {
+                  debugPrint("this is the state ${state}");
                   if (state is EditAssignmentSuccess) {
                     Get.back(result: true);
                     Utils.showSnackBar(
                         context: context,
                         message: assignmentEditedSuccessfullyKey);
                   } else if (state is EditAssignmentFailure) {
+                    debugPrint(
+                        "this is the error message ${state.errorMessage}");
                     Utils.showSnackBar(
                         context: context, message: state.errorMessage);
                   }
@@ -560,20 +512,10 @@ class _TeacherAddEditAssignmentScreenState
             : BlocConsumer<CreateAssignmentCubit, CreateAssignmentState>(
                 listener: (context, state) {
                   if (state is CreateAssignmentSuccess) {
+                    Get.back(result: true);
                     Utils.showSnackBar(
                         context: context,
                         message: assignmentAddedSuccessfullyKey);
-                    _assignmentNameTextEditingController.text = "";
-                    _assignmentInstructionTextEditingController.text = "";
-                    _assignmentPointsTextEditingController.text = "";
-                    _extraResubmissionDaysTextEditingController.text = "";
-                    _allowedReSubmissionOfRejectedAssignment = false;
-                    dueDate = null;
-                    dueTime = null;
-                    uploadedFiles = [];
-                    assignmentAttachments = [];
-                    refreshAssignmentsInPreviousPage = true;
-                    setState(() {});
                   } else if (state is CreateAssignmentFailure) {
                     Utils.showSnackBar(
                       context: context,
@@ -733,11 +675,9 @@ class _TeacherAddEditAssignmentScreenState
                               onTap: () {
                                 openDatePicker();
                               },
-                              titleKey: widget.assignment != null
-                                  ? _getDateFromApiDueDate()
-                                  : (dueDate != null
-                                      ? Utils.getFormattedDate(dueDate!)
-                                      : dueDateKey),
+                              titleKey: dueDate != null
+                                  ? Utils.getFormattedDate(dueDate!)
+                                  : dueDateKey,
                               backgroundColor:
                                   Theme.of(context).scaffoldBackgroundColor,
                             ),
@@ -750,11 +690,9 @@ class _TeacherAddEditAssignmentScreenState
                               onTap: () {
                                 openTimePicker();
                               },
-                              titleKey: widget.assignment != null
-                                  ? _getTimeFromApiDueDate()
-                                  : (dueTime != null
-                                      ? Utils.getFormattedDayOfTime(dueTime!)
-                                      : dueTimeKey),
+                              titleKey: dueTime != null
+                                  ? formatTimeOfDayFor12Hour(dueTime!)
+                                  : dueTimeKey,
                               backgroundColor:
                                   Theme.of(context).scaffoldBackgroundColor,
                             ),
@@ -889,7 +827,7 @@ class _TeacherAddEditAssignmentScreenState
         body: Stack(
           children: [
             _buildAddEditAssignmentForm(),
-            SafeArea(child: _buildSubmitButton()),
+            _buildSubmitButton(),
             Align(
               alignment: Alignment.topCenter,
               child: CustomAppbar(

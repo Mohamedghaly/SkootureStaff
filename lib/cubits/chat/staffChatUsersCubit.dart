@@ -51,22 +51,21 @@ class StaffChatUsersCubit extends Cubit<StaffChatUsersState> {
   StaffChatUsersCubit() : super(const StaffChatUsersState());
 
   final _chatRepository = ChatRepository();
-
-  void fetchChatUsers({
-    required ChatUserRole role,
-    int page = 1,
-    String? childId,
-    String? classSectionId,
-  }) async {
-    emit(state.copyWith(status: StaffChatUsersFetchStatus.loading));
+void fetchChatUsers({
+  required ChatUserRole role,
+  int page = 1,
+  String? childId,
+  String? classSectionId,
+}) async {
+  emit(state.copyWith(status: StaffChatUsersFetchStatus.loading));
 
     _chatRepository
         .getUsers(
-      role: role,
-      childId: childId,
-      classSectionId: classSectionId,
-      page: page,
-    )
+          role: role,
+          childId: childId,
+          classSectionId: classSectionId,
+          page: page,
+        )
         .then((chatUsersResponse) {
       emit(state.copyWith(
         status: StaffChatUsersFetchStatus.success,
@@ -85,7 +84,6 @@ class StaffChatUsersCubit extends Cubit<StaffChatUsersState> {
     required ChatUserRole role,
     int page = 1,
     String? childId,
-    String? classSectionId,
     required String search,
   }) {
     emit(state.copyWith(searchStatus: StaffChatUsersSearchStatus.loading));
@@ -94,7 +92,6 @@ class StaffChatUsersCubit extends Cubit<StaffChatUsersState> {
         .getUsers(
       role: role,
       childId: childId,
-      classSectionId: classSectionId,
       page: page,
       search: search,
     )
@@ -135,7 +132,6 @@ class StaffChatUsersCubit extends Cubit<StaffChatUsersState> {
   Future<void> fetchMoreChatUsers({
     required ChatUserRole role,
     String? childId,
-    String? classSectionId,
   }) async {
     if (state.status == StaffChatUsersFetchStatus.success && !state.loadMore) {
       emit(state.copyWith(loadMore: true));
@@ -146,7 +142,6 @@ class StaffChatUsersCubit extends Cubit<StaffChatUsersState> {
           .getUsers(
         role: role,
         childId: childId,
-        classSectionId: classSectionId,
         page: old.currentPage + 1,
       )
           .then((chatUsersResponse) {

@@ -163,14 +163,14 @@ class AppliedLeaveDetailsBottomsheet extends StatelessWidget {
                     ?.map((leaveDetail) => ListTile(
                           subtitle: CustomTextContainer(
                               textKey: leaveDetail.type ?? ""),
-                          title: CustomTextContainer(
-                              textKey: () {
-                                final parsedDate = Utils.parseDateSafely(leaveDetail.date!);
-                                if (parsedDate != null) {
-                                  return "${Utils.formatDate(parsedDate)}, ${Utils.weekDays[parsedDate.weekday - 1].tr}";
-                                }
-                                return leaveDetail.date ?? "";
-                              }()),
+                          title: CustomTextContainer(textKey: () {
+                            final parsedDate =
+                                Utils.parseDateSafely(leaveDetail.date!);
+                            if (parsedDate != null) {
+                              return "${Utils.formatDate(parsedDate)} (${Utils.weekDays[parsedDate.weekday - 1].tr})";
+                            }
+                            return leaveDetail.date ?? "";
+                          }()),
                         ))
                     .toList() ??
                 [],

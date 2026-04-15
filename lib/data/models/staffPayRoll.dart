@@ -8,6 +8,7 @@ class StaffPayRoll {
   final int? userId;
   final String? qualification;
   final double? salary;
+  final double? netSalary;
   final UserDetails? userDetails;
   final List<LeaveRequest>? leaveRequests;
   final List<PayRoll>? payRolls;
@@ -18,6 +19,7 @@ class StaffPayRoll {
       this.userId,
       this.qualification,
       this.salary,
+      this.netSalary,
       this.userDetails,
       this.leaveRequests,
       this.payRolls,
@@ -28,6 +30,7 @@ class StaffPayRoll {
       int? userId,
       String? qualification,
       double? salary,
+      double? netSalary,
       UserDetails? userDetails,
       List<LeaveRequest>? leaveRequests,
       List<PayRoll>? payRolls,
@@ -41,6 +44,7 @@ class StaffPayRoll {
       userId: userId ?? this.userId,
       qualification: qualification ?? this.qualification,
       salary: salary ?? this.salary,
+      netSalary: netSalary ?? this.netSalary,
     );
   }
 
@@ -59,13 +63,15 @@ class StaffPayRoll {
             .map((salary) => StaffSalary.fromJson(Map.from(salary ?? {})))
             .toList(),
         userDetails = UserDetails.fromJson(Map.from(json['user'] ?? {})),
-        salary = double.parse((json['salary'] ?? 0).toString());
+        salary = double.parse((json['salary'] ?? 0).toString()),
+        netSalary = double.parse((json['net_salary'] ?? 0).toString());
 
   Map<String, dynamic> toJson() => {
         'id': id,
         'user_id': userId,
         'qualification': qualification,
         'salary': salary,
+        'net_salary': netSalary,
         'user': userDetails?.toJson(),
         'leave': leaveRequests?.map((e) => e.toJson()).toList(),
         'expense': payRolls?.map((e) => e.toJson()).toList(),

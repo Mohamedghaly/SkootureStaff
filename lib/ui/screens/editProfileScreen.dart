@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:eschool_saas_staff/cubits/authentication/authCubit.dart';
 import 'package:eschool_saas_staff/cubits/authentication/editProfileCubit.dart';
+import 'package:eschool_saas_staff/data/models/customField.dart';
 import 'package:eschool_saas_staff/ui/widgets/customAppbar.dart';
 import 'package:eschool_saas_staff/ui/widgets/customCircularProgressIndicator.dart';
+import 'package:eschool_saas_staff/ui/widgets/customFieldWidgets.dart';
 import 'package:eschool_saas_staff/ui/widgets/customRoundedButton.dart';
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/customTextFieldContainer.dart';
@@ -49,6 +51,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String profileImage = '';
   String? uploadedPicture;
 
+  // Custom fields management
+  Map<String, TextEditingController> customFieldControllers = {};
+  Map<String, String?> customFieldUploadedFiles = {};
+  List<CustomField> customFields = [];
+
   @override
   void initState() {
     firstName = TextEditingController(
@@ -68,6 +75,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             context.read<AuthCubit>().getUserDetails().permanentAddress ?? "");
     selectedGender = context.read<AuthCubit>().getUserDetails().gender ?? "";
     profileImage = context.read<AuthCubit>().getUserDetails().image ?? "";
+
+    // Initialize custom fields
+    customFields =
+        context.read<AuthCubit>().getUserDetails().customFields ?? [];
+    for (var field in customFields) {
+      final fieldName = field.name ?? '';
+      customFieldControllers[fieldName] =
+          TextEditingController(text: field.value ?? '');
+    }
+
     super.initState();
   }
 
@@ -80,6 +97,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     dateOfBirth.dispose();
     currentAddress.dispose();
     permanentAddress.dispose();
+
+    // Dispose custom field controllers
+    for (var controller in customFieldControllers.values) {
+      controller.dispose();
+    }
+
     super.dispose();
   }
 
@@ -92,21 +115,148 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  Widget _buildLabelWithTextEditingController(
-      {required String labelTitle,
-      required String textFieldHintTextKey,
-      required TextEditingController textEditingController}) {
+  Future<void> _addCustomFieldFile(String fieldName) async {
+    final result = await Utils.openFilePicker(
+        context: context, allowMultiple: false, type: FileType.image);
+    if (result != null) {
+      customFieldUploadedFiles[fieldName] = result.files.first.path;
+      setState(() {});
+    }
+  }
+
+  bool _validateCustomFields() {
+    for (var field in customFields) {
+      if (field.isRequired == true) {
+        final fieldName = field.name ?? '';
+        final controller = customFieldControllers[fieldName];
+        final value = controller?.text.trim() ?? '';
+
+        if (value.isEmpty) {
+          // Check if it's a file field with uploaded file
+          if (field.type == 'file' &&
+              customFieldUploadedFiles[fieldName]?.isNotEmpty == true) {
+            continue;
+          }
+
+          Utils.showSnackBar(
+            message: 'Please fill required field: $fieldName',
+            context: context,
+          );
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /// Prepares custom fields data in the format required by the API
+  /// Format: custom_fields[i][id], custom_fields[i][form_field_id],
+  ///         custom_fields[i][input_type], custom_fields[i][data]
+  List<Map<String, dynamic>> _prepareCustomFieldsData() {
+    return customFields.map((field) {
+      final fieldName = field.name ?? '';
+      final controller = customFieldControllers[fieldName];
+      final uploadedFile = customFieldUploadedFiles[fieldName];
+
+      // Get the value based on field type
+      String fieldValue = controller?.text.trim() ?? '';
+
+      // Handle empty values - use "null" string for radio buttons without selection
+      if (fieldValue.isEmpty && field.type == 'radio') {
+        fieldValue = 'null';
+      }
+
+      return {
+        'id': field.id, // Custom field value record ID
+        'form_field_id': field.formFieldId, // Form field definition ID
+        'input_type': field.type, // Field type (textarea, radio, file, etc.)
+        'data': fieldValue, // The actual value
+        'uploaded_file': uploadedFile, // File path for file type fields
+      };
+    }).toList();
+  }
+
+  Widget _buildCustomFields() {
+    if (customFields.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Sort custom fields by rank
+    final sortedFields = List<CustomField>.from(customFields)
+      ..sort((a, b) => (a.rank ?? 0).compareTo(b.rank ?? 0));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CustomTextContainer(
-          textKey: labelTitle,
+        const SizedBox(height: 20),
+        // Section header for custom fields
+        Text(
+          'Additional Information',
           style: TextStyle(
-              fontSize: 13.0,
-              color: Theme.of(context)
-                  .colorScheme
-                  .secondary
-                  .withValues(alpha: 0.76)),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+        ),
+        const SizedBox(height: 15),
+        ...sortedFields.asMap().entries.map((entry) {
+          final index = entry.key;
+          final field = entry.value;
+          final fieldName = field.name ?? '';
+          final controller = customFieldControllers[fieldName];
+
+          if (controller == null) return const SizedBox.shrink();
+
+          return Container(
+            key: ValueKey(
+                'custom_field_${field.id ?? index}_${field.formFieldId}'),
+            child: CustomFieldWidgets.buildCustomFieldWidget(
+              context: context,
+              field: field,
+              controller: controller,
+              onChanged: (value) {
+                setState(() {});
+              },
+              uploadedFilePath: customFieldUploadedFiles[fieldName],
+              onFileUpload: field.type == 'file'
+                  ? () => _addCustomFieldFile(fieldName)
+                  : null,
+            ),
+          );
+        }).toList(),
+      ],
+    );
+  }
+
+  Widget _buildLabelWithTextEditingController(
+      {required String labelTitle,
+      required String textFieldHintTextKey,
+      required TextEditingController textEditingController,
+      bool isRequired = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CustomTextContainer(
+              textKey: labelTitle,
+              style: TextStyle(
+                  fontSize: 13.0,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondary
+                      .withValues(alpha: 0.76)),
+            ),
+            if (isRequired)
+              Text(
+                ' *',
+                style: TextStyle(
+                  fontSize: 13.0,
+                  color: Theme.of(context).colorScheme.error,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+          ],
         ),
         const SizedBox(
           height: 10.0,
@@ -122,14 +272,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        CustomTextContainer(
-          textKey: dateOfBirthKey,
-          style: TextStyle(
-              fontSize: 13.0,
-              color: Theme.of(context)
-                  .colorScheme
-                  .secondary
-                  .withValues(alpha: 0.76)),
+        Row(
+          children: [
+            CustomTextContainer(
+              textKey: dateOfBirthKey,
+              style: TextStyle(
+                  fontSize: 13.0,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondary
+                      .withValues(alpha: 0.76)),
+            ),
+            Text(
+              ' *',
+              style: TextStyle(
+                fontSize: 13.0,
+                color: Theme.of(context).colorScheme.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(
           height: 10.0,
@@ -167,10 +329,32 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  Widget _buildRadioselection(String title) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15.0),
+      decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
+          borderRadius: BorderRadius.circular(5),
+          border: Border.all(color: Theme.of(context).colorScheme.tertiary)),
+      alignment: Alignment.center,
+      padding: EdgeInsetsDirectional.only(start: appContentHorizontalPadding),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: <Widget>[
+          Text(title),
+          Radio<String>(
+            value: title,
+            // Remove groupValue and onChanged - they're now handled by RadioGroup
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildGenderSelector() {
     return RadioGroup<String>(
       groupValue: selectedGender,
-      onChanged: (value) {
+      onChanged: (String? value) {
         setState(() {
           selectedGender = value ?? '';
         });
@@ -178,47 +362,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Expanded(
-            flex: 1,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 15.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: Theme.of(context).colorScheme.tertiary),
-              ),
-              alignment: Alignment.center,
-              padding: EdgeInsetsDirectional.only(start: appContentHorizontalPadding),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const <Widget>[
-                  Text("male"),
-                  Radio<String>(value: "male"),
-                ],
-              ),
-            ),
-          ),
+          Expanded(flex: 1, child: _buildRadioselection("male")),
           const SizedBox(width: 20),
-          Expanded(
-            flex: 1,
-            child: Container(
-              margin: const EdgeInsets.only(bottom: 15.0),
-              decoration: BoxDecoration(
-                color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: Theme.of(context).colorScheme.tertiary),
-              ),
-              alignment: Alignment.center,
-              padding: EdgeInsetsDirectional.only(start: appContentHorizontalPadding),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const <Widget>[
-                  Text("female"),
-                  Radio<String>(value: "female"),
-                ],
-              ),
-            ),
-          ),
+          Expanded(flex: 1, child: _buildRadioselection("female")),
         ],
       ),
     );
@@ -256,16 +402,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     message: pleaseAddNeededDetailsKey, context: context);
                 return;
               }
+
+              // Validate email format
+              if (!Utils.isValidEmail(email.text.trim())) {
+                Utils.showSnackBar(
+                    message: pleaseEnterValidEmailKey, context: context);
+                return;
+              }
+
+              // Validate current and permanent address for teachers
+              if (context.read<AuthCubit>().isTeacher()) {
+                if (currentAddress.text.trim().isEmpty ||
+                    permanentAddress.text.trim().isEmpty) {
+                  Utils.showSnackBar(
+                      message: pleaseAddNeededDetailsKey, context: context);
+                  return;
+                }
+              }
+
+              // Validate custom fields
+              if (!_validateCustomFields()) {
+                return;
+              }
+
               context.read<EditProfileCubit>().editProfile(
-                  firstName: firstName.text.trim(),
-                  lastName: lastName.text.trim(),
-                  mobileNumber: mobileNumber.text.trim(),
-                  email: email.text.trim(),
-                  dateOfBirth: dateOfBirth.text.trim(),
-                  currentAddress: currentAddress.text.trim(),
-                  permanentAddress: permanentAddress.text.trim(),
-                  gender: selectedGender,
-                  image: uploadedPicture ?? "");
+                    firstName: firstName.text.trim(),
+                    lastName: lastName.text.trim(),
+                    mobileNumber: mobileNumber.text.trim(),
+                    email: email.text.trim(),
+                    dateOfBirth: dateOfBirth.text.trim(),
+                    currentAddress: currentAddress.text.trim(),
+                    permanentAddress: permanentAddress.text.trim(),
+                    gender: selectedGender,
+                    image: uploadedPicture ?? "",
+                    customFieldsData: _prepareCustomFieldsData(),
+                  );
             },
           ),
         ));
@@ -278,8 +449,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             listener: (context, state) {
       if (state is EditProfileSuccess) {
         context.read<AuthCubit>().updateuserDetail(state.userDetails);
-        Get.back();
-        Utils.showSnackBar(message: state.successMessage, context: context);
+        // Navigate back and pass success message
+        Get.back(result: state.successMessage);
       } else if (state is EditProfileFailure) {
         Utils.showSnackBar(message: state.errorMessage, context: context);
       }
@@ -370,33 +541,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         _buildLabelWithTextEditingController(
                             labelTitle: firstNameKey,
                             textFieldHintTextKey: firstNameKey,
-                            textEditingController: firstName),
+                            textEditingController: firstName,
+                            isRequired: true),
                         _buildLabelWithTextEditingController(
                             labelTitle: lastNameKey,
                             textFieldHintTextKey: lastNameKey,
-                            textEditingController: lastName),
+                            textEditingController: lastName,
+                            isRequired: true),
                         _buildLabelWithTextEditingController(
                             labelTitle: mobileNumberKey,
                             textFieldHintTextKey: mobileNumberKey,
-                            textEditingController: mobileNumber),
+                            textEditingController: mobileNumber,
+                            isRequired: true),
                         _buildLabelWithTextEditingController(
                             labelTitle: emailKey,
                             textFieldHintTextKey: emailKey,
-                            textEditingController: email),
+                            textEditingController: email,
+                            isRequired: true),
                         _buildDateOfBirthContainer(),
                         context.read<AuthCubit>().isTeacher()
                             ? _buildLabelWithTextEditingController(
                                 labelTitle: currentAddressKey,
                                 textFieldHintTextKey: currentAddressKey,
-                                textEditingController: currentAddress)
+                                textEditingController: currentAddress,
+                                isRequired: true)
                             : const SizedBox(),
                         context.read<AuthCubit>().isTeacher()
                             ? _buildLabelWithTextEditingController(
                                 labelTitle: permanentAddressKey,
                                 textFieldHintTextKey: permanentAddressKey,
-                                textEditingController: permanentAddress)
+                                textEditingController: permanentAddress,
+                                isRequired: true)
                             : const SizedBox(),
                         _buildGenderSelector(),
+                        // Display custom fields
+                        _buildCustomFields(),
                       ],
                     ),
                   ),

@@ -51,6 +51,16 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
     ..addListener(scrollListener);
 
   @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () {
+      if (mounted) {
+        searchUsers();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _scrollController.removeListener(scrollListener);
     _scrollController.dispose();
@@ -82,9 +92,6 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
   }
 
   void searchQueryTextControllerListener() {
-    if (_textEditingController.text.trim().isEmpty) {
-      return;
-    }
     waitForNextSearchRequestTimer?.cancel();
     setWaitForNextSearchRequestTimer();
   }
@@ -128,31 +135,42 @@ class _SearchUsersScreenState extends State<SearchUsersScreen> {
     return BlocBuilder<SearchUsersCubit, SearchUsersState>(
         builder: (context, state) {
       if (state is SearchUsersSuccess) {
+        final displayUsers = state.users;
+
+        if (displayUsers.isEmpty) {
+          return const Center(
+            child: CustomTextContainer(
+              textKey: noStudentFoundKey,
+              textAlign: TextAlign.center,
+            ),
+          );
+        }
+
         return ListView.builder(
             controller: _scrollController,
-            itemCount: state.users.length,
+            itemCount: displayUsers.length +
+                (context.read<SearchUsersCubit>().hasMore() ? 1 : 0),
             itemBuilder: (context, index) {
-              if (context.read<SearchUsersCubit>().hasMore()) {
-                if (index == (state.users.length - 1)) {
-                  if (state.fetchMoreError) {
-                    return Center(
-                      child: CustomTextButton(
-                          buttonTextKey: retryKey,
-                          onTapButton: () {
-                            fetchMoreUsers();
-                          }),
-                    );
-                  }
-
+              // Show loading indicator for pagination
+              if (index == displayUsers.length) {
+                if (state.fetchMoreError) {
                   return Center(
-                    child: CustomCircularProgressIndicator(
-                      indicatorColor: Theme.of(context).colorScheme.primary,
-                    ),
+                    child: CustomTextButton(
+                        buttonTextKey: retryKey,
+                        onTapButton: () {
+                          fetchMoreUsers();
+                        }),
                   );
                 }
+
+                return Center(
+                  child: CustomCircularProgressIndicator(
+                    indicatorColor: Theme.of(context).colorScheme.primary,
+                  ),
+                );
               }
 
-              final userDetails = state.users[index];
+              final userDetails = displayUsers[index];
 
               final isSelected = _selectedUsers
                       .indexWhere((element) => element.id == userDetails.id) !=

@@ -1,8 +1,11 @@
 import 'package:eschool_saas_staff/app/routes.dart';
+import 'package:eschool_saas_staff/cubits/authentication/authCubit.dart';
+import 'package:eschool_saas_staff/cubits/transport/vehicleAssignmentStatusCubit.dart';
 import 'package:eschool_saas_staff/cubits/userDetails/staffAllowedPermissionsAndModulesCubit.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/menusWithTitleContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/leaves/leavesScreen.dart';
 import 'package:eschool_saas_staff/ui/widgets/customMenuTile.dart';
+import 'package:eschool_saas_staff/ui/widgets/transportNavigationTile.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:eschool_saas_staff/utils/systemModulesAndPermissions.dart';
 
@@ -10,8 +13,32 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
-class TeacherAcademicsContainer extends StatelessWidget {
+class TeacherAcademicsContainer extends StatefulWidget {
   const TeacherAcademicsContainer({super.key});
+
+  @override
+  State<TeacherAcademicsContainer> createState() =>
+      _TeacherAcademicsContainerState();
+}
+
+class _TeacherAcademicsContainerState extends State<TeacherAcademicsContainer> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () {
+      _fetchVehicleAssignmentStatus();
+    });
+  }
+
+  void _fetchVehicleAssignmentStatus() {
+    final authCubit = context.read<AuthCubit>();
+    final userDetails = authCubit.getUserDetails();
+    final userId = userDetails.id ?? 0;
+
+    context.read<VehicleAssignmentStatusCubit>().fetchVehicleAssignmentStatus(
+          userId: userId,
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +78,12 @@ class TeacherAcademicsContainer extends StatelessWidget {
                 onTap: () {
                   Get.toNamed(Routes.teacherViewAttendanceScreen);
                 }),
+            CustomMenuTile(
+                iconImageName: "my_attendance.svg",
+                titleKey: myAttendanceKey,
+                onTap: () {
+                  Get.toNamed(Routes.teacherMyAttendanceScreen);
+                }),
           ]),
         if (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
             moduleId: lessonManagementModuleId.toString()))
@@ -78,6 +111,13 @@ class TeacherAcademicsContainer extends StatelessWidget {
                   Get.toNamed(Routes.teacherManageAssignmentScreen);
                 }),
           ]),
+        staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
+                moduleId: transportationModuleId.toString())
+            ? MenusWithTitleContainer(title: transportationKey, menus: [
+                const TransportNavigationTile(),
+              ])
+            : const SizedBox(),
+        // Messages section - only show if announcement module is enabled
         if (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
             moduleId: announcementManagementModuleId.toString()))
           MenusWithTitleContainer(title: messageKey, menus: [
@@ -88,6 +128,16 @@ class TeacherAcademicsContainer extends StatelessWidget {
                   Get.toNamed(Routes.teacherManageAnnouncementScreen);
                 }),
           ]),
+        // Student Diary section - always visible without any condition
+        MenusWithTitleContainer(title: studentDiaryKey, menus: [
+          CustomMenuTile(
+              iconImageName: "note_book.svg",
+              titleKey: addStudentDiaryKey,
+              onTap: () {
+                Get.toNamed(Routes.studentDiarySelectionScreen);
+              }),
+        ]),
+
         if (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
             moduleId: examManagementModuleId.toString()))
           MenusWithTitleContainer(title: offlineExamKey, menus: [

@@ -38,7 +38,6 @@ class PayRollRepository {
 
       return ((result['data'] ?? []) as List).map((e) => e.toString()).toList();
     } catch (e) {
-   
       throw ApiException(e.toString());
     }
   }
@@ -60,8 +59,10 @@ class PayRollRepository {
             .toList(),
       );
     } catch (e, stc) {
+      print("This is the ${e}");
+      print("This is the ${stc}");
       if (kDebugMode) {
-        print(stc);
+        debugPrint(stc.toString());
       }
       throw ApiException(e.toString());
     }
@@ -80,8 +81,8 @@ class PayRollRepository {
         "payroll": staffPayRolls
       }, url: Api.submitStaffsPayroll);
     } catch (e, st) {
-      print("This is the Error: $e");
-      print("This is the Stack Trace: $st");
+      debugPrint("This is the Error: $e");
+      debugPrint("This is the Stack Trace: $st");
       throw ApiException(e.toString());
     }
   }

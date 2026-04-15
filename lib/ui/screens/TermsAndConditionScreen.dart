@@ -5,7 +5,7 @@ import 'package:eschool_saas_staff/ui/widgets/noDataContainer.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:eschool_saas_staff/utils/utils.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';  
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import 'package:get/route_manager.dart';
@@ -33,7 +33,9 @@ class TermsAndConditionScreen extends StatefulWidget {
 class _TermsAndConditionScreenState extends State<TermsAndConditionScreen> {
   @override
   void initState() {
-    context.read<SettingsCubit>().getSettings("teacher_terms_condition");
+    // Uses 'terms_condition' as API type parameter
+    // SettingsCubit automatically handles authenticated vs unauthenticated API selection
+    context.read<SettingsCubit>().getSettings("terms_condition");
     super.initState();
   }
 

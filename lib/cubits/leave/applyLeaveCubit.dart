@@ -29,6 +29,10 @@ class ApplyLeaveCubit extends Cubit<ApplyLeaveState> {
       List<Map<String, String>> leaveDetails = [];
 
       for (var leaveDay in leaveDays.keys) {
+        // Skip holiday/weekend days and public holidays — they don't require leave
+        if (leaveDays[leaveDay] == 'holiday' ||
+            leaveDays[leaveDay] == 'public_holiday') continue;
+
         leaveDetails.add({
           "type": getLeaveTypeValueFromKey(leaveTypeKey: leaveDays[leaveDay]!),
           "date": "${leaveDay.year}-${leaveDay.month}-${leaveDay.day}"

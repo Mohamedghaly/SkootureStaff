@@ -37,13 +37,12 @@ class _AnnouncementDetailsContainerState
   late final AnimationController _animationController =
       AnimationController(vsync: this, duration: tileCollapsedDuration);
 
-  late final Animation<double> _heightAnimation =
-      Tween<double>(begin: 70, end: 250).animate(CurvedAnimation(
-          parent: _animationController, curve: const Interval(0.0, 0.5)));
+  late final Animation<double> _expandAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeInOut));
 
-  late final Animation<double> _opacityAnimation =
-      Tween<double>(begin: 0, end: 1.0).animate(CurvedAnimation(
-          parent: _animationController, curve: const Interval(0.5, 1.0)));
+  late final Animation<double> _opacityAnimation = CurvedAnimation(
+      parent: _animationController, curve: const Interval(0.5, 1.0));
 
   late final Animation<double> _iconAngleAnimation =
       Tween<double>(begin: 0, end: 180).animate(CurvedAnimation(
@@ -73,7 +72,6 @@ class _AnnouncementDetailsContainerState
               }
             },
             child: Container(
-              height: _heightAnimation.value,
               padding: EdgeInsets.symmetric(
                   vertical: appContentHorizontalPadding,
                   horizontal: appContentHorizontalPadding),
@@ -83,6 +81,7 @@ class _AnnouncementDetailsContainerState
                           color: Theme.of(context).colorScheme.tertiary))),
               child: LayoutBuilder(builder: (context, boxConstraints) {
                 return Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
                       children: [
@@ -100,7 +99,7 @@ class _AnnouncementDetailsContainerState
                               Expanded(
                                   child: CustomTextContainer(
                                 textKey: widget.announcement.title ?? "-",
-                                maxLines: 2,
+                                maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                     fontSize: 15.0,
@@ -118,182 +117,183 @@ class _AnnouncementDetailsContainerState
                         ),
                       ],
                     ),
-                    _animationController.value > 0.5
-                        ? Opacity(
-                            opacity: _opacityAnimation.value,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 20),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 5),
-                                    child: Divider(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .tertiary,
-                                    ),
-                                  ),
-                                  CustomTextContainer(
-                                    textKey: descriptionKey,
-                                    style: TextStyle(
-                                        fontSize: 13.0,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .secondary
-                                            .withValues(alpha: 0.76)),
-                                  ),
-                                  CustomTextContainer(
-                                    textKey:
-                                        widget.announcement.description ?? "-",
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                  Utils.calculateLinesForGivenText(
-                                              availableMaxWidth:
-                                                  boxConstraints.maxWidth,
-                                              context: context,
+                    SizeTransition(
+                      sizeFactor: _expandAnimation,
+                      child: FadeTransition(
+                        opacity: _opacityAnimation,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 5),
+                                child: Divider(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .tertiary,
+                                ),
+                              ),
+                              CustomTextContainer(
+                                textKey: descriptionKey,
+                                style: TextStyle(
+                                    fontSize: 13.0,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .secondary
+                                        .withValues(alpha: 0.76)),
+                              ),
+                              CustomTextContainer(
+                                textKey:
+                                    widget.announcement.description ?? "-",
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w600),
+                              ),
+                              Utils.calculateLinesForGivenText(
+                                          availableMaxWidth:
+                                              boxConstraints.maxWidth,
+                                          context: context,
+                                          text: widget.announcement
+                                                  .description ??
+                                              "-",
+                                          textStyle: const TextStyle(
+                                              fontWeight:
+                                                  FontWeight.w600)) >
+                                      2
+                                  ? ReadMoreTextButton(
+                                      textStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary),
+                                      onTap: () {
+                                        Utils.showBottomSheet(
+                                            child:
+                                                AnnouncementDescriptionBottomsheet(
                                               text: widget.announcement
                                                       .description ??
-                                                  "-",
-                                              textStyle: const TextStyle(
-                                                  fontWeight:
-                                                      FontWeight.w600)) >
-                                          2
-                                      ? ReadMoreTextButton(
-                                          textStyle: TextStyle(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary),
-                                          onTap: () {
-                                            Utils.showBottomSheet(
-                                                child:
-                                                    AnnouncementDescriptionBottomsheet(
-                                                  text: widget.announcement
-                                                          .description ??
-                                                      "",
-                                                ),
-                                                context: context);
-                                          })
-                                      : const SizedBox(),
-                                  const SizedBox(
-                                    height: 5.0,
-                                  ),
-                                  (widget.announcement.files ?? []).isNotEmpty
-                                      ? CustomTextButton(
-                                          buttonTextKey: viewFilesKey,
-                                          textStyle: TextStyle(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                              fontSize: 16.0,
-                                              fontWeight: FontWeight.w600),
-                                          onTapButton: () {
-                                            Utils.showBottomSheet(
-                                                child:
-                                                    AnnouncementFilesBottomsheet(
-                                                  files: widget
-                                                          .announcement.files ??
-                                                      [],
-                                                ),
-                                                context: context);
-                                          })
-                                      : const SizedBox(),
-                                  Divider(
-                                    color:
-                                        Theme.of(context).colorScheme.tertiary,
-                                  ),
-                                  const SizedBox(
-                                    height: 2.5,
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      context
-                                              .read<
-                                                  StaffAllowedPermissionsAndModulesCubit>()
-                                              .isPermissionGiven(
-                                                  permission:
-                                                      editAnnouncementPermissionKey)
-                                          ? CustomRoundedButton(
-                                              height: 35,
-                                              widthPercentage: 0.3,
-                                              backgroundColor: Theme.of(context)
-                                                  .colorScheme
-                                                  .primary,
-                                              buttonTitle: editKey,
-                                              fontWeight: FontWeight.w500,
-                                              showBorder: false,
-                                              onTap: () {
-                                                Get.toNamed(
-                                                    Routes
-                                                        .editAnnouncementScreen,
-                                                    arguments: EditAnnouncementScreen
-                                                        .buildArguments(
-                                                            announcement: widget
-                                                                .announcement));
-                                              },
-                                            )
-                                          : const SizedBox(),
-                                      const SizedBox(
-                                        width: 15,
-                                      ),
-                                      context
-                                              .read<
-                                                  StaffAllowedPermissionsAndModulesCubit>()
-                                              .isPermissionGiven(
-                                                  permission:
-                                                      deleteAnnouncementPermissionKey)
-                                          ? CustomRoundedButton(
-                                              height: 35,
-                                              widthPercentage: 0.3,
-                                              backgroundColor: Theme.of(context)
-                                                  .colorScheme
-                                                  .error,
-                                              buttonTitle: deleteKey,
-                                              fontWeight: FontWeight.w500,
-                                              showBorder: false,
-                                              onTap: () {
-                                                showDialog(
-                                                    context: context,
-                                                    builder: (_) =>
-                                                        BlocProvider(
-                                                          create: (_) =>
-                                                              DeleteAnnouncementCubit(),
-                                                          child:
-                                                              DeleteAnnouncementDialog(
-                                                            announcementId: widget
-                                                                    .announcement
-                                                                    .id ??
-                                                                0,
-                                                          ),
-                                                        )).then((value) {
-                                                  final announcementId =
-                                                      value as int?;
-                                                  if (announcementId != null) {
-                                                    if (context.mounted) {
-                                                      context
-                                                          .read<
-                                                              AnnouncementsCubit>()
-                                                          .deleteAnnouncement(
-                                                              announcementId:
-                                                                  announcementId);
-                                                    }
-                                                  }
-                                                });
-                                              },
-                                            )
-                                          : const SizedBox(),
-                                    ],
-                                  )
-                                ],
+                                                  "",
+                                            ),
+                                            context: context);
+                                      })
+                                  : const SizedBox(),
+                              const SizedBox(
+                                height: 5.0,
                               ),
-                            ),
-                          )
-                        : const SizedBox(),
+                              (widget.announcement.files ?? []).isNotEmpty
+                                  ? CustomTextButton(
+                                      buttonTextKey: viewFilesKey,
+                                      textStyle: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          fontSize: 16.0,
+                                          fontWeight: FontWeight.w600),
+                                      onTapButton: () {
+                                        Utils.showBottomSheet(
+                                            child:
+                                                AnnouncementFilesBottomsheet(
+                                              files: widget
+                                                      .announcement.files ??
+                                                  [],
+                                            ),
+                                            context: context);
+                                      })
+                                  : const SizedBox(),
+                              Divider(
+                                color:
+                                    Theme.of(context).colorScheme.tertiary,
+                              ),
+                              const SizedBox(
+                                height: 2.5,
+                              ),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  context
+                                          .read<
+                                              StaffAllowedPermissionsAndModulesCubit>()
+                                          .isPermissionGiven(
+                                              permission:
+                                                  editAnnouncementPermissionKey)
+                                      ? CustomRoundedButton(
+                                          height: 35,
+                                          widthPercentage: 0.3,
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          buttonTitle: editKey,
+                                          fontWeight: FontWeight.w500,
+                                          showBorder: false,
+                                          onTap: () {
+                                            Get.toNamed(
+                                                Routes
+                                                    .editAnnouncementScreen,
+                                                arguments: EditAnnouncementScreen
+                                                    .buildArguments(
+                                                        announcement: widget
+                                                            .announcement));
+                                          },
+                                        )
+                                      : const SizedBox(),
+                                  const SizedBox(
+                                    width: 15,
+                                  ),
+                                  context
+                                          .read<
+                                              StaffAllowedPermissionsAndModulesCubit>()
+                                          .isPermissionGiven(
+                                              permission:
+                                                  deleteAnnouncementPermissionKey)
+                                      ? CustomRoundedButton(
+                                          height: 35,
+                                          widthPercentage: 0.3,
+                                          backgroundColor: Theme.of(context)
+                                              .colorScheme
+                                              .error,
+                                          buttonTitle: deleteKey,
+                                          fontWeight: FontWeight.w500,
+                                          showBorder: false,
+                                          onTap: () {
+                                            showDialog(
+                                                context: context,
+                                                builder: (_) =>
+                                                    BlocProvider(
+                                                      create: (_) =>
+                                                          DeleteAnnouncementCubit(),
+                                                      child:
+                                                          DeleteAnnouncementDialog(
+                                                        announcementId: widget
+                                                                .announcement
+                                                                .id ??
+                                                            0,
+                                                      ),
+                                                    )).then((value) {
+                                              final announcementId =
+                                                  value as int?;
+                                              if (announcementId != null) {
+                                                if (context.mounted) {
+                                                  context
+                                                      .read<
+                                                          AnnouncementsCubit>()
+                                                      .deleteAnnouncement(
+                                                          announcementId:
+                                                              announcementId);
+                                                }
+                                              }
+                                            });
+                                          },
+                                        )
+                                      : const SizedBox(),
+                                ],
+                              )
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 );
               }),

@@ -313,13 +313,9 @@ class _TeacherAddEditTopicScreenState extends State<TeacherAddEditTopicScreen> {
             : BlocConsumer<CreateTopicCubit, CreateTopicState>(
                 listener: (context, state) {
                   if (state is CreateTopicSuccess) {
+                    Get.back(result: true);
                     Utils.showSnackBar(
                         context: context, message: topicAddedSuccessfullyKey);
-                    _topicNameTextEditingController.text = "";
-                    _topicDescriptionTextEditingController.text = "";
-                    _addedStudyMaterials = [];
-                    refreshTopicsInPreviousPage = true;
-                    setState(() {});
                   } else if (state is CreateTopicFailure) {
                     Utils.showSnackBar(
                       context: context,
@@ -448,7 +444,7 @@ class _TeacherAddEditTopicScreenState extends State<TeacherAddEditTopicScreen> {
                                     }
                                   } else {
                                     if (kDebugMode) {
-                                      print(
+                                      debugPrint(
                                           "No class section selected or invalid value returned.");
                                     }
                                   }
@@ -535,17 +531,17 @@ class _TeacherAddEditTopicScreenState extends State<TeacherAddEditTopicScreen> {
                                 );
                               } else if (lessonState is LessonsFetchFailure) {
                                 if (kDebugMode) {
-                                  print(
+                                  debugPrint(
                                       "Failed to fetch lessons: ${lessonState.errorMessage}");
                                 }
                               } else if (lessonState
                                   is LessonsFetchInProgress) {
                                 if (kDebugMode) {
-                                  print("Lessons are being fetched...");
+                                  debugPrint("Lessons are being fetched...");
                                 }
                               } else {
                                 if (kDebugMode) {
-                                  print("Lessons state is not ready.");
+                                  debugPrint("Lessons state is not ready.");
                                 }
                               }
                             },
@@ -600,6 +596,7 @@ class _TeacherAddEditTopicScreenState extends State<TeacherAddEditTopicScreen> {
                             customTitleKey: addStudyMaterialKey,
                             onTap: () {
                               FocusScope.of(context).unfocus();
+
                               Utils.showBottomSheet(
                                 child: AddStudyMaterialBottomsheet(
                                   editFileDetails: false,

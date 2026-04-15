@@ -198,19 +198,17 @@ class _TeacherManageAnnouncementScreenState
                   });
                 },
                 isDeleteLoading: state is TeacherDeleteAnnouncementInProgress,
-                onEdit: () {
-                  Get.toNamed(Routes.teacherAddEditAnnouncementScreen,
-                          arguments:
-                              TeacherAddEditAnnouncementScreen.buildArguments(
-                                  announcement: announcement,
-                                  selectedClassSection: _selectedClassSection,
-                                  selectedSubject: _selectedSubject))
-                      ?.then((value) {
-                    if (value != null && value is bool && value) {
-                      //re-fetch announcements if they edit or add
-                      getAnnouncements();
-                    }
-                  });
+                onEdit: () async {
+                  final result = await Get.toNamed(
+                    Routes.teacherAddEditAnnouncementScreen,
+                    arguments: TeacherAddEditAnnouncementScreen.buildArguments(
+                        announcement: announcement,
+                        selectedClassSection: _selectedClassSection,
+                        selectedSubject: _selectedSubject),
+                  );
+                  if (mounted && result == true) {
+                    getAnnouncements();
+                  }
                 },
                 isStudyMaterialFile: true,
                 studyMaterials: announcement.files,
@@ -312,19 +310,17 @@ class _TeacherManageAnnouncementScreenState
             backgroundColor: Theme.of(context).colorScheme.primary,
             buttonTitle: addAnnouncementKey,
             showBorder: false,
-            onTap: () {
-              Get.toNamed(Routes.teacherAddEditAnnouncementScreen,
-                      arguments:
-                          TeacherAddEditAnnouncementScreen.buildArguments(
-                              announcement: null,
-                              selectedClassSection: _selectedClassSection,
-                              selectedSubject: _selectedSubject))
-                  ?.then((value) {
-                if (value != null && value is bool && value) {
-                  //re-fetch announcements if they edit or add
-                  getAnnouncements();
-                }
-              });
+            onTap: () async {
+              final result = await Get.toNamed(
+                Routes.teacherAddEditAnnouncementScreen,
+                arguments: TeacherAddEditAnnouncementScreen.buildArguments(
+                    announcement: null,
+                    selectedClassSection: _selectedClassSection,
+                    selectedSubject: _selectedSubject),
+              );
+              if (mounted && result == true) {
+                getAnnouncements();
+              }
             },
           ),
         ));
@@ -428,66 +424,64 @@ class _TeacherManageAnnouncementScreenState
     return Scaffold(
       body: Stack(
         children: [
-          SafeArea(
-            child: BlocBuilder<ClassSectionsAndSubjectsCubit,
-                ClassSectionsAndSubjectsState>(
-              builder: (context, state) {
-                if (state is ClassSectionsAndSubjectsFetchSuccess) {
-                  if (state.classSections.isEmpty) {
-                    return const noDataContainer(titleKey: noClassSectionKey);
-                  }
-                  if (state.subjects.isEmpty) {
-                    return const noDataContainer(titleKey: noSubjectsKey);
-                  }
-                  return _buildAnnouncementList();
+          BlocBuilder<ClassSectionsAndSubjectsCubit,
+              ClassSectionsAndSubjectsState>(
+            builder: (context, state) {
+              if (state is ClassSectionsAndSubjectsFetchSuccess) {
+                if (state.classSections.isEmpty) {
+                  return const noDataContainer(titleKey: noClassSectionKey);
                 }
+                if (state.subjects.isEmpty) {
+                  return const noDataContainer(titleKey: noSubjectsKey);
+                }
+                return _buildAnnouncementList();
+              }
 
-                if (state is ClassSectionsAndSubjectsFetchFailure) {
+              if (state is ClassSectionsAndSubjectsFetchFailure) {
+                return Center(
+                    child: ErrorContainer(
+                  errorMessage: state.errorMessage,
+                  onTapRetry: () {
+                    context
+                        .read<ClassSectionsAndSubjectsCubit>()
+                        .getClassSectionsAndSubjects(
+                          teacherId:
+                              context.read<AuthCubit>().getUserDetails().id ??
+                                  0,
+                        );
+                  },
+                ));
+              }
+              if (state is ClassSectionsAndSubjectsFetchSuccess) {
+                if (state.classSections.isEmpty) {
                   return Center(
-                      child: ErrorContainer(
-                    errorMessage: state.errorMessage,
-                    onTapRetry: () {
-                      context
-                          .read<ClassSectionsAndSubjectsCubit>()
-                          .getClassSectionsAndSubjects(
-                            teacherId:
-                                context.read<AuthCubit>().getUserDetails().id ??
-                                    0,
-                          );
-                    },
-                  ));
-                }
-                if (state is ClassSectionsAndSubjectsFetchSuccess) {
-                  if (state.classSections.isEmpty) {
-                    return Center(
-                      child: noDataContainer(titleKey: noClassSectionKey),
-                    );
-                  }
-
-                  if (state.subjects.isEmpty) {
-                    return Center(
-                      child: noDataContainer(titleKey: noSubjectsKey),
-                    );
-                  }
-                }
-
-                if (state is ClassSectionsAndSubjectsInitial) {
-                  return Center(
-                    child: CustomCircularProgressIndicator(
-                      indicatorColor: Theme.of(context).colorScheme.primary,
-                    ),
+                    child: noDataContainer(titleKey: noClassSectionKey),
                   );
                 }
 
+                if (state.subjects.isEmpty) {
+                  return Center(
+                    child: noDataContainer(titleKey: noSubjectsKey),
+                  );
+                }
+              }
+
+              if (state is ClassSectionsAndSubjectsInitial) {
                 return Center(
                   child: CustomCircularProgressIndicator(
                     indicatorColor: Theme.of(context).colorScheme.primary,
                   ),
                 );
-              },
-            ),
+              }
+
+              return Center(
+                child: CustomCircularProgressIndicator(
+                  indicatorColor: Theme.of(context).colorScheme.primary,
+                ),
+              );
+            },
           ),
-          SafeArea(child: _buildAddAnnouncementButton()),
+          _buildAddAnnouncementButton(),
           _buildAppbarAndFilters(),
         ],
       ),

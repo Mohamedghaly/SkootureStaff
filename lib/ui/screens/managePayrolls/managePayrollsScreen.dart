@@ -91,12 +91,18 @@ class _ManagePayrollsScreenState extends State<ManagePayrollsScreen> {
       setState(() {});
     }
 
-    // Extract the first year from the session year string (e.g., "2025/26" -> 2025)
+    // Extract the first year from the session year string
+    // API returns format: "2022-23", "2024-25", "2025-26" (with hyphen)
+    // Also support slash format: "2022/23", "2024/25" for compatibility
     int yearNumber = 0;
     if (_selectedYear != null && _selectedYear!.isNotEmpty) {
-      final yearParts = _selectedYear!.split('/');
+      // Try to split by hyphen first, then by slash
+      List<String> yearParts = _selectedYear!.contains('-')
+          ? _selectedYear!.split('-')
+          : _selectedYear!.split('/');
+
       if (yearParts.isNotEmpty) {
-        yearNumber = int.tryParse(yearParts[0]) ?? 0;
+        yearNumber = int.tryParse(yearParts[0].trim()) ?? 0;
       }
     }
 
@@ -187,12 +193,18 @@ class _ManagePayrollsScreenState extends State<ManagePayrollsScreen> {
                             }
 
                             // Extract the first year from the session year string
+                            // API returns format: "2022-23" with hyphen
                             int yearNumber = 0;
                             if (_selectedYear != null &&
                                 _selectedYear!.isNotEmpty) {
-                              final yearParts = _selectedYear!.split('/');
+                              // Try to split by hyphen first, then by slash
+                              List<String> yearParts =
+                                  _selectedYear!.contains('-')
+                                      ? _selectedYear!.split('-')
+                                      : _selectedYear!.split('/');
                               if (yearParts.isNotEmpty) {
-                                yearNumber = int.tryParse(yearParts[0]) ?? 0;
+                                yearNumber =
+                                    int.tryParse(yearParts[0].trim()) ?? 0;
                               }
                             }
                             context
@@ -230,7 +242,7 @@ class _ManagePayrollsScreenState extends State<ManagePayrollsScreen> {
       },
       builder: (context, state) {
         if (state is StaffsPayrollFetchSuccess) {
-          if (state.staffsPayRoll.length == 0) {
+          if (state.staffsPayRoll.isEmpty) {
             return Center(
               child: noDataContainer(
                 titleKey: noStaffsPayRollsKey,
@@ -337,11 +349,17 @@ class _ManagePayrollsScreenState extends State<ManagePayrollsScreen> {
           );
         }
 
-        return Center(
-          child: CustomCircularProgressIndicator(
-            indicatorColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
+        // Show loading indicator only when fetch is in progress
+        if (state is StaffsPayrollFetchInProgress) {
+          return Center(
+            child: CustomCircularProgressIndicator(
+              indicatorColor: Theme.of(context).colorScheme.primary,
+            ),
+          );
+        }
+
+        // Initial state - show a message or empty state
+        return const SizedBox.shrink();
       },
     );
   }

@@ -44,7 +44,7 @@ class Assignment {
     subjectId = json['subject_id'] ?? 0;
     name = json['name'] ?? "";
     instructions = json["instructions"] ?? "";
-    dueDate = json['due_date'] ?? "";
+    dueDate = json['due_date_original'] ?? "";
     points = json["points"] ?? 0;
     resubmission = json['resubmission'] ?? 0;
     extraDaysForResubmission = json["extra_days_for_resubmission"] ?? 0;

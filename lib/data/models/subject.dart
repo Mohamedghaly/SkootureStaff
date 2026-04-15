@@ -17,6 +17,7 @@ class Subject {
   final String? updatedAt;
   final String? deletedAt;
   final String? nameWithType;
+  
 
   Subject({
     this.id,

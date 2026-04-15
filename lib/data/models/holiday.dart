@@ -7,6 +7,7 @@ class Holiday {
   final String? createdAt;
   final String? updatedAt;
   final String? defaultDateFormat;
+  final String? dmyFormat; // Date in dd-MM-yyyy format (e.g., "17-12-2025")
 
   Holiday({
     this.id,
@@ -17,6 +18,7 @@ class Holiday {
     this.createdAt,
     this.updatedAt,
     this.defaultDateFormat,
+    this.dmyFormat,
   });
 
   Holiday copyWith({
@@ -28,6 +30,7 @@ class Holiday {
     String? createdAt,
     String? updatedAt,
     String? defaultDateFormat,
+    String? dmyFormat,
   }) {
     return Holiday(
       id: id ?? this.id,
@@ -38,6 +41,7 @@ class Holiday {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       defaultDateFormat: defaultDateFormat ?? this.defaultDateFormat,
+      dmyFormat: dmyFormat ?? this.dmyFormat,
     );
   }
 
@@ -49,7 +53,8 @@ class Holiday {
         schoolId = json['school_id'] as int?,
         createdAt = json['created_at'] as String?,
         updatedAt = json['updated_at'] as String?,
-        defaultDateFormat = json['default_date_format'] as String?;
+        defaultDateFormat = json['default_date_format'] as String?,
+        dmyFormat = json['dmyFormat'] as String?;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -59,6 +64,7 @@ class Holiday {
         'school_id': schoolId,
         'created_at': createdAt,
         'updated_at': updatedAt,
-        'default_date_format': defaultDateFormat
+        'default_date_format': defaultDateFormat,
+        'dmyFormat': dmyFormat,
       };
 }

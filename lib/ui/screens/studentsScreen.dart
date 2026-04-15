@@ -204,9 +204,14 @@ class _StudentsScreenState extends State<StudentsScreen> {
                   .read<ClassesAndSessionYearsCubit>()
                   .getClasses()
                   .first);
-              changeSelectedSessionYear(state.sessionYears
+
+              // Find default session year or use first one
+              final defaultSessionYear = state.sessionYears
                   .where((element) => element.isThisDefault())
-                  .first);
+                  .firstOrNull;
+
+              changeSelectedSessionYear(
+                  defaultSessionYear ?? state.sessionYears.first);
               getStudents();
             }
           }
@@ -214,39 +219,45 @@ class _StudentsScreenState extends State<StudentsScreen> {
         builder: (context, state) {
           return Column(
             children: [
-              const CustomAppbar(titleKey: studentsKey),
+              CustomAppbar(
+                titleKey: studentsKey,
+                showBackButton: true,
+                onBackButtonTap: () {
+                  Get.toNamed(Routes.homeScreen);
+                },
+              ),
               AppbarFilterBackgroundContainer(
                 child: LayoutBuilder(builder: (context, boxConstraints) {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       FilterButton(
-                          onTap: () {
-                            if (state is ClassesAndSessionYearsFetchSuccess &&
-                                context
-                                    .read<ClassesAndSessionYearsCubit>()
-                                    .getClasses()
-                                    .isNotEmpty) {
-                              Utils.showBottomSheet(
-                                  child: FilterSelectionBottomsheet<
-                                          ClassSection>(
-                                      onSelection: (value) {
-                                        changeSelectedClassSection(value!);
-                                        getStudents();
-                                        Get.back();
-                                      },
-                                      selectedValue: _selectedClassSection!,
-                                      titleKey: classKey,
-                                      values: context
-                                          .read<ClassesAndSessionYearsCubit>()
-                                          .getClasses()),
-                                  context: context);
-                            }
-                          },
-                          titleKey: _selectedClassSection?.id == null
-                              ? classKey
-                              : (_selectedClassSection?.fullName ?? ""),
-                          width: boxConstraints.maxWidth * (0.48)),
+                        onTap: () {
+                          if (state is ClassesAndSessionYearsFetchSuccess &&
+                              context
+                                  .read<ClassesAndSessionYearsCubit>()
+                                  .getClasses()
+                                  .isNotEmpty) {
+                            Utils.showBottomSheet(
+                                child: FilterSelectionBottomsheet<ClassSection>(
+                                    onSelection: (value) {
+                                      changeSelectedClassSection(value!);
+                                      getStudents();
+                                      Get.back();
+                                    },
+                                    selectedValue: _selectedClassSection!,
+                                    titleKey: classKey,
+                                    values: context
+                                        .read<ClassesAndSessionYearsCubit>()
+                                        .getClasses()),
+                                context: context);
+                          }
+                        },
+                        titleKey: _selectedClassSection == null
+                            ? classKey
+                            : (_selectedClassSection!.fullName ?? classKey),
+                        width: boxConstraints.maxWidth * (0.48),
+                      ),
                       FilterButton(
                           onTap: () {
                             if (state is ClassesAndSessionYearsFetchSuccess &&
@@ -266,9 +277,9 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                   context: context);
                             }
                           },
-                          titleKey: _selectedSessionYear?.id == null
+                          titleKey: _selectedSessionYear == null
                               ? sessionYearKey
-                              : _selectedSessionYear!.name ?? "",
+                              : (_selectedSessionYear!.name ?? sessionYearKey),
                           width: boxConstraints.maxWidth * (0.48)),
                     ],
                   );

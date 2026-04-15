@@ -254,19 +254,17 @@ class _TeacherManageAssignmentScreenState
                   });
                 },
                 isDeleteLoading: state is DeleteAssignmentInProgress,
-                onEdit: () {
-                  Get.toNamed(Routes.teacherAddEditAssignmentScreen,
-                          arguments:
-                              TeacherAddEditAssignmentScreen.buildArguments(
-                                  assignment: assignment,
-                                  selectedClassSection: _selectedClassSection,
-                                  selectedSubject: _selectedSubject))
-                      ?.then((value) {
-                    if (value != null && value is bool && value) {
-                      //re-fetch assignments if they edit or add
-                      getAssignments();
-                    }
-                  });
+                onEdit: () async {
+                  final result = await Get.toNamed(
+                    Routes.teacherAddEditAssignmentScreen,
+                    arguments: TeacherAddEditAssignmentScreen.buildArguments(
+                        assignment: assignment,
+                        selectedClassSection: _selectedClassSection,
+                        selectedSubject: _selectedSubject),
+                  );
+                  if (mounted && result == true) {
+                    getAssignments();
+                  }
                 },
                 isStudyMaterialFile: true,
                 studyMaterials: assignment.studyMaterial,
@@ -367,18 +365,17 @@ class _TeacherManageAssignmentScreenState
           backgroundColor: Theme.of(context).colorScheme.primary,
           buttonTitle: createAssignmentKey,
           showBorder: false,
-          onTap: () {
-            Get.toNamed(Routes.teacherAddEditAssignmentScreen,
-                    arguments: TeacherAddEditAssignmentScreen.buildArguments(
-                        assignment: null,
-                        selectedClassSection: _selectedClassSection,
-                        selectedSubject: _selectedSubject))
-                ?.then((value) {
-              if (value != null && value is bool && value) {
-                //re-fetch assignments if they edit or add
-                getAssignments();
-              }
-            });
+          onTap: () async {
+            final result = await Get.toNamed(
+              Routes.teacherAddEditAssignmentScreen,
+              arguments: TeacherAddEditAssignmentScreen.buildArguments(
+                  assignment: null,
+                  selectedClassSection: _selectedClassSection,
+                  selectedSubject: _selectedSubject),
+            );
+            if (mounted && result == true) {
+              getAssignments();
+            }
           },
         ),
       ),

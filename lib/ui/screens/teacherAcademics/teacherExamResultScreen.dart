@@ -8,7 +8,7 @@ import 'package:eschool_saas_staff/data/models/studentDetails.dart';
 import 'package:eschool_saas_staff/ui/widgets/appbarFilterBackgroundContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/customAppbar.dart';
 import 'package:eschool_saas_staff/ui/widgets/customCircularProgressIndicator.dart';
-import 'package:eschool_saas_staff/ui/widgets/customRoundedButton.dart';
+
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/customTextFieldContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/errorContainer.dart';
@@ -202,7 +202,7 @@ class _TeacherExamResultScreenState extends State<TeacherExamResultScreen> {
       child: SingleChildScrollView(
         padding: EdgeInsets.only(
             top: Utils.appContentTopScrollPadding(context: context) + 150,
-            bottom: 70),
+            bottom: 90),
         child: BlocConsumer<StudentsByClassSectionCubit,
             StudentsByClassSectionState>(
           listener: (context, state) {
@@ -215,9 +215,7 @@ class _TeacherExamResultScreenState extends State<TeacherExamResultScreen> {
             // Check if all required data is available
             if (!_isAllRequiredDataAvailable()) {
               String messageKey;
-              if (_selectedClassSection?.id == null) {
-                messageKey = noClassSectionKey;
-              } else if (_selectedExam?.examID == null) {
+              if (_selectedExam?.examID == null) {
                 messageKey = noExamKey;
               } else if (_selectedExamTimetableSubject?.subjectId == null ||
                   _selectedExamTimetableSubject!.subjectId.toString().isEmpty) {
@@ -233,7 +231,11 @@ class _TeacherExamResultScreenState extends State<TeacherExamResultScreen> {
 
             if (state is StudentsByClassSectionFetchSuccess) {
               if (state.studentDetailsList.isEmpty) {
-                return const SizedBox.shrink();
+                return const Center(
+                  child: noDataContainer(
+                    titleKey: noStudentFoundKey,
+                  ),
+                );
               }
               return Column(
                 children: [
@@ -328,130 +330,259 @@ class _TeacherExamResultScreenState extends State<TeacherExamResultScreen> {
     );
   }
 
-  Widget _buildSubmitButton() {
+  // ── Validation helpers ──────────────────────────────────────────────────────
+
+  /// Validates marks for a full publish. Returns an error message key or null.
+  String? _validateForPublish() {
+    for (int i = 0; i < marksControllers.length; i++) {
+      final text = marksControllers[i].text.trim();
+      if (text.isEmpty) {
+        return pleaseAddMarksToAllStudentsKey;
+      }
+      final double? val = double.tryParse(text);
+      if (val == null) {
+        return pleaseAddMarksToAllStudentsKey;
+      }
+      if (val > (_selectedExamTimetableSubject?.totalMarks ?? 0)) {
+        return cannotAddMoreMarksThenTotalKey;
+      }
+    }
+    return null; // All good
+  }
+
+  /// Validates marks for a draft save.
+  /// At least one mark must be entered. Only non-empty fields are checked
+  /// for value validity / exceeding total.
+  String? _validateForDraft() {
+    // Guard: at least one field must have a value
+    final bool allEmpty = marksControllers.every((c) => c.text.trim().isEmpty);
+    if (allEmpty) {
+      return pleaseAddAtLeastOneMarkForDraftKey;
+    }
+
+    for (int i = 0; i < marksControllers.length; i++) {
+      final text = marksControllers[i].text.trim();
+      if (text.isEmpty) continue; // Empty is fine for draft
+      final double? val = double.tryParse(text);
+      if (val == null) {
+        return pleaseAddMarksToAllStudentsKey;
+      }
+      if (val > (_selectedExamTimetableSubject?.totalMarks ?? 0)) {
+        return cannotAddMoreMarksThenTotalKey;
+      }
+    }
+    return null;
+  }
+
+  /// Builds the marks payload to send to the API.
+  ///
+  /// For draft (`isDraft: true`): only students whose mark field is non-empty
+  /// are included. Empty fields are completely excluded from the request —
+  /// no sentinel values are ever sent.
+  ///
+  /// For publish (`isDraft: false`): all students are included (validation
+  /// guarantees every field is filled at this point).
+  List<({double obtainedMarks, int studentId})> _buildMarksPayload(
+      List<StudentDetails> studentList,
+      {required bool isDraft}) {
+    final result = <({double obtainedMarks, int studentId})>[];
+    for (int i = 0; i < marksControllers.length; i++) {
+      final text = marksControllers[i].text.trim();
+      // For draft: skip students whose mark field is empty
+      if (isDraft && text.isEmpty) continue;
+      result.add((
+        obtainedMarks: double.tryParse(text) ?? 0,
+        studentId: studentList[i].id ?? 0,
+      ));
+    }
+    return result;
+  }
+
+  // ── Bottom action bar (Save Draft + Submit & Publish) ───────────────────────
+
+  Widget _buildActionButtons() {
     return BlocBuilder<StudentsByClassSectionCubit,
         StudentsByClassSectionState>(
       builder: (context, studentState) {
-        // Don't show submit button if all required data is not available
         if (!_isAllRequiredDataAvailable()) {
           return const SizedBox.shrink();
         }
-
-        if (studentState is StudentsByClassSectionFetchSuccess) {
-          return Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              padding: EdgeInsets.all(appContentHorizontalPadding),
-              decoration: BoxDecoration(boxShadow: const [
-                BoxShadow(color: Colors.black12, blurRadius: 1, spreadRadius: 1)
-              ], color: Theme.of(context).colorScheme.surface),
-              width: MediaQuery.of(context).size.width,
-              height: 70,
-              child: BlocConsumer<SubmitExamMarksCubit, SubmitExamMarksState>(
-                listener: (context, state) {
-                  if (state is SubmitExamMarksSubmitSuccess) {
-                    Utils.showSnackBar(
-                        message: resultAddedSuccessfullyKey, context: context);
-                  } else if (state is SubmitExamMarksSubmitFailure) {
-                    Utils.showSnackBar(
-                        message: state.errorMessage, context: context);
-                  }
-                },
-                builder: (context, state) {
-                  return CustomRoundedButton(
-                    height: 40,
-                    widthPercentage: 1.0,
-                    backgroundColor: Theme.of(context).colorScheme.primary,
-                    buttonTitle: submitResultKey,
-                    showBorder: false,
-                    onTap: () {
-                      if (state is SubmitExamMarksSubmitInProgress) {
-                        return;
-                      } else {
-                        for (int i = 0; i < marksControllers.length; i++) {
-                          if (marksControllers[i].text.trim().isEmpty) {
-                            Utils.showSnackBar(
-                              message: pleaseAddMarksToAllStudentsKey,
-                              context: context,
-                            );
-                            return;
-                          } else {
-                            int? obtainedMarks =
-                                int.tryParse(marksControllers[i].text);
-                            double? obtainedMarksDouble =
-                                double.tryParse(marksControllers[i].text);
-
-                            if (obtainedMarks == null &&
-                                obtainedMarksDouble == null) {
-                              Utils.showSnackBar(
-                                message: pleaseAddMarksToAllStudentsKey,
-                                context: context,
-                              );
-                              return;
-                            }
-
-                            if (obtainedMarksDouble != null) {
-                              obtainedMarks = obtainedMarksDouble.toInt();
-                            }
-
-                            if (obtainedMarksDouble != null &&
-                                obtainedMarksDouble >
-                                    (_selectedExamTimetableSubject
-                                            ?.totalMarks ??
-                                        0)) {
-                              Utils.showSnackBar(
-                                message: cannotAddMoreMarksThenTotalKey,
-                                context: context,
-                              );
-                              return;
-                            }
-                          }
-                        }
-
-                        if (marksControllers
-                            .any((element) => element.text.trim().isEmpty)) {
-                          return;
-                        }
-
-                        context
-                            .read<SubmitExamMarksCubit>()
-                            .submitOfflineExamMarks(
-                              classSubjectId:
-                                  _selectedExamTimetableSubject?.subjectId ?? 0,
-                              examId: _selectedExam?.examID ?? 0,
-                              marksDetails: List.generate(
-                                marksControllers.length,
-                                (index) {
-                                  double obtainedMarksDouble = double.tryParse(
-                                          marksControllers[index].text) ??
-                                      0;
-
-                                  return (
-                                    obtainedMarks: obtainedMarksDouble,
-                                    studentId: studentState
-                                            .studentDetailsList[index].id ??
-                                        0,
-                                  );
-                                },
-                              ),
-                            );
-                      }
-                    },
-                    child: state is SubmitExamMarksSubmitInProgress
-                        ? const CustomCircularProgressIndicator(
-                            strokeWidth: 2,
-                            widthAndHeight: 20,
-                          )
-                        : null,
-                  );
-                },
-              ),
-            ),
-          );
+        if (studentState is! StudentsByClassSectionFetchSuccess) {
+          return const SizedBox.shrink();
         }
-        return const SizedBox();
+        if (studentState.studentDetailsList.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return Align(
+          alignment: Alignment.bottomCenter,
+          child: BlocConsumer<SubmitExamMarksCubit, SubmitExamMarksState>(
+            listener: (context, state) {
+              if (state is SubmitExamMarksSubmitSuccess) {
+                Utils.showSnackBar(
+                    message: resultAddedSuccessfullyKey, context: context);
+              } else if (state is SubmitExamMarksDraftSuccess) {
+                Utils.showSnackBar(
+                    message: draftSavedSuccessfullyKey, context: context);
+              } else if (state is SubmitExamMarksSubmitFailure) {
+                Utils.showSnackBar(
+                    message: state.errorMessage,
+                    context: context,
+                    snackDuration: const Duration(seconds: 5));
+              }
+            },
+            builder: (context, state) {
+              final bool anyLoading = state is SubmitExamMarksSubmitInProgress;
+              final bool isDraftLoading =
+                  state is SubmitExamMarksSubmitInProgress && state.status == 0;
+              final bool isPublishLoading =
+                  state is SubmitExamMarksSubmitInProgress && state.status == 1;
+
+              return Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: appContentHorizontalPadding,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  boxShadow: const [
+                    BoxShadow(
+                        color: Colors.black12, blurRadius: 4, spreadRadius: 1)
+                  ],
+                  color: Theme.of(context).colorScheme.surface,
+                ),
+                width: double.infinity,
+                height: 66, // fixed bar height: 46 button + 2×10 padding
+                child: Row(
+                  children: [
+                    // ── Save as Draft ──────────────────────────────────────
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: OutlinedButton(
+                          onPressed: anyLoading
+                              ? null
+                              : () => _onTapSaveAsDraft(
+                                  studentState.studentDetailsList),
+                          style: OutlinedButton.styleFrom(
+                            fixedSize: const Size.fromHeight(46),
+                            side: BorderSide(
+                              color: Theme.of(context).colorScheme.primary,
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          child: isDraftLoading
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                  ),
+                                )
+                              : CustomTextContainer(
+                                  textKey: saveAsDraftKey,
+                                  style: TextStyle(
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    // ── Submit & Publish ───────────────────────────────────
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: ElevatedButton(
+                          onPressed: anyLoading
+                              ? null
+                              : () => _onTapSubmitAndPublish(
+                                  studentState.studentDetailsList),
+                          style: ElevatedButton.styleFrom(
+                            fixedSize: const Size.fromHeight(46),
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            disabledBackgroundColor: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withValues(alpha: 0.6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            elevation: 0,
+                          ),
+                          child: isPublishLoading
+                              ? const CustomCircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  widthAndHeight: 20,
+                                )
+                              : Text(
+                                  Utils.getTranslatedLabel(submitAndPublishKey),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: Theme.of(context)
+                                        .scaffoldBackgroundColor,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
       },
     );
+  }
+
+  void _onTapSaveAsDraft(List<StudentDetails> studentList) {
+    final error = _validateForDraft();
+    if (error != null) {
+      Utils.showSnackBar(
+          message: error,
+          context: context,
+          snackDuration: const Duration(seconds: 5));
+      return;
+    }
+    context.read<SubmitExamMarksCubit>().submitOfflineExamMarks(
+          classSubjectId: _selectedExamTimetableSubject?.subjectId ?? 0,
+          examId: _selectedExam?.examID ?? 0,
+          status: 0,
+          marksDetails: _buildMarksPayload(studentList, isDraft: true),
+        );
+  }
+
+  void _onTapSubmitAndPublish(List<StudentDetails> studentList) {
+    final error = _validateForPublish();
+    if (error != null) {
+      Utils.showSnackBar(
+          message: error,
+          context: context,
+          snackDuration: const Duration(seconds: 5));
+      return;
+    }
+    context.read<SubmitExamMarksCubit>().submitOfflineExamMarks(
+          classSubjectId: _selectedExamTimetableSubject?.subjectId ?? 0,
+          examId: _selectedExam?.examID ?? 0,
+          status: 1,
+          marksDetails: _buildMarksPayload(studentList, isDraft: false),
+        );
   }
 
   Widget _buildAppbarAndFilters() {
@@ -648,7 +779,7 @@ class _TeacherExamResultScreenState extends State<TeacherExamResultScreen> {
               builder: (context, state) {
                 if (state is ClassesFetchSuccess &&
                     examState is ExamsFetchSuccess) {
-                  if (state.classes.isEmpty) {
+                  if (context.read<ClassesCubit>().getAllClasses().isEmpty) {
                     return const noDataContainer(titleKey: noClassSectionKey);
                   }
                   if (examState.examList.isEmpty) {
@@ -657,7 +788,7 @@ class _TeacherExamResultScreenState extends State<TeacherExamResultScreen> {
                   return Stack(
                     children: [
                       _buildStudentsContainer(),
-                      _buildSubmitButton(),
+                      _buildActionButtons(),
                     ],
                   );
                 }

@@ -1,4 +1,5 @@
 import 'package:eschool_saas_staff/data/models/additionalUserDetails.dart';
+import 'package:eschool_saas_staff/data/models/customField.dart';
 import 'package:eschool_saas_staff/data/models/role.dart';
 import 'package:eschool_saas_staff/data/models/school.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
@@ -28,6 +29,7 @@ class UserDetails {
   final AdditionalUserDetails? teacher;
   final AdditionalUserDetails? staff;
   final List<Role>? roles;
+  final List<CustomField>? customFields;
 
   UserDetails(
       {this.id,
@@ -53,7 +55,8 @@ class UserDetails {
       this.fullName,
       this.school,
       this.staff,
-      this.teacher});
+      this.teacher,
+      this.customFields});
 
   UserDetails copyWith({
     int? id,
@@ -80,6 +83,7 @@ class UserDetails {
     AdditionalUserDetails? staff,
     AdditionalUserDetails? teacher,
     List<Role>? roles,
+    List<CustomField>? customFields,
   }) {
     return UserDetails(
       id: id ?? this.id,
@@ -106,6 +110,7 @@ class UserDetails {
       school: school ?? this.school,
       staff: staff ?? this.staff,
       teacher: teacher ?? this.teacher,
+      customFields: customFields ?? this.customFields,
     );
   }
 
@@ -136,6 +141,9 @@ class UserDetails {
         teacher =
             AdditionalUserDetails.fromJson(Map.from(json['teacher'] ?? {})),
         staff = AdditionalUserDetails.fromJson(Map.from(json['staff'] ?? {})),
+        customFields = ((json['custom_fields'] ?? []) as List)
+            .map((field) => CustomField.fromJson(Map.from(field ?? {})))
+            .toList(),
         fullName = json['full_name'] as String?;
 
   Map<String, dynamic> toJson() => {
@@ -162,7 +170,8 @@ class UserDetails {
         'school': school?.toJson(),
         'teacher': teacher?.toJson(),
         'staff': staff?.toJson(),
-        'roles': roles?.map((e) => e.toJson()).toList()
+        'roles': roles?.map((e) => e.toJson()).toList(),
+        'custom_fields': customFields?.map((e) => e.toJson()).toList()
       };
 
   bool isActive() {

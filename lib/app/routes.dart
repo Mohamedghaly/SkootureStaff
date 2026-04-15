@@ -16,10 +16,27 @@ import 'package:eschool_saas_staff/ui/screens/home/homeScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/chatContainer/chatContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/chatContainer/chatScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/chatContainer/newChatContactsScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/selectTransport/staffTransportEnrollScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/selectTransport/requestSubmittedScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/transportHomeScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/attendanceScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/transportPlanDetailsScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/busRouteScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/changeRouteScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/transportRequestDetailsScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/planRenewal/planRenewalScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/planRenewal/planRenewalReviewScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/teacherAcademics/techerMyAttendanceScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/tripDetailsScreen/tripDetailsScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/myExpenseScreen/myExpenseScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/leaveRequestsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/leaves/leavesScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/login/loginScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/manageAnnouncement/manageAnnouncementScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/manageDiary/addNoteScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/manageDiary/manageCategoryScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/manageDiary/studentDiaryScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/manageDiary/studentDiarySelectionScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/manageNotification/manageNotificationScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/managePayrolls/managePayrollsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/myPayrollScreen.dart';
@@ -29,10 +46,12 @@ import 'package:eschool_saas_staff/ui/screens/paidFeesScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/privacyPolicyScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/searchTeachersScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/searchUsersScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/selectUsersByRoleScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/sessionYearsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/splashScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/staffDetailsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/staffsScreen.dart';
+
 import 'package:eschool_saas_staff/ui/screens/onbordingScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/studentProfileScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/studentsAttendanceScreen.dart';
@@ -56,7 +75,8 @@ import 'package:eschool_saas_staff/ui/screens/teacherProfileScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/teacherTimeTableDetailsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/teachersScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/termsAndConditionScreen.dart';
-import 'package:get/get.dart'; // Add this line
+import 'package:eschool_saas_staff/ui/screens/staffAttendance/staffAttendanceScreen.dart';
+import 'package:get/route_manager.dart';
 
 class Routes {
   static String splashScreen = "/splash";
@@ -88,6 +108,7 @@ class Routes {
   static String editProfileScreen = "/editProfile";
   static String changePasswordScreen = "/changePassword";
   static String searchTeachersScreen = "/searchTeachers";
+  static String selectUsersByRoleScreen = "/selectUsersByRole";
   static String notificationsScreen = "/notifications";
   static String classesScreen = "/classes";
   static String classTimetableScreen = "/classTimetable";
@@ -133,6 +154,21 @@ class Routes {
   static String chatScreen = "/chat";
   static String chatContacts = "/chatContacts";
   static String newChatContactsScreen = "/newChatContactsScreen";
+  static String teacherMyAttendanceScreen = "/teacherMyAttendance";
+  static String staffAttendanceScreen = "/staffAttendance";
+
+  static String tripDetailsScreen = "/tripDetails";
+  static String myExpenseScreen = "/myExpense";
+  static String staffTransportEnrollScreen = "/staffTransportEnroll";
+  static String transportEnrollSubmittedScreen = "/transportEnrollSubmitted";
+  static String planRenewalScreen = "/planRenewal";
+  static String planRenewalReviewScreen = "/planRenewalReview";
+  static String transportEnrollHomeScreen = "/transportEnrollHome";
+  static String transportPlanDetailsScreen = "/transportPlanDetails";
+  static String busRouteScreen = "/busRoute";
+  static String changeRouteScreen = "/changeRoute";
+  static String attendanceScreen = "/attendance";
+  static String transportRequestDetailsScreen = "/transportRequestDetails";
 
   static final List<GetPage> getPages = [
     GetPage(
@@ -178,6 +214,12 @@ class Routes {
         name: studentsAttendanceScreen,
         page: () => StudentsAttendanceScreen.getRouteInstance()),
     GetPage(
+        name: staffAttendanceScreen,
+        page: () => StaffAttendanceScreen.getRouteInstance()),
+    GetPage(
+        name: attendanceScreen,
+        page: () => AttendanceScreen.getRouteInstance()),
+    GetPage(
         name: offlineResultScreen,
         page: () => OfflineResultScreen.getRouteInstance()),
     GetPage(
@@ -220,6 +262,9 @@ class Routes {
     GetPage(
         name: searchTeachersScreen,
         page: () => SearchTeachersScreen.getRouteInstance()),
+    GetPage(
+        name: selectUsersByRoleScreen,
+        page: () => SelectUsersByRoleScreen.getRouteInstance()),
     GetPage(
         name: notificationsScreen,
         page: () => NotificationsScreen.getRouteInstance()),
@@ -311,7 +356,6 @@ class Routes {
       page: () => AllowancesAndDeductionsScreen.getRouteInstance(),
     ),
 
-
     GetPage(
       name: chatContacts,
       page: () => ChatContainer.getRouteInstance(),
@@ -320,5 +364,84 @@ class Routes {
     GetPage(
         name: newChatContactsScreen,
         page: () => NewChatContactsScreen.getRouteInstance()),
+
+    GetPage(
+      name: teacherMyAttendanceScreen,
+      page: () => TeacherMyAttendanceScreen.getRouteInstance(),
+    ),
+
+    //manage diary routes
+    GetPage(name: addNoteScreen, page: () => AddNoteScreen.getRouteInstance()),
+    GetPage(
+        name: manageCategoryScreen,
+        page: () {
+          final arguments = Get.arguments as Map<String, dynamic>?;
+          final type = arguments?['type'] as String? ?? "positive";
+          return ManageCategoryScreen.getRouteInstance(type: type);
+        }),
+    GetPage(
+        name: studentDiaryScreen,
+        page: () {
+          final arguments = Get.arguments as Map<String, dynamic>?;
+          final studentId = arguments?['studentId'] as int? ?? 0;
+          return StudentDiaryScreen.getRouteInstance(studentId: studentId);
+        }),
+    GetPage(
+        name: studentDiarySelectionScreen,
+        page: () => StudentDiarySelectionScreen.getRouteInstance()),
+
+    // Trip Details Route
+    GetPage(
+      name: tripDetailsScreen,
+      page: () => TripDetailsScreen.getRouteInstance(),
+    ),
+    GetPage<dynamic>(
+      name: myExpenseScreen,
+      page: () => MyExpenseScreen.getRouteInstance(),
+    ),
+
+    // Staff transport enrollment
+    GetPage(
+      name: staffTransportEnrollScreen,
+      page: () => StaffTransportEnrollScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: transportEnrollSubmittedScreen,
+      page: () => RequestSubmittedScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: transportEnrollHomeScreen,
+      page: () => TransportHomeScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: transportPlanDetailsScreen,
+      page: () => TransportPlanDetailsScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: busRouteScreen,
+      page: () => BusRouteScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: changeRouteScreen,
+      page: () => ChangeRouteScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: attendanceScreen,
+      page: () => AttendanceScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: transportRequestDetailsScreen,
+      page: () => TransportRequestDetailsScreen(
+        transportRequest: Get.arguments,
+      ),
+    ),
+    GetPage(
+      name: planRenewalScreen,
+      page: () => PlanRenewalScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: planRenewalReviewScreen,
+      page: () => PlanRenewalReviewScreen.getRouteInstance(),
+    ),
   ];
 }

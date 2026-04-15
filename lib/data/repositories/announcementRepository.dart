@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:eschool_saas_staff/data/models/announcement.dart';
 import 'package:eschool_saas_staff/data/models/notificationDetails.dart';
@@ -14,22 +13,39 @@ class AnnouncementRepository {
   Future<
       ({
         List<NotificationDetails> notifications,
-        int currentPage,
-        int totalPage
-      })> getNotifications({int? page}) async {
+        int offset,
+        int limit,
+        bool hasMore
+      })> getNotifications({int? offset, int? limit}) async {
     try {
+      final requestOffset = offset ?? 0;
+      final requestLimit = limit ?? 10;
+
       final result = await Api.get(url: Api.getNotifications, queryParameters: {
-        "page": page ?? 1,
+        "offset": requestOffset,
+        "limit": requestLimit,
       });
+
+      // Parse notifications directly from data array
+      final List<NotificationDetails> notifications =
+          ((result['data'] ?? []) as List)
+              .map((notification) =>
+                  NotificationDetails.fromJson(Map.from(notification ?? {})))
+              .toList();
+
+      // Determine if there are more items
+      // If we received fewer items than requested, we've reached the end
+      final bool hasMore = notifications.length >= requestLimit;
+
       return (
-        notifications: ((result['data']['data'] ?? []) as List)
-            .map((notification) =>
-                NotificationDetails.fromJson(Map.from(notification ?? {})))
-            .toList(),
-        currentPage: (result['data']['current_page'] as int),
-        totalPage: (result['data']['last_page'] as int),
+        notifications: notifications,
+        offset: requestOffset,
+        limit: requestLimit,
+        hasMore: hasMore,
       );
-    } catch (e) {
+    } catch (e, st) {
+      print("this is the error $e");
+      print("this is the stack trace $st");
       throw ApiException(e.toString());
     }
   }
@@ -51,7 +67,6 @@ class AnnouncementRepository {
         totalPage: (result['data']['last_page'] as int),
       );
     } catch (e) {
- 
       throw ApiException(e.toString());
     }
   }

@@ -63,7 +63,7 @@ class ExamRepository {
       return result['pdf'] ?? "";
     } catch (e) {
       if (kDebugMode) {
-        print(e.toString());
+        debugPrint(e.toString());
       }
       throw ApiException(e.toString());
     }

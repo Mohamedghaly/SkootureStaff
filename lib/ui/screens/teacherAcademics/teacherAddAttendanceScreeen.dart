@@ -213,7 +213,9 @@ class _TeacherAddAttendanceScreenState
             if (submitAttendanceState is SubmitAttendanceSuccess) {
               Utils.showSnackBar(
                 context: context,
-                message: attendanceSubmittedSuccessfullyKey,
+                message: Utils.getTranslatedLabel(
+                  attendanceSubmittedSuccessfullyKey,
+                ),
               );
             } else if (submitAttendanceState is SubmitAttendanceFailure) {
               Utils.showSnackBar(

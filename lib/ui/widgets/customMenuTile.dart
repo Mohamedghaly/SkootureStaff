@@ -5,11 +5,14 @@ class CustomMenuTile extends StatelessWidget {
   final String iconImageName;
   final String titleKey;
   final Function onTap;
-  const CustomMenuTile(
-      {super.key,
-      required this.iconImageName,
-      required this.titleKey,
-      required this.onTap});
+  final Widget? trailingWidget;
+  const CustomMenuTile({
+    super.key,
+    required this.iconImageName,
+    required this.titleKey,
+    required this.onTap,
+    this.trailingWidget,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,6 +20,7 @@ class CustomMenuTile extends StatelessWidget {
       iconPadding: 10,
       iconImageName: iconImageName,
       titleKey: titleKey,
+      trailingWidget: trailingWidget,
       onTap: () {
         onTap.call();
       },

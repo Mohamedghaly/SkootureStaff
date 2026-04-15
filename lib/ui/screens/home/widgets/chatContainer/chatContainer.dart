@@ -55,7 +55,7 @@ class _ChatContainerState extends State<ChatContainer> {
   void initState() {
     super.initState();
 
-    if (!context.read<AuthCubit>().isTeacher()) {
+    if (context.read<AuthCubit>().getUserDetails().isSchoolAdmin()) {
       tabTitles.remove(studentsKey);
     }
 
@@ -177,7 +177,13 @@ class _ChatContainerState extends State<ChatContainer> {
                           message: state.message.message ?? "",
                           updatedAt: state.message.updatedAt,
                           incrementUnreadCount: true,
+                          hasAttachment: state.message.attachments.isNotEmpty,
                         );
+                  }
+                  if (state is SocketReconnectSuccess) {
+                    context
+                        .read<StudentsUserChatHistoryCubit>()
+                        .silentRefresh();
                   }
                 },
                 child: RefreshIndicator(
@@ -207,6 +213,7 @@ class _ChatContainerState extends State<ChatContainer> {
                               ),
                             )?.then(
                               (result) {
+                                if (result == null) return;
                                 if (result.unreadCount > 0) {
                                   if (context.mounted) {
                                     context
@@ -324,7 +331,11 @@ class _ChatContainerState extends State<ChatContainer> {
                           message: state.message.message ?? "",
                           updatedAt: state.message.updatedAt,
                           incrementUnreadCount: false,
+                          hasAttachment: state.message.attachments.isNotEmpty,
                         );
+                  }
+                  if (state is SocketReconnectSuccess) {
+                    context.read<ParentsUserChatHistoryCubit>().silentRefresh();
                   }
                 },
                 child: ListView(
@@ -350,6 +361,7 @@ class _ChatContainerState extends State<ChatContainer> {
                             ),
                           )?.then(
                             (result) {
+                              if (result == null) return;
                               if (result.unreadCount > 0) {
                                 if (context.mounted) {
                                   context
@@ -464,7 +476,11 @@ class _ChatContainerState extends State<ChatContainer> {
                           message: state.message.message ?? "",
                           updatedAt: state.message.updatedAt,
                           incrementUnreadCount: false,
+                          hasAttachment: state.message.attachments.isNotEmpty,
                         );
+                  }
+                  if (state is SocketReconnectSuccess) {
+                    context.read<StaffsUserChatHistoryCubit>().silentRefresh();
                   }
                 },
                 child: ListView(
@@ -490,6 +506,7 @@ class _ChatContainerState extends State<ChatContainer> {
                             ),
                           )?.then(
                             (result) {
+                              if (result == null) return;
                               if (result.unreadCount > 0) {
                                 if (context.mounted) {
                                   context

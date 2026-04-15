@@ -9,6 +9,7 @@ class DiaryStudent {
   final String updatedAt;
   final String? deletedAt;
   final Diary diary;
+  
 
   DiaryStudent({
     required this.id,
@@ -22,12 +23,12 @@ class DiaryStudent {
   });
 
   DiaryStudent.fromJson(Map<String, dynamic> json)
-      : id = json['id'] as int,
-        diaryId = json['diary_id'] as int,
-        studentId = json['student_id'] as int,
-        classSectionId = json['class_section_id'] as int,
-        createdAt = json['created_at'] as String,
-        updatedAt = json['updated_at'] as String,
+      : id = json['id'] as int? ?? 0,
+        diaryId = json['diary_id'] as int? ?? 0,
+        studentId = json['student_id'] as int? ?? 0,
+        classSectionId = json['class_section_id'] as int? ?? 0,
+        createdAt = json['created_at'] as String? ?? '',
+        updatedAt = json['updated_at'] as String? ?? '',
         deletedAt = json['deleted_at'] as String?,
         diary = Diary.fromJson(Map.from(json['diary'] ?? {}));
 

@@ -111,7 +111,7 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen> {
                         .withValues(alpha: 0.1),
                     child: CustomTextContainer(
                       textKey:
-                          (leaveRequest.leaveDetail?.length ?? 1).toString(),
+                          (leaveRequest.total ?? 0).toString(),
                       style: TextStyle(
                           color: Theme.of(context).colorScheme.primary,
                           fontSize: 18.0),
@@ -142,14 +142,13 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen> {
                     textKey: fromDateKey,
                     style: titleTextStyle,
                   ),
-                  CustomTextContainer(
-                      textKey:
-                          Utils.parseDateSafely(leaveRequest.fromDate ?? "") !=
-                                  null
-                              ? Utils.formatDate(Utils.parseDateSafely(
-                                  leaveRequest.fromDate ?? "")!)
-                              : (leaveRequest.fromDate ?? ""),
-                      style: dateTextStyle),
+                 CustomTextContainer(
+  textKey: leaveRequest.fromDate != null
+      ? leaveRequest.fromDate!
+      : "",
+  style: dateTextStyle,
+),
+
                 ],
               ),
               const Spacer(),
@@ -160,14 +159,13 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen> {
                     textKey: toDateKey,
                     style: titleTextStyle,
                   ),
-                  CustomTextContainer(
-                      textKey: Utils.parseDateSafely(
-                                  leaveRequest.toDate ?? "") !=
-                              null
-                          ? Utils.formatDate(
-                              Utils.parseDateSafely(leaveRequest.toDate ?? "")!)
-                          : (leaveRequest.toDate ?? ""),
-                      style: dateTextStyle),
+                 CustomTextContainer(
+  textKey: leaveRequest.toDate != null
+      ? leaveRequest.toDate!
+      : "",
+  style: dateTextStyle,
+),
+
                 ],
               ),
             ],
@@ -326,7 +324,7 @@ class LeaveRequestDetailsBottomsheet extends StatelessWidget {
                             final parsedDate =
                                 Utils.parseDateSafely(leaveDetail.date!);
                             if (parsedDate != null) {
-                              return "${Utils.formatDate(parsedDate)}, ${Utils.weekDays[parsedDate.weekday - 1].tr}";
+                              return "${Utils.formatDate(parsedDate)} (${Utils.weekDays[parsedDate.weekday - 1].tr})";
                             }
                             return leaveDetail.date ?? "";
                           }()),

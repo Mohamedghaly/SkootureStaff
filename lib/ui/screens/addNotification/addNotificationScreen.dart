@@ -4,6 +4,7 @@ import 'package:eschool_saas_staff/cubits/rolesCubit.dart';
 import 'package:eschool_saas_staff/data/models/userDetails.dart';
 import 'package:eschool_saas_staff/ui/screens/manageNotification/manageNotificationScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/searchUsersScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/selectUsersByRoleScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/teacherAcademics/widgets/customFileContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/customAppbar.dart';
 import 'package:eschool_saas_staff/ui/widgets/customCircularProgressIndicator.dart';
@@ -52,6 +53,9 @@ class AddNotificationScreen extends StatefulWidget {
 class _AddNotificationScreenState extends State<AddNotificationScreen> {
   String _sendToUserValue = "";
 
+  // Selected roles for Overdue fees (Student and/or Parent)
+  List<String> _selectedOverdueRoles = [];
+
   final TextEditingController _titleTextEditingController =
       TextEditingController();
 
@@ -61,6 +65,8 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
   List<String> _selectedRoles = [];
 
   List<UserDetails> _selectedUsers = [];
+
+  List<UserDetails> _selectedUsersFromRoles = [];
 
   PlatformFile? _pickedFile;
 
@@ -90,6 +96,40 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
     }
   }
 
+  void _navigateToSelectUsersByRoleScreen() {
+    List<String> rolesToFetch = [];
+    String? type;
+
+    if (_sendToUserValue == overDueFeesKey) {
+      // For overdue fees, fetch based on selected roles (Student and/or Parent)
+      if (_selectedOverdueRoles.isEmpty) {
+        return;
+      }
+      rolesToFetch = _selectedOverdueRoles;
+      type = "overdue_fees";
+    } else if (_sendToUserValue == specificRolesKey &&
+        _selectedRoles.isNotEmpty) {
+      // For specific roles, fetch users with selected roles
+      rolesToFetch = _selectedRoles;
+    }
+
+    if (rolesToFetch.isEmpty) {
+      return;
+    }
+
+    Get.toNamed(Routes.selectUsersByRoleScreen,
+            arguments: SelectUsersByRoleScreen.buildArguments(
+                selectedUsers: _selectedUsersFromRoles,
+                roles: rolesToFetch,
+                type: type))
+        ?.then((value) {
+      if (value != null) {
+        _selectedUsersFromRoles = value as List<UserDetails>;
+        setState(() {});
+      }
+    });
+  }
+
   void onTapSubmitButton() {
     if (_titleTextEditingController.text.trim().isEmpty) {
       Utils.showSnackBar(message: pleaseEnterTitleKey, context: context);
@@ -114,9 +154,26 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
       return;
     }
 
+    // Validation for overdue fees and specific roles with student selection
+    if ((_sendToUserValue == overDueFeesKey ||
+            _sendToUserValue == specificRolesKey) &&
+        _selectedUsersFromRoles.isEmpty) {
+      Utils.showSnackBar(message: pleaseSelectUserKey, context: context);
+      return;
+    }
+
+    // Combine userIds from both specific users and role-based selection
+    final List<int> allUserIds = [];
+    if (_sendToUserValue == specificUsersKey) {
+      allUserIds.addAll(_selectedUsers.map((e) => e.id ?? 0).toList());
+    } else if (_sendToUserValue == overDueFeesKey ||
+        _sendToUserValue == specificRolesKey) {
+      allUserIds.addAll(_selectedUsersFromRoles.map((e) => e.id ?? 0).toList());
+    }
+
     context.read<SendNotificationCubit>().sendNotification(
         title: _titleTextEditingController.text.trim(),
-        userIds: _selectedUsers.map((e) => e.id ?? 0).toList(),
+        userIds: allUserIds,
         filePath: _pickedFile?.path,
         message: _messageTextEditingController.text.trim(),
         roles: _selectedRoles,
@@ -154,8 +211,10 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
                       _titleTextEditingController.clear();
                       _messageTextEditingController.clear();
                       _sendToUserValue = "";
+                      _selectedOverdueRoles.clear();
                       _selectedRoles.clear();
                       _selectedUsers.clear();
+                      _selectedUsersFromRoles.clear();
                       _pickedFile = null;
                       setState(() {});
                     }
@@ -237,6 +296,8 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
                                       if (_sendToUserValue != value) {
                                         _sendToUserValue = value!;
                                         _selectedRoles.clear();
+                                        _selectedUsersFromRoles.clear();
+                                        _selectedOverdueRoles.clear();
                                         setState(() {});
                                         Get.back();
                                       }
@@ -254,9 +315,95 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
                           titleKey: _sendToUserValue.isEmpty
                               ? sendToKey
                               : _sendToUserValue),
-                      const SizedBox(
-                        height: 20.0,
+                      SizedBox(
+                        height: _sendToUserValue == specificRolesKey ||
+                                _sendToUserValue == specificUsersKey ||
+                                _sendToUserValue == overDueFeesKey
+                            ? 20.0
+                            : 0,
                       ),
+                      // Role selection for Overdue fees (Student and/or Parent)
+                      _sendToUserValue == overDueFeesKey
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                CustomSelectionDropdownSelectionButton(
+                                    onTap: () {
+                                      Utils.showBottomSheet(
+                                              child:
+                                                  MultiSelectionValueBottomsheet<
+                                                          String>(
+                                                      values: const [
+                                                    studentRoleKey,
+                                                    guardianRoleKey
+                                                  ],
+                                                      selectedValues:
+                                                          _selectedOverdueRoles,
+                                                      titleKey: selectRoleKey),
+                                              context: context)
+                                          .then((value) {
+                                        if (value != null) {
+                                          final updatedSelectedRoles =
+                                              List<String>.from(value as List);
+                                          _selectedOverdueRoles =
+                                              updatedSelectedRoles;
+                                          // Clear selected users when roles change
+                                          _selectedUsersFromRoles.clear();
+                                          setState(() {});
+                                        }
+                                      });
+                                    },
+                                    titleKey: selectRoleKey),
+                                const SizedBox(
+                                  height: 10.0,
+                                ),
+                                Wrap(
+                                  runSpacing: 10,
+                                  spacing: 10,
+                                  crossAxisAlignment: WrapCrossAlignment.start,
+                                  children: _selectedOverdueRoles
+                                      .map((selectedRole) => Container(
+                                            decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .surface),
+                                            padding: const EdgeInsets.all(10),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                CustomTextContainer(
+                                                    textKey: selectedRole),
+                                                const SizedBox(
+                                                  width: 7.5,
+                                                ),
+                                                InkWell(
+                                                  onTap: () {
+                                                    _selectedOverdueRoles
+                                                        .remove(selectedRole);
+                                                    // Clear selected users when roles change
+                                                    _selectedUsersFromRoles
+                                                        .clear();
+                                                    setState(() {});
+                                                  },
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: Colors
+                                                                .transparent)),
+                                                    child: const Icon(
+                                                      Icons.close,
+                                                      size: 17.50,
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ))
+                                      .toList(),
+                                ),
+                              ],
+                            )
+                          : const SizedBox(),
                       _sendToUserValue == specificRolesKey
                           ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -286,6 +433,8 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
                                               List<String>.from(value as List);
 
                                           _selectedRoles = updatedSelectedRoles;
+                                          // Clear selected users from roles when roles change
+                                          _selectedUsersFromRoles.clear();
                                           setState(() {});
                                         }
                                       });
@@ -388,6 +537,74 @@ class _AddNotificationScreenState extends State<AddNotificationScreen> {
                                                         (element) =>
                                                             element.id ==
                                                             userDetails.id);
+                                                    setState(() {});
+                                                  },
+                                                  child: Container(
+                                                    decoration: BoxDecoration(
+                                                        border: Border.all(
+                                                            color: Colors
+                                                                .transparent)),
+                                                    child: const Icon(
+                                                      Icons.close,
+                                                      size: 17.50,
+                                                    ),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                          ))
+                                      .toList(),
+                                ),
+                              ],
+                            )
+                          : const SizedBox(),
+                      // User selection for Overdue Fees (when roles are selected) or Specific Roles
+                      ((_sendToUserValue == overDueFeesKey &&
+                                  _selectedOverdueRoles.isNotEmpty) ||
+                              (_sendToUserValue == specificRolesKey &&
+                                  _selectedRoles.isNotEmpty))
+                          ? Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(
+                                  height: 20.0,
+                                ),
+                                CustomSelectionDropdownSelectionButton(
+                                    onTap: () {
+                                      _navigateToSelectUsersByRoleScreen();
+                                    },
+                                    titleKey: selectUsersKey),
+                                const SizedBox(
+                                  height: 10.0,
+                                ),
+                                Wrap(
+                                  runSpacing: 10,
+                                  spacing: 10,
+                                  crossAxisAlignment: WrapCrossAlignment.start,
+                                  children: _selectedUsersFromRoles
+                                      .map((userDetails) => Container(
+                                            decoration: BoxDecoration(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .surface),
+                                            padding: const EdgeInsets.all(10),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                CustomTextContainer(
+                                                    textKey:
+                                                        userDetails.fullName ??
+                                                            "-"),
+                                                const SizedBox(
+                                                  width: 7.5,
+                                                ),
+                                                InkWell(
+                                                  onTap: () {
+                                                    _selectedUsersFromRoles
+                                                        .removeWhere(
+                                                            (element) =>
+                                                                element.id ==
+                                                                userDetails.id);
                                                     setState(() {});
                                                   },
                                                   child: Container(

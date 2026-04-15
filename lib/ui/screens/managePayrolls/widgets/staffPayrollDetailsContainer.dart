@@ -61,9 +61,8 @@ class StaffPayrollDetailsContainerState
   void initState() {
     super.initState();
 
-    _netSalaryTextEditingController.text = widget.staffPayRoll
-        .getNetSalaryAmount(allowedMonthlyLeaves: widget.allowedMonthlyLeaves)
-        .toStringAsFixed(2);
+    _netSalaryTextEditingController.text =
+        (widget.staffPayRoll.netSalary ?? 0).toStringAsFixed(2);
   }
 
   @override

@@ -160,7 +160,6 @@ class _TeachersScreenState extends State<TeachersScreen> {
                             runSpacing: 15,
                             children: state.teachers
                                 .map((teacher) => Container(
-                                      height: 200,
                                       padding: const EdgeInsets.all(15),
                                       width: boxConstraints.maxWidth * (0.48),
                                       decoration: BoxDecoration(

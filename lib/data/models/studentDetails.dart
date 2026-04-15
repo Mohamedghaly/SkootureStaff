@@ -1,6 +1,184 @@
 import 'package:eschool_saas_staff/data/models/offlineExamSubjectResult.dart';
 import 'package:eschool_saas_staff/data/models/paidFeeDetails.dart';
 import 'package:eschool_saas_staff/data/models/student.dart';
+import 'package:eschool_saas_staff/utils/constants.dart';
+
+/// Model for form field information
+class FormField {
+  final int? id;
+  final String? name;
+  final String? type;
+  final int? isRequired;
+  final dynamic defaultValues; // Can be null, String, or List<String>
+  final int? schoolId;
+  final int? userType;
+  final int? rank;
+  final int? displayOnId;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? deletedAt;
+
+  FormField({
+    this.id,
+    this.name,
+    this.type,
+    this.isRequired,
+    this.defaultValues,
+    this.schoolId,
+    this.userType,
+    this.rank,
+    this.displayOnId,
+    this.createdAt,
+    this.updatedAt,
+    this.deletedAt,
+  });
+
+  factory FormField.fromJson(Map<String, dynamic> json) {
+    return FormField(
+      id: json['id'] as int?,
+      name: json['name'] as String?,
+      type: json['type'] as String?,
+      isRequired: json['is_required'] as int?,
+      defaultValues: json['default_values'], // Keep as dynamic
+      schoolId: json['school_id'] as int?,
+      userType: json['user_type'] as int?,
+      rank: json['rank'] as int?,
+      displayOnId: json['display_on_id'] as int?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+      deletedAt: json['deleted_at'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'type': type,
+      'is_required': isRequired,
+      'default_values': defaultValues,
+      'school_id': schoolId,
+      'user_type': userType,
+      'rank': rank,
+      'display_on_id': displayOnId,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'deleted_at': deletedAt,
+    };
+  }
+
+  /// Get default values as a list of strings
+  /// Handles both single values and arrays from the API
+  List<String> getDefaultValuesAsList() {
+    if (defaultValues == null) return [];
+    if (defaultValues is List) {
+      return (defaultValues as List).map((e) => e.toString()).toList();
+    }
+    return [defaultValues.toString()];
+  }
+
+  /// Get default values as a single string (for display purposes)
+  String getDefaultValuesAsString() {
+    if (defaultValues == null) return '';
+    if (defaultValues is List) {
+      return (defaultValues as List).join(', ');
+    }
+    return defaultValues.toString();
+  }
+}
+
+/// Model for extra/custom student details
+class ExtraStudentDetail {
+  final int? id;
+  final int? userId;
+  final int? formFieldId;
+  final String? data;
+  final int? schoolId;
+  final String? createdAt;
+  final String? updatedAt;
+  final String? deletedAt;
+  final String? fileUrl;
+  final FormField? formField;
+
+  ExtraStudentDetail({
+    this.id,
+    this.userId,
+    this.formFieldId,
+    this.data,
+    this.schoolId,
+    this.createdAt,
+    this.updatedAt,
+    this.deletedAt,
+    this.fileUrl,
+    this.formField,
+  });
+
+  factory ExtraStudentDetail.fromJson(Map<String, dynamic> json) {
+    return ExtraStudentDetail(
+      id: json['id'] as int?,
+      userId: json['user_id'] as int?,
+      formFieldId: json['form_field_id'] as int?,
+      data: json['data'] as String?,
+      schoolId: json['school_id'] as int?,
+      createdAt: json['created_at'] as String?,
+      updatedAt: json['updated_at'] as String?,
+      deletedAt: json['deleted_at'] as String?,
+      fileUrl: json['file_url'] as String?,
+      formField: json['form_field'] != null
+          ? FormField.fromJson(Map.from(json['form_field']))
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'user_id': userId,
+      'form_field_id': formFieldId,
+      'data': data,
+      'school_id': schoolId,
+      'created_at': createdAt,
+      'updated_at': updatedAt,
+      'deleted_at': deletedAt,
+      'file_url': fileUrl,
+      'form_field': formField?.toJson(),
+    };
+  }
+
+  /// Get the field name from form_field or fallback to generic label
+  String getFieldName() {
+    if (formField?.name != null && formField!.name!.isNotEmpty) {
+      return formField!.name!;
+    }
+    return 'Field $formFieldId';
+  }
+
+  /// Check if this detail contains a file (has data that looks like a file path)
+  bool isFileField() {
+    if (data == null || data!.isEmpty) return false;
+    // Check if data contains file extensions or file path patterns
+    final fileExtensions = ['.jpg', '.jpeg', '.png', '.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+    return fileExtensions.any((ext) => data!.toLowerCase().contains(ext));
+  }
+
+  /// Get the full file URL for display/download
+  /// Prioritizes file_url from API, then constructs from data path
+  String? getFileUrl() {
+    // Priority 1: Use file_url if provided by API (direct URL)
+    if (fileUrl != null && fileUrl!.isNotEmpty) {
+      return fileUrl;
+    }
+
+    // Priority 2: Check if data looks like a file and construct URL
+    if (data == null || data!.isEmpty) return null;
+    if (isFileField()) {
+      // Construct URL from data path
+      return '$baseUrl/storage/$data';
+    }
+
+    return null;
+  }
+}
 
 class StudentDetails {
   final int? id;
@@ -29,6 +207,7 @@ class StudentDetails {
   final List<OfflineExamSubjectResult>? offlineExamMarks;
   final List<ExamMarks>? examMarks;
   final PaidFeeDetails? paidFeeDetails;
+  final List<ExtraStudentDetail>? extraStudentDetails;
 
   StudentDetails({
     this.id,
@@ -57,6 +236,7 @@ class StudentDetails {
     this.schoolNames,
     this.offlineExamMarks,
     this.examMarks,
+    this.extraStudentDetails,
   });
 
   StudentDetails copyWith(
@@ -143,6 +323,9 @@ class StudentDetails {
             PaidFeeDetails.fromJson(Map.from(json['fees_paid'] ?? {})),
         examMarks = ((json['marks'] ?? []) as List)
             .map<ExamMarks>((e) => ExamMarks.fromJson(Map.from(e ?? {})))
+            .toList(),
+        extraStudentDetails = ((json['extra_student_details'] ?? []) as List)
+            .map((detail) => ExtraStudentDetail.fromJson(Map.from(detail ?? {})))
             .toList();
 
   Map<String, dynamic> toJson() => {

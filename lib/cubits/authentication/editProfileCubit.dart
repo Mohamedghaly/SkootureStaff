@@ -24,28 +24,32 @@ class EditProfileCubit extends Cubit<EditProfileState> {
   final AuthRepository _authRepository = AuthRepository();
   EditProfileCubit() : super(EditProfileInitial());
 
-  void editProfile(
-      {required String firstName,
-      required String lastName,
-      required String mobileNumber,
-      required String email,
-      required String dateOfBirth,
-      required String currentAddress,
-      required String permanentAddress,
-      required String gender,
-      String? image}) async {
+  void editProfile({
+    required String firstName,
+    required String lastName,
+    required String mobileNumber,
+    required String email,
+    required String dateOfBirth,
+    required String currentAddress,
+    required String permanentAddress,
+    required String gender,
+    String? image,
+    List<Map<String, dynamic>>? customFieldsData,
+  }) async {
     try {
       emit(EditProfileProgress());
       final result = await _authRepository.editProfile(
-          firstName: firstName,
-          lastName: lastName,
-          mobileNumber: mobileNumber,
-          email: email,
-          dateOfBirth: dateOfBirth,
-          currentAddress: currentAddress,
-          permanentAddress: permanentAddress,
-          gender: gender,
-          image: image);
+        firstName: firstName,
+        lastName: lastName,
+        mobileNumber: mobileNumber,
+        email: email,
+        dateOfBirth: dateOfBirth,
+        currentAddress: currentAddress,
+        permanentAddress: permanentAddress,
+        gender: gender,
+        image: image,
+        customFieldsData: customFieldsData,
+      );
       emit(EditProfileSuccess(
           userDetails: result.userDetails,
           successMessage: result.successmessage));

@@ -47,10 +47,16 @@ class SettingsRepository {
     }
   }
 
-  Future<String> getSetting(String type) async {
+  /// Get settings based on user authentication status
+  /// When [isUserLoggedIn] is true, uses authenticated API (school-settings)
+  /// When [isUserLoggedIn] is false, uses public API (settings)
+  Future<String> getSetting(String type, {required bool isUserLoggedIn}) async {
     try {
-      final result =
-          await Api.get(url: Api.getSettings, queryParameters: {"type": type});
+      final result = await Api.get(
+        url: isUserLoggedIn ? Api.getSchoolSettings : Api.getSettings,
+        queryParameters: {"type": type},
+        useAuthToken: isUserLoggedIn,
+      );
       return result['data'];
     } catch (e) {
       throw ApiException(e.toString());

@@ -112,6 +112,36 @@ class ChatMessagesCubit extends Cubit<ChatMessagesState> {
     }
   }
 
+  /// Silently fetch latest messages from API and merge any new ones into
+  /// the existing list. No loading indicator is shown — messages just appear.
+  /// Called after WebSocket reconnection to recover messages missed during background.
+  void silentFetchAndMerge({required int receiverId}) async {
+    if (state is! ChatMessagesFetchSuccess) return;
+
+    final currentResponse = (state as ChatMessagesFetchSuccess).response;
+    final existingIds = currentResponse.messages.map((m) => m.id).toSet();
+
+    try {
+      final freshResponse = await _chatRepository.getChatMessages(
+        receiverId: receiverId,
+        page: 1,
+      );
+
+      final newMessages = freshResponse.messages
+          .where((m) => !existingIds.contains(m.id))
+          .toList();
+
+      if (newMessages.isNotEmpty && !isClosed) {
+        final mergedMessages = [...newMessages, ...currentResponse.messages];
+        emit(ChatMessagesFetchSuccess(
+          currentResponse.copyWith(messages: mergedMessages),
+        ));
+      }
+    } catch (_) {
+      // Silent — don't show any error for background merge
+    }
+  }
+
   void readMessages(List<ChatMessage> messages) {
     if (state is ChatMessagesFetchSuccess) {
       final response = (state as ChatMessagesFetchSuccess).response;
