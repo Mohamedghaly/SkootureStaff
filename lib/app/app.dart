@@ -21,7 +21,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/route_manager.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:device_preview/device_preview.dart';
 
@@ -44,13 +43,6 @@ Future<void> initializeApp() async {
 
   HttpOverrides.global = MyHttpOverrides();
 
-  //Register the licence of font
-  //If using google-fonts
-  LicenseRegistry.addLicense(() async* {
-    final license = await rootBundle.loadString('google_fonts/OFL.txt');
-    yield LicenseEntryWithLineBreaks(['google_fonts'], license);
-  });
-
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -58,6 +50,8 @@ Future<void> initializeApp() async {
       statusBarIconBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.transparent,
       systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
+      systemStatusBarContrastEnforced: false,
     ),
   );
 
@@ -134,24 +128,11 @@ class _MyAppState extends State<MyApp> {
           return GetMaterialApp(
             debugShowCheckedModeBanner: false,
             translationsKeys: AppTranslation.translationsKeys,
-            builder: (context, child) {
-              return MediaQuery(
-                data: MediaQuery.of(context).copyWith(
-                  viewPadding: MediaQuery.of(context).viewPadding.copyWith(
-                        top: 0, // Keep status bar transparent
-                      ),
-                ),
-                child: SafeArea(
-                  top: false, // Don't add padding for status bar
-                  bottom: true, // Add padding for bottom navigation bar
-                  child: child ?? Container(),
-                ),
-              );
-            },
             theme: Theme.of(context).copyWith(
               extensions: <ThemeExtension<dynamic>>[customColorsExtension],
-              textTheme:
-                  GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme),
+              textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Cairo'),
+              primaryTextTheme:
+                  Theme.of(context).primaryTextTheme.apply(fontFamily: 'Cairo'),
               scaffoldBackgroundColor: pageBackgroundColor,
               colorScheme: Theme.of(context).colorScheme.copyWith(
                     primary: primaryColor,

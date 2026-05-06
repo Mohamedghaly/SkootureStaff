@@ -129,6 +129,8 @@
   "viewLeaves": "Afficher les congés",
   "present": "Présent",
   "absent": "Absent",
+  "totalPresent": "Total Présent",
+  "totalAbsent": "Total Absent",
   "date": "Date",
   "name": "Nom",
   "exam": "Examen",
@@ -430,6 +432,7 @@
   "noParentsFound": "Aucun parent trouvé",
   "noStudentsFound": "Aucun étudiant trouvé",
   "noSearchResults": "Aucun résultat de recherche trouvé",
+  "noDataFound": "Aucune donnée trouvée",
   "pressbackagaintoexit": "Appuyez à nouveau pour quitter.",
   "pleaseaddavalidurl": "Veuillez ajouter une URL valide",
   "noNotifications": "Aucune notification trouvée",
@@ -470,5 +473,13 @@
   "downloadComplete": "Téléchargement terminé ✅",
   "downloadFailed": "Échec du téléchargement ❌",
   "fileDownloadedSuccessfully": "téléchargé avec succès",
-  "failedToDownload": "Échec du téléchargement"
+  "failedToDownload": "Échec du téléchargement",
+  "transportation": "Transport",
+  "continue": "Continuer",
+  "selectPickDropPoint": "Sélectionner le point de ramassage/dépose",
+  "selectShift": "Sélectionner l'équipe",
+  "selectDuration": "Sélectionner la durée",
+  "pleaseSelectPickDropPoint": "Veuillez sélectionner un point de ramassage/dépose",
+  "pleaseSelectShift": "Veuillez sélectionner une équipe",
+  "pleaseSelectDuration": "Veuillez sélectionner une durée"
 }
