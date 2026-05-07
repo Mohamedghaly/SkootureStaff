@@ -347,12 +347,12 @@ class LogoutConfirmationDialog extends StatelessWidget {
       ),
       actions: [
         CupertinoButton(
-            child: Text(Utils.getTranslatedLabel(yesKey)),
+            child: const CustomTextContainer(textKey: yesKey),
             onPressed: () {
               Get.back(result: true);
             }),
         CupertinoButton(
-            child: Text(Utils.getTranslatedLabel(noKey)),
+            child: const CustomTextContainer(textKey: noKey),
             onPressed: () {
               Get.back(result: false);
             }),

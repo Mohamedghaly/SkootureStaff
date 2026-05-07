@@ -14,6 +14,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
+import '../../../utils/labelKeys.dart';
+
 class ManageCategoryScreen extends StatefulWidget {
   final String? type;
   const ManageCategoryScreen({super.key, this.type});
@@ -93,7 +95,7 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Cancel'),
+            child: const CustomTextContainer(textKey: cancelKey),
           ),
           TextButton(
             onPressed: () {
@@ -103,7 +105,10 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
                     diaryCategoryId: category.id,
                   );
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const CustomTextContainer(
+              textKey: deleteKey,
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),

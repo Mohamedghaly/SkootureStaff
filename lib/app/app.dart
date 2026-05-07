@@ -16,6 +16,7 @@ import 'package:eschool_saas_staff/ui/styles/colors.dart';
 import 'package:eschool_saas_staff/utils/hiveBoxKeys.dart';
 import 'package:eschool_saas_staff/utils/unauthenticatedAccessManager.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -128,19 +129,29 @@ class _MyAppState extends State<MyApp> {
           return GetMaterialApp(
             debugShowCheckedModeBanner: false,
             translationsKeys: AppTranslation.translationsKeys,
-            theme: Theme.of(context).copyWith(
+            theme: ThemeData(fontFamily: 'Cairo').copyWith(
               extensions: <ThemeExtension<dynamic>>[customColorsExtension],
-              textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Cairo'),
-              primaryTextTheme:
-                  Theme.of(context).primaryTextTheme.apply(fontFamily: 'Cairo'),
               scaffoldBackgroundColor: pageBackgroundColor,
-              colorScheme: Theme.of(context).colorScheme.copyWith(
-                    primary: primaryColor,
-                    secondary: secondaryColor,
-                    surface: backgroundColor,
-                    error: errorColor,
-                    tertiary: tertiaryColor,
-                  ),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: primaryColor,
+                primary: primaryColor,
+                secondary: secondaryColor,
+                surface: backgroundColor,
+                error: errorColor,
+                tertiary: tertiaryColor,
+              ),
+              cupertinoOverrideTheme: CupertinoThemeData(
+                textTheme: CupertinoTextThemeData(
+                  primaryColor: primaryColor,
+                  textStyle: const TextStyle(fontFamily: 'Cairo'),
+                  actionTextStyle: const TextStyle(fontFamily: 'Cairo'),
+                  navActionTextStyle: const TextStyle(fontFamily: 'Cairo'),
+                  navLargeTitleTextStyle: const TextStyle(fontFamily: 'Cairo'),
+                  navTitleTextStyle: const TextStyle(fontFamily: 'Cairo'),
+                  pickerTextStyle: const TextStyle(fontFamily: 'Cairo'),
+                  dateTimePickerTextStyle: const TextStyle(fontFamily: 'Cairo'),
+                ),
+              ),
             ),
             getPages: Routes.getPages,
             initialRoute: Routes.splashScreen,
