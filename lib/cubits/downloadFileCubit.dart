@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:eschool_saas_staff/data/models/studyMaterial.dart';
 import 'package:eschool_saas_staff/data/repositories/studyMaterialRepository.dart';
@@ -103,14 +104,28 @@ class DownloadFileCubit extends Cubit<DownloadFileState> {
           destinationPath: downloadFilePath,
         );
 
-        
-
         emit(DownloadFileSuccess(downloadFilePath));
       }
 
-      //if user has given permission to download and view file
-      final permission = await Permission.storage.request();
-      if (permission.isGranted) {
+      // Check SDK version for Android
+      bool isPermissionGranted = false;
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt >= 30) {
+          // For Android 11+, we don't need Permission.storage to write to app-specific directories
+          // or we can just use the fallback directory.
+          isPermissionGranted = false; // Default to app-specific directory for compliance
+        } else {
+          final status = await Permission.storage.request();
+          isPermissionGranted = status.isGranted;
+        }
+      } else {
+        // For iOS
+        final status = await Permission.storage.request();
+        isPermissionGranted = status.isGranted;
+      }
+
+      if (isPermissionGranted) {
         await thingsToDoAfterPermissionIsGiven(true);
       } else {
         try {

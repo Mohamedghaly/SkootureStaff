@@ -336,12 +336,9 @@ class Utils {
       }
       return permissionGiven;
     } else {
-      bool permissionGiven = await Permission.photos.isGranted;
-      if (!permissionGiven) {
-        permissionGiven = (await Permission.photos.request()).isGranted;
-        return permissionGiven;
-      }
-      return permissionGiven;
+      // For Android 13+, we don't need to request READ_EXTERNAL_STORAGE or READ_MEDIA_IMAGES
+      // for occasional media selection using Photo Picker.
+      return true;
     }
   }
 
@@ -351,8 +348,8 @@ class Utils {
       final sdkInt = androidInfo.version.sdkInt;
 
       if (sdkInt >= 33) {
-        // Android 13+
-        return await _requestPermission(Permission.photos);
+        // Android 13+ Photo Picker doesn't need permissions
+        return true;
       } else {
         // Android 12 and below
         return await _requestPermission(Permission.storage);
@@ -365,7 +362,8 @@ class Utils {
 
   static Future<bool> _requestPermission(Permission permission) async {
     if (await permission.isGranted) return true;
-    return (await permission.request()).isGranted;
+    final status = await permission.request();
+    return status.isGranted;
   }
 
   static Future<bool> hasCameraPermissionGiven() async {
@@ -641,6 +639,14 @@ class Utils {
         type: FileType.custom,
         allowedExtensions: allowedExtensions,
       );
+    }
+
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      if (androidInfo.version.sdkInt >= 33) {
+        // Android 13+ doesn't need storage permission for picking files
+        return await pickFiles();
+      }
     }
 
     final permission = await Permission.storage.request();
