@@ -31,7 +31,7 @@ def keystoreProperties = new Properties()
 
 
 android {
-    namespace "com.skooture.teacher"
+    namespace "com.skooture.staff.app"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
@@ -52,7 +52,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.skooture.teacher"
+        applicationId "com.skooture.staff.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion flutter.minSdkVersion
