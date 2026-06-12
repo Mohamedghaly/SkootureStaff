@@ -7,9 +7,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:429045694276:android:2c85b2ac18422d9bfbe111",
+        "mobilesdk_app_id": "1:429045694276:android:50cb964e27320e18fbe111",
         "android_client_info": {
           "package_name": "com.skooture.staff.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6NA8fpkoZ-uRp5bOk25UgCp8h3AuDEs0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429045694276:android:2c85b2ac18422d9bfbe111",
+        "android_client_info": {
+          "package_name": "com.skooture.teacher"
         }
       },
       "oauth_client": [],
