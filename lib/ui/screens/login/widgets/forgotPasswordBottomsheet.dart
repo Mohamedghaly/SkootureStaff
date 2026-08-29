@@ -59,11 +59,11 @@ class _ForgotPasswordBottomsheetState extends State<ForgotPasswordBottomsheet> {
               listener: (context, state) {
                 if (state is SendPasswordResetEmailSuccess) {
                   Get.back();
-                  Utils.showSnackBar(
+                  Utils.showOverlaySnackbar(
                       message: passwordResetLinkSentToYourEmailKey,
                       context: context);
                 } else if (state is SendPasswordResetEmailFailure) {
-                  Utils.showSnackBar(
+                  Utils.showOverlaySnackbar(
                       message: state.errorMessage, context: context);
                 }
               },
@@ -84,12 +84,12 @@ class _ForgotPasswordBottomsheetState extends State<ForgotPasswordBottomsheet> {
                       }
 
                       if (_textEditingController.text.trim().isEmpty) {
-                        Utils.showSnackBar(
+                        Utils.showOverlaySnackbar(
                             message: pleaseEnterEmailKey, context: context);
                         return;
                       }
                       if (_schoolCodeController.text.trim().isEmpty) {
-                        Utils.showSnackBar(
+                        Utils.showOverlaySnackbar(
                             message: pleaseEnterSchoolCodeKey,
                             context: context);
                         return;

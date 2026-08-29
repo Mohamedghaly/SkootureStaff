@@ -60,7 +60,7 @@ class TeacherAnnouncementRepository {
         "title": title,
         "description": description,
         "file": files,
-        "url": url
+        "add_url": url
       };
 
       if (url.isEmpty) {
@@ -104,7 +104,7 @@ class TeacherAnnouncementRepository {
         "title": title,
         "description": description,
         "file": files,
-        "other_link": url
+        "add_url": url
       };
       if (files.isEmpty) {
         body.remove('file');

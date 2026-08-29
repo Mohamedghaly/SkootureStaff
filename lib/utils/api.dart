@@ -1,10 +1,11 @@
 import 'dart:io';
 
-import 'package:curl_logger_dio_interceptor/curl_logger_dio_interceptor.dart';
 import 'package:dio/dio.dart';
 import 'package:eschool_saas_staff/data/repositories/authRepository.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
+import 'package:eschool_saas_staff/utils/curlLoggerInterceptor.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
+import 'package:eschool_saas_staff/utils/unauthenticatedAccessManager.dart';
 import 'package:flutter/foundation.dart';
 
 class ApiException implements Exception {
@@ -34,6 +35,7 @@ class Api {
   static String applyLeave = "${databaseUrl}leaves";
 
   static String getSettings = "${databaseUrl}settings";
+  static String getSchoolSettings = "${databaseUrl}school-settings";
   static String getHolidays = "${databaseUrl}holidays";
   static String getLeaveRequests = "${databaseUrl}staff/leave-request";
   static String approveOrRejectLeaveRequest =
@@ -51,7 +53,7 @@ class Api {
   static String getMediums = "${databaseUrl}medium";
   static String getOfflineExamStudentResults =
       "${databaseUrl}staff/student-offline-exam-result";
-  static String getNotifications = "${databaseUrl}staff/notification";
+  static String getNotifications = "${databaseUrl}notifications";
   static String deleteNotification = "${databaseUrl}staff/notification-delete";
   static String getAnnouncements = "${databaseUrl}staff/get-announcement";
   static String deleteGeneralAnnouncement =
@@ -67,6 +69,7 @@ class Api {
   static String getPayRollYears = "${databaseUrl}staff/payroll-year";
   static String getRoles = "${databaseUrl}staff/roles";
   static String searchUsers = "${databaseUrl}staff/users";
+  static String getUsersByRole = "${databaseUrl}users-by-role";
   static String getFees = "${databaseUrl}staff/get-fees";
   static String getStudentsFeeStatus = "${databaseUrl}staff/fees-paid-list";
   static String getStaffsPayroll = "${databaseUrl}staff/payroll-staff-list";
@@ -79,6 +82,11 @@ class Api {
 
   static String getLeaveSettings = "${databaseUrl}leave-settings";
 
+  /// Staff Attendance APIs
+  static String getStaffAttendance = "${databaseUrl}staff/staff-attendance";
+  static String submitStaffAttendance =
+      "${databaseUrl}staff/staff-attendance-store";
+
   ///[teacher-related APIs]
   //-------------
   static String getTeacherMyTimetable =
@@ -88,6 +96,7 @@ class Api {
   static String getExams = "${databaseUrl}teacher/get-exam-list";
   static String getLessons = "${databaseUrl}teacher/get-lesson";
   static String getSubjects = "${databaseUrl}teacher/subjects";
+  static String getStudentSubjects = "${databaseUrl}teacher/subjects";
   static String getClassDetails = "${databaseUrl}teacher/class-detail";
 
   static String createLesson = "${databaseUrl}teacher/create-lesson";
@@ -121,6 +130,7 @@ class Api {
 
   static String getAttendance = "${databaseUrl}teacher/get-attendance";
   static String submitAttendance = "${databaseUrl}teacher/submit-attendance";
+  static String getTeacherAttendance = "${databaseUrl}staff/attendance";
 
   static String examList = "${databaseUrl}teacher/get-exam-list";
   static String submitExamMarks =
@@ -134,8 +144,9 @@ class Api {
   static String deleteDiaryCategory =
       "${databaseUrl}teacher/delete-diary-category";
   static String createDiary = "${databaseUrl}teacher/create-diary";
-  static String getDiaries = "${databaseUrl}teacher/diaries";
-  static String getStudentSubjects = "${databaseUrl}student/subjects";
+  static String deleteDiary = "${databaseUrl}teacher/delete-diary";
+  static String getDiaries = "${databaseUrl}diaries";
+  static String getStudentDetails = "${databaseUrl}student-details";
 
   /// Chat
   static String chatMessages = "${databaseUrl}message";
@@ -146,14 +157,58 @@ class Api {
 
   //-------------
 
+  /// Transportation
+  static String getPickupPoints = "${databaseUrl}pickup-points";
+  static String getTransportationShifts = "${databaseUrl}transportation-shifts";
+  static String getTransportationFees = "${databaseUrl}transportation-fees";
+  static String getTransportDashboard = "${databaseUrl}transport/dashboard";
+  static String getCurrentPlan = "${databaseUrl}transport/plans/current";
+  static String getVehicleAssignmentStatus =
+      "${databaseUrl}get-vehicle-assignment-status";
+  static String getTrips = "${databaseUrl}driver-helpr/get-trips";
+  static String getUserImage =
+      "${databaseUrl}get-image"; // Common endpoint for user images
+  static String startEndTrip = "${databaseUrl}driver-helpr/trip/start-end";
+  static String createAttendance = "${databaseUrl}transport/attendance/create";
+  static String getTransportUserAttendanceList =
+      "${databaseUrl}transport/user/attendance-list";
+  static String getLiveRoute = "${databaseUrl}transportation/live-route";
+  static String getRouteStops = "${databaseUrl}transport/routes/stops";
+  static String getTransportRequests = "${databaseUrl}transport/requests";
+  static String submitTransportEnrollment =
+      "${databaseUrl}transportation-payments";
+
+  // Expense APIs
+  static String createTransportationExpense =
+      "${databaseUrl}create-transportation-expense";
+  static String getExpenseCategories =
+      "${databaseUrl}transport/expense/categories/list";
+  static String getVehicleDetails =
+      "${databaseUrl}driver-helpr/get-vehicle-details";
+  static String getTransportationExpenses =
+      "${databaseUrl}get-transportation-expense";
+  static String storeTripReports = "${databaseUrl}transport/store-trip-reports";
+
   static String downloadStudentResult = "${databaseUrl}student-exan-result-pdf";
+  static String getDriverDashboard = "${databaseUrl}driver-helpr/dashboard";
+
+  /// URLs that should NOT trigger 401 handling (to avoid infinite loops).
+  static final Set<String> _authExemptUrls = {login, logout};
+
+  /// Checks if the given URL is exempt from 401 handling.
+  static bool _isAuthExemptUrl(String url) {
+    return _authExemptUrls.any((exemptUrl) => url.contains(exemptUrl));
+  }
 
   static Map<String, dynamic> headers() {
     final String jwtToken = AuthRepository.getAuthToken();
     final schoolCode = AuthRepository().schoolCode;
 
     if (kDebugMode) {
-      print({"Authorization": "Bearer $jwtToken", "school_code": schoolCode});
+      debugPrint({
+        "Authorization": "Bearer $jwtToken",
+        "school_code": schoolCode
+      }.toString());
     }
     return {
       "Authorization": "Bearer $jwtToken",
@@ -171,14 +226,24 @@ class Api {
     Function(int, int)? onReceiveProgress,
   }) async {
     try {
+      // Block API calls if user has been force-logged out due to 401
+      if (UnauthenticatedAccessManager().isLoggedOut &&
+          !_isAuthExemptUrl(url)) {
+        throw ApiException(defaultErrorMessageKey);
+      }
+
       if (kDebugMode) {
-        print(url);
-        print(body);
+        debugPrint(url);
+        debugPrint(body.toString());
       }
       final Dio dio = Dio();
       final FormData formData =
           FormData.fromMap(body, ListFormat.multiCompatible);
-      dio.interceptors.add(CurlLoggerDioInterceptor(convertFormData: true));
+      dio.interceptors.add(CurlLoggerInterceptor(
+        printOnSuccess: true,
+        printOnError: true,
+        convertFormData: true,
+      ));
 
       final response = await dio.post(url,
           data: formData,
@@ -188,8 +253,10 @@ class Api {
           onSendProgress: onSendProgress,
           options: (useAuthToken ?? true) ? Options(headers: headers()) : null);
 
-      if (kDebugMode) {
-        print("Response : ${response.data}");
+      // Check for 401 in response body (API returns 200 with error code 401)
+      if (_isUnauthorizedResponse(response.data)) {
+        _handleUnauthorized(url);
+        throw ApiException(defaultErrorMessageKey);
       }
 
       if (bool.parse(response.data['error'].toString())) {
@@ -198,15 +265,33 @@ class Api {
       return Map.from(response.data);
     } on DioException catch (e) {
       if (kDebugMode) {
-        print(e.response?.data);
+        debugPrint(e.response?.data?.toString());
       }
-      throw ApiException(
-          e.error is SocketException ? noInternetKey : defaultErrorMessageKey);
+
+      // Handle 401 HTTP status code
+      if (e.response?.statusCode == 401 && !_isAuthExemptUrl(url)) {
+        _handleUnauthorized(url);
+        throw ApiException(defaultErrorMessageKey);
+      }
+
+      if (e.error is SocketException) {
+        throw ApiException(noInternetKey);
+      }
+      // Extract error message from API response if available
+      if (e.response?.data != null && e.response?.data is Map) {
+        final responseData = e.response!.data as Map;
+        if (responseData.containsKey('message') &&
+            responseData['message'] != null &&
+            responseData['message'].toString().isNotEmpty) {
+          throw ApiException(responseData['message'].toString());
+        }
+      }
+      throw ApiException(defaultErrorMessageKey);
     } on ApiException catch (e) {
       throw ApiException(e.errorMessage);
     } catch (e) {
       if (kDebugMode) {
-        print(e.toString());
+        debugPrint(e.toString());
       }
       throw ApiException(defaultErrorMessageKey);
     }
@@ -216,40 +301,77 @@ class Api {
     required String url,
     bool? useAuthToken,
     Map<String, dynamic>? queryParameters,
+    bool skipErrorCheck =
+        false, // Add parameter to skip error field check for non-standard APIs
   }) async {
     try {
+      // Block API calls if user has been force-logged out due to 401
+      if (UnauthenticatedAccessManager().isLoggedOut &&
+          !_isAuthExemptUrl(url)) {
+        throw ApiException(defaultErrorMessageKey);
+      }
+
       if (kDebugMode) {
-        print(url);
-        print(queryParameters);
+        debugPrint(url);
+        debugPrint(queryParameters.toString());
       }
       //
       final Dio dio = Dio();
-      dio.interceptors.add(CurlLoggerDioInterceptor(convertFormData: true));
+      dio.interceptors.add(CurlLoggerInterceptor(
+        printOnSuccess: true,
+        printOnError: true,
+        convertFormData: true,
+      ));
 
       final response = await dio.get(url,
           queryParameters: queryParameters,
           options: (useAuthToken ?? true) ? Options(headers: headers()) : null);
 
-      if (kDebugMode) {
-        print("Response : ${response.data}");
+      // Check for 401 in response body (API returns 200 with error code 401)
+      if (_isUnauthorizedResponse(response.data)) {
+        _handleUnauthorized(url);
+        throw ApiException(defaultErrorMessageKey);
       }
 
-      if (bool.parse(response.data['error'].toString())) {
-        if (kDebugMode) {
-          print(response.data);
-        }
+      // Only check 'error' field if skipErrorCheck is false and response contains 'error' field
+      if (!skipErrorCheck &&
+          response.data is Map &&
+          response.data.containsKey('error')) {
+        if (bool.parse(response.data['error'].toString())) {
+          if (kDebugMode) {
+            debugPrint(response.data);
+          }
 
-        throw ApiException(response.data['message'].toString());
+          throw ApiException(response.data['message'].toString());
+        }
       }
 
       return Map.from(response.data);
     } on DioException catch (e) {
       if (kDebugMode) {
-        print(e.error?.toString());
-        print(e.response?.data);
+        debugPrint(e.error?.toString());
+        debugPrint(e.response?.data?.toString());
       }
-      throw ApiException(
-          e.error is SocketException ? noInternetKey : defaultErrorMessageKey);
+
+      // Handle 401 HTTP status code
+      if (e.response?.statusCode == 401 && !_isAuthExemptUrl(url)) {
+        _handleUnauthorized(url);
+        throw ApiException(defaultErrorMessageKey);
+      }
+
+      if (e.error is SocketException) {
+        throw ApiException(noInternetKey);
+      }
+      // Extract error message from API response if available
+      if (e.response?.data != null && e.response?.data is Map) {
+        final responseData = e.response!.data as Map;
+        if (responseData.containsKey('message') &&
+            responseData['message'] != null &&
+            responseData['message'].toString().isNotEmpty) {
+          throw ApiException(responseData['message'].toString());
+        }
+      }
+      throw ApiException(defaultErrorMessageKey);
     } on ApiException catch (e) {
       throw ApiException(e.errorMessage);
     } catch (e) {
@@ -275,6 +397,25 @@ class Api {
       throw ApiException(e.errorMessage);
     } catch (e) {
       throw ApiException(defaultErrorMessageKey);
+    }
+  }
+
+  /// Checks if the API response body indicates a 401 Unauthorized error.
+  /// Some APIs return HTTP 200 but include a `code: 401` in the response body.
+  static bool _isUnauthorizedResponse(dynamic responseData) {
+    if (responseData is Map) {
+      final code = responseData['code'];
+      if (code != null && int.tryParse(code.toString()) == 401) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// Triggers the global 401 handler (unless the URL is exempt).
+  static void _handleUnauthorized(String url) {
+    if (!_isAuthExemptUrl(url)) {
+      UnauthenticatedAccessManager().handleUnauthorizedAccess();
     }
   }
 }

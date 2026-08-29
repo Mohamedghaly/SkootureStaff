@@ -75,7 +75,9 @@ class StudentsByClassSectionCubit extends Cubit<StudentsByClassSectionState> {
           ),
         ),
       );
-    } catch (e) {
+    } catch (e, st) {
+      print("This is the E :- ${e}");
+      print("This is the E :- ${st}");
       emit(StudentsByClassSectionFetchFailure(e.toString()));
     }
   }

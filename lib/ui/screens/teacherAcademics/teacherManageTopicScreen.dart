@@ -214,19 +214,19 @@ class _TeacherManageTopicScreenState extends State<TeacherManageTopicScreen> {
                     }
                   });
                 },
-                onEdit: () {
-                  Get.toNamed(Routes.teacherAddEditTopicScreen,
-                      arguments: TeacherAddEditTopicScreen.buildArguments(
-                        topic: topic,
-                        selectedClassSection: _selectedClassSection,
-                        selectedLesson: _selectedLesson,
-                        selectedSubject: _selectedSubject,
-                      ))?.then((value) {
-                    if (value != null && value is bool && value) {
-                      //re-fetch topics if they edit or add
-                      getTopics();
-                    }
-                  });
+                onEdit: () async {
+                  final result = await Get.toNamed(
+                    Routes.teacherAddEditTopicScreen,
+                    arguments: TeacherAddEditTopicScreen.buildArguments(
+                      topic: topic,
+                      selectedClassSection: _selectedClassSection,
+                      selectedLesson: _selectedLesson,
+                      selectedSubject: _selectedSubject,
+                    ),
+                  );
+                  if (mounted && result == true) {
+                    getTopics();
+                  }
                 },
                 studyMaterials: topic.studyMaterials,
                 titleText: topic.name);
@@ -325,7 +325,7 @@ class _TeacherManageTopicScreenState extends State<TeacherManageTopicScreen> {
           backgroundColor: Theme.of(context).colorScheme.primary,
           buttonTitle: createTopicKey,
           showBorder: false,
-          onTap: () {
+          onTap: () async {
             if (_selectedClassSection == null ||
                 _selectedClassSection!.isEmpty) {
               Utils.showSnackBar(
@@ -343,19 +343,19 @@ class _TeacherManageTopicScreenState extends State<TeacherManageTopicScreen> {
                 message: Utils.getTranslatedLabel(noSubjectSelectedKey),
               );
             } else {
-              Get.toNamed(Routes.teacherAddEditTopicScreen,
-                  arguments: TeacherAddEditTopicScreen.buildArguments(
-                    topic: null,
-                    selectedClassSection: _selectedClassSection,
-                    selectedLesson: _selectedLesson,
-                    selectedSubject: _selectedSubject,
-                  ))?.then((value) {
-                if (value != null && value is bool && value) {
-                  //re-fetch topics if they edit or add
-                  getTopics();
-                  didCreateNewTopic = true;
-                }
-              });
+              final result = await Get.toNamed(
+                Routes.teacherAddEditTopicScreen,
+                arguments: TeacherAddEditTopicScreen.buildArguments(
+                  topic: null,
+                  selectedClassSection: _selectedClassSection,
+                  selectedLesson: _selectedLesson,
+                  selectedSubject: _selectedSubject,
+                ),
+              );
+              if (mounted && result == true) {
+                getTopics();
+                didCreateNewTopic = true;
+              }
             }
           },
         ),

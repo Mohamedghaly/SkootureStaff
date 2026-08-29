@@ -1,6 +1,7 @@
-// ignore_for_file: use_build_context_synchronously
+// ignore_for_file: use_build_context_synchroapinously
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:eschool_saas_staff/cubits/downloadFileCubit.dart';
 import 'package:eschool_saas_staff/data/models/assignmentSubmission.dart';
@@ -84,7 +85,7 @@ class Utils {
         final datePart = parts[0];
         String? timePart;
         String? amPm;
-        
+
         if (parts.length >= 2) {
           timePart = parts[1];
           amPm = parts.length >= 3 ? parts[2] : null;
@@ -92,7 +93,7 @@ class Utils {
 
         // Parse the date part based on separator
         DateTime? parsedDate;
-        
+
         if (datePart.contains('-')) {
           parsedDate = _parseDateWithSeparator(datePart, '-');
         } else if (datePart.contains('/')) {
@@ -118,9 +119,10 @@ class Utils {
           }
         }
 
-        return DateTime(parsedDate.year, parsedDate.month, parsedDate.day, hour, minute);
+        return DateTime(
+            parsedDate.year, parsedDate.month, parsedDate.day, hour, minute);
       } catch (e) {
-        print('Error parsing date: $dateString - $e');
+        debugPrint('Error parsing date: $dateString - $e');
         return null;
       }
     }
@@ -147,7 +149,7 @@ class Utils {
           day = part2;
           month = part3;
         } else if (part3 > 12) {
-          // Y-m-d or Y/m/d format  
+          // Y-m-d or Y/m/d format
           month = part2;
           day = part3;
         } else {
@@ -194,7 +196,12 @@ class Utils {
       }
 
       // Validate the parsed values
-      if (year < 1900 || year > 2100 || month < 1 || month > 12 || day < 1 || day > 31) {
+      if (year < 1900 ||
+          year > 2100 ||
+          month < 1 ||
+          month > 12 ||
+          day < 1 ||
+          day > 31) {
         return null;
       }
 
@@ -212,10 +219,11 @@ class Utils {
     return intl.DateFormat("dd-MM-yyyy, kk:mm").format(dateTime);
   }
 
-  static Future<dynamic> showBottomSheet(
-      {required Widget child,
-      required BuildContext context,
-      bool? enableDrag}) async {
+  static Future<dynamic> showBottomSheet({
+    required Widget child,
+    required BuildContext context,
+    bool? enableDrag,
+  }) async {
     final result = Get.bottomSheet(
       child,
       enableDrag: enableDrag ?? true,
@@ -223,9 +231,11 @@ class Utils {
       isDismissible: true,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(bottomsheetBorderRadius),
-              topRight: Radius.circular(bottomsheetBorderRadius))),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(bottomsheetBorderRadius),
+          topRight: Radius.circular(bottomsheetBorderRadius),
+        ),
+      ),
     );
     return result;
   }
@@ -235,24 +245,58 @@ class Utils {
     required BuildContext context,
     TextStyle? messageTextStyle,
     Duration? snackDuration,
+    Color? backgroundColor,
   }) async {
-    Get.snackbar(
-      "",
-      "",
-      duration: snackDuration ?? snackBarDuration,
-      titleText: const SizedBox(),
-      messageText: CustomTextContainer(
-        textKey: message,
-        style: messageTextStyle ??
-            TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 15.5,
-              color: Theme.of(context).colorScheme.secondary,
-            ),
+    // Use ScaffoldMessenger instead of Get.snackbar to avoid overlay context issues
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        duration: snackDuration ?? snackBarDuration,
+        backgroundColor:
+            backgroundColor ?? Theme.of(context).colorScheme.surface,
+        content: CustomTextContainer(
+          textKey: message,
+          style: messageTextStyle ??
+              TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 15.5,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+        ),
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(15),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 12.5, horizontal: 15),
-      snackPosition: SnackPosition.BOTTOM,
     );
+  }
+
+  /// Shows a snackbar that renders above modal bottom sheets.
+  /// Use this when calling from within a bottom sheet context.
+  /// Uses Flutter's root Overlay to ensure visibility above all other widgets.
+  static void showOverlaySnackbar({
+    required String message,
+    required BuildContext context,
+    Duration? snackDuration,
+  }) {
+    if (!context.mounted) return;
+
+    final overlay = Overlay.of(context, rootOverlay: true);
+    late OverlayEntry overlayEntry;
+
+    overlayEntry = OverlayEntry(
+      builder: (context) => _OverlaySnackbar(
+        message: message,
+        duration: snackDuration ?? snackBarDuration,
+        onDismiss: () {
+          overlayEntry.remove();
+        },
+      ),
+    );
+
+    overlay.insert(overlayEntry);
   }
 
   static intl.DateFormat hourMinutesDateFormat = intl.DateFormat.jm();
@@ -292,22 +336,34 @@ class Utils {
       }
       return permissionGiven;
     } else {
-      bool permissionGiven = await Permission.photos.isGranted;
-      if (!permissionGiven) {
-        permissionGiven = (await Permission.photos.request()).isGranted;
-        return permissionGiven;
-      }
-      return permissionGiven;
+      // For Android 13+, we don't need to request READ_EXTERNAL_STORAGE or READ_MEDIA_IMAGES
+      // for occasional media selection using Photo Picker.
+      return true;
     }
   }
 
   static Future<bool> hasGalleryPermissionGiven() async {
-    bool permissionGiven = await Permission.photos.isGranted;
-    if (!permissionGiven) {
-      permissionGiven = (await Permission.photos.request()).isGranted;
-      return permissionGiven;
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      final sdkInt = androidInfo.version.sdkInt;
+
+      if (sdkInt >= 33) {
+        // Android 13+ Photo Picker doesn't need permissions
+        return true;
+      } else {
+        // Android 12 and below
+        return await _requestPermission(Permission.storage);
+      }
+    } else if (Platform.isIOS) {
+      return await _requestPermission(Permission.photos);
     }
-    return permissionGiven;
+    return false;
+  }
+
+  static Future<bool> _requestPermission(Permission permission) async {
+    if (await permission.isGranted) return true;
+    final status = await permission.request();
+    return status.isGranted;
   }
 
   static Future<bool> hasCameraPermissionGiven() async {
@@ -339,6 +395,31 @@ class Utils {
           message: isShareAppLink ? shareAppLinkKey : rateAppLinkKey,
           context: context);
     }
+  }
+
+  static Future<void> showImagePreview(
+      {required BuildContext context,
+      required String imageUrl,
+      String? heroTag}) async {
+    if (imageUrl.trim().isEmpty) {
+      return;
+    }
+
+    final resolvedHeroTag = heroTag ?? imageUrl;
+
+    await showGeneralDialog(
+      context: context,
+      barrierLabel: 'image_preview',
+      barrierDismissible: true,
+      barrierColor: Colors.black.withValues(alpha: 0.85),
+      transitionDuration: const Duration(milliseconds: 200),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
+        return _FullScreenImageViewer(
+          imageUrl: imageUrl,
+          heroTag: resolvedHeroTag,
+        );
+      },
+    );
   }
 
   static String getTranslatedLabel(String labelKey) {
@@ -523,10 +604,49 @@ class Utils {
       bool allowMultiple = true,
       FileType type = FileType.any}) async {
     Future<FilePickerResult?> pickFiles() async {
+      // Determine allowed extensions based on file type
+      List<String> allowedExtensions;
+      switch (type) {
+        case FileType.image:
+          allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+          break;
+        case FileType.video:
+          allowedExtensions = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+          break;
+        case FileType.any:
+        default:
+          allowedExtensions = [
+            'pdf',
+            'doc',
+            'docx',
+            'jpg',
+            'jpeg',
+            'png',
+            'gif',
+            'bmp',
+            'webp',
+            'mp4',
+            'mov',
+            'avi',
+            'mkv',
+            'webm',
+          ];
+          break;
+      }
+
       return await FilePicker.platform.pickFiles(
         allowMultiple: allowMultiple,
-        type: type,
+        type: FileType.custom,
+        allowedExtensions: allowedExtensions,
       );
+    }
+
+    if (Platform.isAndroid) {
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      if (androidInfo.version.sdkInt >= 33) {
+        // Android 13+ doesn't need storage permission for picking files
+        return await pickFiles();
+      }
     }
 
     final permission = await Permission.storage.request();
@@ -614,6 +734,12 @@ class Utils {
 
   static String extractTimeFromDateString(String dateString) {
     try {
+      // Handle ISO8601 format like "2025-12-11T14:51:00.000" or "2025-12-11T14:51:00.000Z"
+      if (dateString.contains('T')) {
+        final dateTime = DateTime.parse(dateString);
+        return intl.DateFormat.jm().format(dateTime);
+      }
+
       // Handle format like "2025-18-07 05:31 AM"
       final parts = dateString.split(' ');
       if (parts.length >= 2) {
@@ -644,6 +770,93 @@ class Utils {
     }
     return dateString;
   }
+
+  /// Validates if the provided email address is in a valid format
+  /// Returns true if the email is valid, false otherwise
+  static bool isValidEmail(String email) {
+    if (email.trim().isEmpty) {
+      return false;
+    }
+
+    // RFC 5322 compliant email validation regex pattern
+    // This pattern covers most common email formats while being practical
+    final emailRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+
+    return emailRegex.hasMatch(email.trim());
+  }
+}
+
+class _FullScreenImageViewer extends StatelessWidget {
+  const _FullScreenImageViewer({required this.imageUrl, required this.heroTag});
+
+  final String imageUrl;
+  final String heroTag;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.of(context).maybePop(),
+          child: Container(
+            color: Colors.black.withValues(alpha: 0.9),
+            child: Stack(
+              children: [
+                Center(
+                  child: Hero(
+                    tag: heroTag,
+                    child: InteractiveViewer(
+                      minScale: 1,
+                      maxScale: 4,
+                      child: CachedNetworkImage(
+                        imageUrl: imageUrl,
+                        fit: BoxFit.contain,
+                        progressIndicatorBuilder:
+                            (context, url, downloadProgress) => SizedBox(
+                          height: 48,
+                          width: 48,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 3,
+                            value: downloadProgress.progress,
+                            valueColor: const AlwaysStoppedAnimation<Color>(
+                                Colors.white70),
+                          ),
+                        ),
+                        errorWidget: (context, url, error) => const Icon(
+                          Icons.broken_image_outlined,
+                          size: 64,
+                          color: Colors.white54,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Material(
+                    color: Colors.black45,
+                    shape: const CircleBorder(),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                      ),
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 extension DateTimeExtension on DateTime {
@@ -661,5 +874,106 @@ extension DateTimeExtension on DateTime {
     } else {
       return intl.DateFormat('d MMMM yyyy').format(this);
     }
+  }
+}
+
+/// Custom overlay snackbar widget that displays above all other widgets
+/// including modal bottom sheets.
+class _OverlaySnackbar extends StatefulWidget {
+  final String message;
+  final Duration duration;
+  final VoidCallback onDismiss;
+
+  const _OverlaySnackbar({
+    required this.message,
+    required this.duration,
+    required this.onDismiss,
+  });
+
+  @override
+  State<_OverlaySnackbar> createState() => _OverlaySnackbarState();
+}
+
+class _OverlaySnackbarState extends State<_OverlaySnackbar>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, -1),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    );
+
+    _animationController.forward();
+
+    Future.delayed(widget.duration, () {
+      if (mounted) {
+        _animationController.reverse().then((_) {
+          widget.onDismiss();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 10,
+      left: 15,
+      right: 15,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: CustomTextContainer(
+                textKey: widget.message,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 15.5,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

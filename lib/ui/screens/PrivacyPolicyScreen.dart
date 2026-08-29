@@ -1,4 +1,4 @@
-import 'package:eschool_saas_staff/cubits/settingCubit.dart';
+import 'package:eschool_saas_staff/cubits/settingCubit.dart';  
 import 'package:eschool_saas_staff/ui/widgets/customAppbar.dart';
 import 'package:eschool_saas_staff/ui/widgets/customCircularProgressIndicator.dart';
 import 'package:eschool_saas_staff/ui/widgets/noDataContainer.dart';
@@ -32,7 +32,9 @@ class PrivacyPolicyScreen extends StatefulWidget {
 class _PrivacyPolicyScreenState extends State<PrivacyPolicyScreen> {
   @override
   void initState() {
-    context.read<SettingsCubit>().getSettings("teacher_staff_privacy_policy");
+    // Uses 'privacy_policy' as API type parameter
+    // SettingsCubit automatically handles authenticated vs unauthenticated API selection
+    context.read<SettingsCubit>().getSettings("privacy_policy");
     super.initState();
   }
 

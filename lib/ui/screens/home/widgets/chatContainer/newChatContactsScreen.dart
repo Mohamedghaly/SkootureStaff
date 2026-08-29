@@ -14,6 +14,7 @@ import 'package:eschool_saas_staff/ui/widgets/customTabContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/errorContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/filterButton.dart';
 import 'package:eschool_saas_staff/ui/widgets/filterSelectionBottomsheet.dart';
+import 'package:eschool_saas_staff/ui/widgets/noDataContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/tabBackgroundContainer.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
@@ -59,12 +60,14 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
   void initState() {
     super.initState();
 
-    if (!context.read<AuthCubit>().isTeacher()) {
+    if (context.read<AuthCubit>().getUserDetails().isSchoolAdmin()) {
       tabTitles.remove(studentsKey);
     }
 
     context.read<ClassesCubit>().getClasses();
     _parentScrollController.addListener(_onParentScrollListener);
+    // Staff does not need a class section — load immediately
+    getStaffs();
   }
 
   @override
@@ -93,9 +96,13 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
     if (_selectedClassSection != classSection) {
       _selectedClassSection = classSection;
       setState(() {});
-      getStudents();
-      getParents();
-      getStaffs();
+
+      // Only fetch data if a valid class section is selected
+      if (_selectedClassSection != null) {
+        getStudents();
+        getParents();
+        // Staff is fetched independently (no class section needed)
+      }
     }
   }
 
@@ -116,7 +123,6 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
   void getStaffs() {
     context.read<StaffChatUsersCubit>().fetchChatUsers(
           role: ChatUserRole.staff,
-          classSectionId: (_selectedClassSection?.id ?? 0).toString(),
         );
   }
 
@@ -321,6 +327,16 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
   }
 
   Widget _buildStudentsList() {
+    // Check if no classes are available
+    if (_selectedClassSection == null) {
+      return Container(
+        color: Theme.of(context).colorScheme.surface,
+        child: noDataContainer(
+          titleKey: noClassSectionKey,
+        ),
+      );
+    }
+
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child:
@@ -328,10 +344,9 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
         builder: (context, state) {
           if (state is StudentsByClassSectionFetchSuccess) {
             if (state.studentDetailsList.isEmpty) {
-              return Center(
-                child: Text(
-                  Utils.getTranslatedLabel("noStudentsFound"),
-                  style: const TextStyle(fontSize: 20.0),
+              return const Center(
+                child: noDataContainer(
+                  titleKey: noStudentFoundKey,
                 ),
               );
             }
@@ -430,6 +445,16 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
   }
 
   Widget _buildParentsList() {
+    // Check if no classes are available
+    if (_selectedClassSection == null) {
+      return Container(
+        color: Theme.of(context).colorScheme.surface,
+        child: noDataContainer(
+          titleKey: noClassSectionKey,
+        ),
+      );
+    }
+
     return Container(
       color: Theme.of(context).colorScheme.surface,
       child: BlocBuilder<ChatUsersCubit, ChatUsersState>(
@@ -443,10 +468,9 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
 
           if (state.status == ChatUsersFetchStatus.success) {
             if (state.chatUsersResponse!.chatUsers.isEmpty) {
-              return Center(
-                child: Text(
-                  Utils.getTranslatedLabel("noParentsFound"),
-                  style: const TextStyle(fontSize: 20.0),
+              return const Center(
+                child: noDataContainer(
+                  titleKey: noDataFoundKey,
                 ),
               );
             }
@@ -556,10 +580,9 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
 
           if (state.status == StaffChatUsersFetchStatus.success) {
             if (state.chatUsersResponse!.chatUsers.isEmpty) {
-              return Center(
-                child: Text(
-                  Utils.getTranslatedLabel("noStaffsFound"),
-                  style: const TextStyle(fontSize: 20.0),
+              return const Center(
+                child: noDataContainer(
+                  titleKey: noStaffsKey,
                 ),
               );
             }
@@ -572,8 +595,6 @@ class _NewChatContactsScreenState extends State<NewChatContactsScreen>
                   onSubmitted: (search) {
                     context.read<StaffChatUsersCubit>().searchChatUsers(
                           role: ChatUserRole.staff,
-                          classSectionId:
-                              (_selectedClassSection?.id ?? 0).toString(),
                           search: search,
                         );
                   },

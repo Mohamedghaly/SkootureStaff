@@ -1,7 +1,6 @@
-
-
 import 'package:eschool_saas_staff/data/models/schoolDetails.dart';
 import 'package:eschool_saas_staff/utils/api.dart';
+import 'package:flutter/material.dart';
 
 class Schooldetailsfetch {
   static Future<SchoolDetails> fetchSchoolDetails() async {
@@ -11,14 +10,14 @@ class Schooldetailsfetch {
         useAuthToken: true,
       );
 
-      print("This is school details : ${result['data']}");
+      debugPrint("This is school details : ${result['data']}");
 
       final SchoolDetails schoolDetails =
           SchoolDetails.fromJson(result['data']);
 
       return schoolDetails;
     } catch (e, st) {
-      print("this is School details error : ${st}");
+      debugPrint("this is School details error : ${st}");
       throw ApiException(e.toString());
     }
   }

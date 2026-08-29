@@ -7,6 +7,7 @@ Color secondaryColor = const Color(0xff1A1C1D);
 Color pageBackgroundColor = const Color(0xffF7F9FF);
 Color backgroundColor = const Color(0xffFFFFFF);
 Color errorColor = const Color(0xffBA1A1A);
+Color tripTimelineGreenColor = const Color(0xff57CC99);
 Color tertiaryColor =
     const Color(0xffEBEEF3); //Border color define in design style
 

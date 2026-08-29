@@ -74,7 +74,6 @@ class ChatRepository {
         result['data'] as Map<String, dynamic>,
       );
     } catch (e) {
-    
       throw ApiException(e.toString());
     }
   }
@@ -112,7 +111,6 @@ class ChatRepository {
 
       return ChatMessage.fromJson(result['data'] as Map<String, dynamic>);
     } catch (e) {
-   
       throw ApiException(e.toString());
     }
   }

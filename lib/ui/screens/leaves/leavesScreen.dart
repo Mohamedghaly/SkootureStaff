@@ -15,6 +15,7 @@ import 'package:eschool_saas_staff/ui/widgets/noDataContainer.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:eschool_saas_staff/utils/utils.dart';
+import 'package:eschool_saas_staff/app/routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/route_manager.dart';
@@ -58,11 +59,19 @@ class _LeavesScreenState extends State<LeavesScreen> {
   @override
   void initState() {
     super.initState();
+
     Future.delayed(Duration.zero, () {
       if (mounted) {
         context.read<SessionYearsCubit>().getSessionYears();
       }
     });
+  }
+
+  // Add this method to refresh data when screen becomes visible
+  void _refreshDataIfNeeded() {
+    if (_selectedSessionYear != null) {
+      getLeaves();
+    }
   }
 
   void changeSelectedSessionYear(SessionYear sessionYear) {
@@ -88,6 +97,17 @@ class _LeavesScreenState extends State<LeavesScreen> {
             ? (context.read<AuthCubit>().getUserDetails().id ?? 0)
             : (widget.userDetails?.id ?? 0),
         sessionYearId: (_selectedSessionYear?.id ?? 0));
+  }
+
+  // Method to handle navigation result and refresh data
+  void _navigateToApplyLeave() async {
+    await Get.toNamed(Routes.applyLeaveScreen);
+
+    // refresh data when returning from apply leave screen
+    // This ensures fresh data regardless of success/failure
+    if (context.read<AuthCubit>().isDriver()) {
+      _refreshDataIfNeeded();
+    }
   }
 
   Widget _buildLeaveCountContainer(
@@ -264,103 +284,117 @@ class _LeavesScreenState extends State<LeavesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Stack(
-      children: [
-        BlocBuilder<SessionYearsCubit, SessionYearsState>(
-          builder: (context, state) {
-            if (state is SessionYearsFetchSuccess) {
-              return _buildLeavesContainer();
-            }
-
-            if (state is SessionYearsFetchFailure) {
-              return Center(
-                child: ErrorContainer(
-                  errorMessage: state.errorMessage,
-                  onTapRetry: () {
-                    context.read<SessionYearsCubit>().getSessionYears();
-                  },
+        floatingActionButton: context.read<AuthCubit>().isDriver()
+            ? FloatingActionButton(
+                onPressed: _navigateToApplyLeave, // Updated navigation method
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 26,
                 ),
-              );
-            }
+              )
+            : null,
+        body: Stack(
+          children: [
+            BlocBuilder<SessionYearsCubit, SessionYearsState>(
+              builder: (context, state) {
+                if (state is SessionYearsFetchSuccess) {
+                  return _buildLeavesContainer();
+                }
 
-            return Center(
-              child: CustomCircularProgressIndicator(
-                indicatorColor: Theme.of(context).colorScheme.primary,
-              ),
-            );
-          },
-        ),
-        Align(
-          alignment: Alignment.topCenter,
-          child: Column(
-            children: [
-              CustomAppbar(
-                  titleKey: widget.showMyLeaves
-                      ? myLeaveKey
-                      : (widget.userDetails?.fullName ?? "")),
-              BlocConsumer<SessionYearsCubit, SessionYearsState>(
-                listener: (context, state) {
-                  if (state is SessionYearsFetchSuccess) {
-                    if (state.sessionYears.isNotEmpty) {
-                      changeSelectedSessionYear(state.sessionYears
-                          .where((element) => element.isThisDefault())
-                          .first);
-                    }
-                  }
-                },
-                builder: (context, state) {
-                  return AppbarFilterBackgroundContainer(
-                    child: LayoutBuilder(builder: (context, boxConstraints) {
-                      return Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          FilterButton(
-                              onTap: () {
-                                if (state is SessionYearsFetchSuccess &&
-                                    state.sessionYears.isNotEmpty) {
-                                  Utils.showBottomSheet(
-                                      child: FilterSelectionBottomsheet<
-                                          SessionYear>(
-                                        selectedValue: _selectedSessionYear!,
-                                        titleKey: sessionYearKey,
-                                        values: state.sessionYears,
-                                        onSelection: (value) {
-                                          changeSelectedSessionYear(value!);
-                                          Get.back();
-                                        },
-                                      ),
-                                      context: context);
-                                }
-                              },
-                              titleKey:
-                                  _selectedSessionYear?.name ?? sessionYearKey,
-                              width: boxConstraints.maxWidth * (0.49)),
-                          FilterButton(
-                              onTap: () {
-                                Utils.showBottomSheet(
-                                    child: FilterSelectionBottomsheet<String>(
-                                      selectedValue: _selectedMonthKey,
-                                      titleKey: monthKey,
-                                      values: months,
-                                      onSelection: (value) {
-                                        changeSelectedMonth(value!);
-                                        Get.back();
-                                      },
-                                    ),
-                                    context: context);
-                              },
-                              titleKey: _selectedMonthKey,
-                              width: boxConstraints.maxWidth * (0.49)),
-                        ],
-                      );
-                    }),
+                if (state is SessionYearsFetchFailure) {
+                  return Center(
+                    child: ErrorContainer(
+                      errorMessage: state.errorMessage,
+                      onTapRetry: () {
+                        context.read<SessionYearsCubit>().getSessionYears();
+                      },
+                    ),
                   );
-                },
+                }
+
+                return Center(
+                  child: CustomCircularProgressIndicator(
+                    indicatorColor: Theme.of(context).colorScheme.primary,
+                  ),
+                );
+              },
+            ),
+            Align(
+              alignment: Alignment.topCenter,
+              child: Column(
+                children: [
+                  CustomAppbar(
+                      titleKey: widget.showMyLeaves
+                          ? myLeaveKey
+                          : (widget.userDetails?.fullName ?? "")),
+                  BlocConsumer<SessionYearsCubit, SessionYearsState>(
+                    listener: (context, state) {
+                      if (state is SessionYearsFetchSuccess) {
+                        if (state.sessionYears.isNotEmpty) {
+                          changeSelectedSessionYear(state.sessionYears
+                              .where((element) => element.isThisDefault())
+                              .first);
+                        }
+                      }
+                    },
+                    builder: (context, state) {
+                      return AppbarFilterBackgroundContainer(
+                        child:
+                            LayoutBuilder(builder: (context, boxConstraints) {
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              FilterButton(
+                                  onTap: () {
+                                    if (state is SessionYearsFetchSuccess &&
+                                        state.sessionYears.isNotEmpty) {
+                                      Utils.showBottomSheet(
+                                          child: FilterSelectionBottomsheet<
+                                              SessionYear>(
+                                            selectedValue:
+                                                _selectedSessionYear!,
+                                            titleKey: sessionYearKey,
+                                            values: state.sessionYears,
+                                            onSelection: (value) {
+                                              changeSelectedSessionYear(value!);
+                                              Get.back();
+                                            },
+                                          ),
+                                          context: context);
+                                    }
+                                  },
+                                  titleKey: _selectedSessionYear?.name ??
+                                      sessionYearKey,
+                                  width: boxConstraints.maxWidth * (0.49)),
+                              FilterButton(
+                                  onTap: () {
+                                    Utils.showBottomSheet(
+                                        child:
+                                            FilterSelectionBottomsheet<String>(
+                                          selectedValue: _selectedMonthKey,
+                                          titleKey: monthKey,
+                                          values: months,
+                                          onSelection: (value) {
+                                            changeSelectedMonth(value!);
+                                            Get.back();
+                                          },
+                                        ),
+                                        context: context);
+                                  },
+                                  titleKey: _selectedMonthKey,
+                                  width: boxConstraints.maxWidth * (0.49)),
+                            ],
+                          );
+                        }),
+                      );
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
-        )
-      ],
-    ));
+            )
+          ],
+        ));
   }
 }

@@ -46,6 +46,9 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
   Map<DateTime, String> _leaveDays = {};
 
+  /// Maps dates that are public holidays to their holiday title
+  Map<DateTime, String> _publicHolidayNames = {};
+
   List<PlatformFile> _uploadedFiles = [];
 
   @override
@@ -79,34 +82,67 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
   void generateLeaveDays() {
     List<int> holidayWeekdays =
         context.read<LeaveSettingsAndSessionYearsCubit>().getHolidayWeekDays();
+    Map<DateTime, String> publicHolidayDates = context
+        .read<LeaveSettingsAndSessionYearsCubit>()
+        .getPublicHolidayDates();
     _leaveDays = {};
+    _publicHolidayNames = {};
+
+    // Calculate the number of days between from and to date (inclusive)
     int differenceInDays =
         _selectedToDate!.difference(_selectedFromDate!).inDays;
-    _leaveDays.addAll({
-      _selectedFromDate!: fullDayKey,
-    });
-    for (var i = 1; i < differenceInDays; i++) {
+
+    // Add all days from start date to end date (inclusive)
+    for (var i = 0; i <= differenceInDays; i++) {
       final date = _selectedFromDate!.add(Duration(days: i));
+      final normalizedDate = DateTime(date.year, date.month, date.day);
 
-      _leaveDays.addAll({date: fullDayKey});
+      // Check if this day is a weekly holiday (e.g., Sunday, Monday)
+      bool isWeeklyHoliday = holidayWeekdays.contains(date.weekday);
+
+      // Check if this day is a public holiday
+      String? publicHolidayTitle = publicHolidayDates[normalizedDate];
+      bool isPublicHoliday = publicHolidayTitle != null;
+
+      if (isWeeklyHoliday) {
+        _leaveDays.addAll({date: 'holiday'});
+      } else if (isPublicHoliday) {
+        _leaveDays.addAll({date: 'public_holiday'});
+        _publicHolidayNames[date] = publicHolidayTitle;
+      } else {
+        // Regular working day
+        _leaveDays.addAll({date: fullDayKey});
+      }
     }
-
-    _leaveDays.addAll({
-      _selectedToDate!: fullDayKey,
-    });
-
-    _leaveDays
-        .removeWhere((key, value) => holidayWeekdays.contains(key.weekday));
   }
 
   void onTapFromDate() async {
+    final endDateString = context
+        .read<LeaveSettingsAndSessionYearsCubit>()
+        .getCurrentSessionYear()
+        .endDate;
+
+    // Parse the end date safely using Utils
+    final endDate =
+        endDateString != null ? Utils.parseDateSafely(endDateString) : null;
+
+    if (endDate == null) {
+      Utils.showSnackBar(
+          message: invalidSessionYearEndDateKey, context: context);
+      return;
+    }
+
+    // Check if session year has ended
+    final today = DateTime.now();
+    final todayDate = DateTime(today.year, today.month, today.day);
+
+    if (endDate.isBefore(todayDate)) {
+      Utils.showSnackBar(message: sessionYearEndedKey, context: context);
+      return;
+    }
+
     final selectedDate = await showDatePicker(
-        context: context,
-        firstDate: DateTime.now(),
-        lastDate: DateTime.parse(context
-            .read<LeaveSettingsAndSessionYearsCubit>()
-            .getCurrentSessionYear()
-            .endDate!));
+        context: context, firstDate: todayDate, lastDate: endDate);
     if (selectedDate != null) {
       _selectedFromDate = selectedDate;
 
@@ -124,13 +160,32 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
   void onTapToDate() async {
     if (_selectedFromDate != null) {
+      final endDateString = context
+          .read<LeaveSettingsAndSessionYearsCubit>()
+          .getCurrentSessionYear()
+          .endDate;
+
+      // Parse the end date safely using Utils
+      final endDate =
+          endDateString != null ? Utils.parseDateSafely(endDateString) : null;
+
+      if (endDate == null) {
+        Utils.showSnackBar(
+            message: invalidSessionYearEndDateKey, context: context);
+        return;
+      }
+
+      // Check if session year has ended
+      final today = DateTime.now();
+      final todayDate = DateTime(today.year, today.month, today.day);
+
+      if (endDate.isBefore(todayDate)) {
+        Utils.showSnackBar(message: sessionYearEndedKey, context: context);
+        return;
+      }
+
       final selectedDate = await showDatePicker(
-          context: context,
-          firstDate: _selectedFromDate!,
-          lastDate: DateTime.parse(context
-              .read<LeaveSettingsAndSessionYearsCubit>()
-              .getCurrentSessionYear()
-              .endDate!));
+          context: context, firstDate: _selectedFromDate!, lastDate: endDate);
       if (selectedDate != null) {
         _selectedToDate = selectedDate;
 
@@ -151,6 +206,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           _selectedFromDate = null;
           _selectedToDate = null;
           _uploadedFiles = [];
+          _publicHolidayNames = {};
           setState(() {});
           Utils.showSnackBar(
               message: leaveAppliedSuccessfullyKey, context: context);
@@ -197,6 +253,16 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                 if (_selectedToDate == null) {
                   Utils.showSnackBar(
                       message: pleaseSelectToDateKey, context: context);
+                  return;
+                }
+
+                // Check if there are any actual working days to apply leave for
+                final hasWorkingDays = _leaveDays.values.any(
+                    (value) => value != 'holiday' && value != 'public_holiday');
+                if (!hasWorkingDays) {
+                  Utils.showSnackBar(
+                      message: noLeaveRequiredForHolidayWeekendKey,
+                      context: context);
                   return;
                 }
 
@@ -281,6 +347,12 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
 
   Widget _buildLeaveDaysWithReasonContainer({required DateTime dateTime}) {
     final selectedLeaveTypeKey = _leaveDays[dateTime];
+    final isWeeklyHoliday = selectedLeaveTypeKey == 'holiday';
+    final isPublicHoliday = selectedLeaveTypeKey == 'public_holiday';
+    final isHoliday = isWeeklyHoliday || isPublicHoliday;
+
+    // Get public holiday name if applicable
+    final publicHolidayTitle = _publicHolidayNames[dateTime];
 
     return Container(
       width: MediaQuery.of(context).size.width,
@@ -290,45 +362,71 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
           right: appContentHorizontalPadding),
       padding: EdgeInsets.all(appContentHorizontalPadding),
       decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surface,
+          color: isHoliday
+              ? Theme.of(context).colorScheme.surface.withValues(alpha: 0.5)
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(8)),
       child: LayoutBuilder(builder: (context, boxConstraints) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextWithFadedBackgroundContainer(
-                backgroundColor: Theme.of(context)
-                    .extension<CustomColors>()!
-                    .totalStaffOverviewBackgroundColor!
-                    .withValues(alpha: 0.1),
-                textColor: Theme.of(context)
-                    .extension<CustomColors>()!
-                    .totalStaffOverviewBackgroundColor!,
-                titleKey:
-                    "${Utils.formatDate(dateTime)} (${Utils.weekDays[dateTime.weekday - 1].tr})"),
+                backgroundColor: isHoliday
+                    ? Colors.red.withValues(alpha: 0.1)
+                    : Theme.of(context)
+                        .extension<CustomColors>()!
+                        .totalStaffOverviewBackgroundColor!
+                        .withValues(alpha: 0.1),
+                textColor: isHoliday
+                    ? Colors.red
+                    : Theme.of(context)
+                        .extension<CustomColors>()!
+                        .totalStaffOverviewBackgroundColor!,
+                titleKey: isWeeklyHoliday
+                    ? "${Utils.formatDate(dateTime)} (${Utils.weekDays[dateTime.weekday - 1].tr}) - ${Utils.getTranslatedLabel(holidayWeekendKey)}"
+                    : isPublicHoliday
+                        ? "${Utils.formatDate(dateTime)} (${Utils.weekDays[dateTime.weekday - 1].tr}) - $publicHolidayTitle"
+                        : "${Utils.formatDate(dateTime)} (${Utils.weekDays[dateTime.weekday - 1].tr})"),
             const SizedBox(
               height: 15.0,
             ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildLeaveTypeContainer(
-                    dateTime: dateTime,
-                    leaveTypeKey: fullDayKey,
-                    heightAndWidth: boxConstraints.maxWidth * (0.3),
-                    isSelected: selectedLeaveTypeKey == fullDayKey),
-                _buildLeaveTypeContainer(
-                    dateTime: dateTime,
-                    leaveTypeKey: firstHalfKey,
-                    heightAndWidth: boxConstraints.maxWidth * (0.3),
-                    isSelected: selectedLeaveTypeKey == firstHalfKey),
-                _buildLeaveTypeContainer(
-                    dateTime: dateTime,
-                    leaveTypeKey: secondHalfKey,
-                    heightAndWidth: boxConstraints.maxWidth * (0.3),
-                    isSelected: selectedLeaveTypeKey == secondHalfKey),
-              ],
-            ),
+            if (isHoliday)
+              // Show message for holiday/weekend/public holiday days
+              Center(
+                child: CustomTextContainer(
+                  textKey: isPublicHoliday
+                      ? "${Utils.getTranslatedLabel(publicHolidayKey)}: $publicHolidayTitle"
+                      : Utils.getTranslatedLabel(
+                          noLeaveRequiredForHolidayWeekendKey),
+                  style: TextStyle(
+                    color: Colors.red,
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              )
+            else
+              // Show normal leave type options for working days
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildLeaveTypeContainer(
+                      dateTime: dateTime,
+                      leaveTypeKey: fullDayKey,
+                      heightAndWidth: boxConstraints.maxWidth * (0.3),
+                      isSelected: selectedLeaveTypeKey == fullDayKey),
+                  _buildLeaveTypeContainer(
+                      dateTime: dateTime,
+                      leaveTypeKey: firstHalfKey,
+                      heightAndWidth: boxConstraints.maxWidth * (0.3),
+                      isSelected: selectedLeaveTypeKey == firstHalfKey),
+                  _buildLeaveTypeContainer(
+                      dateTime: dateTime,
+                      leaveTypeKey: secondHalfKey,
+                      heightAndWidth: boxConstraints.maxWidth * (0.3),
+                      isSelected: selectedLeaveTypeKey == secondHalfKey),
+                ],
+              ),
           ],
         );
       }),
@@ -395,7 +493,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                                     _selectedFromDate != null
                                         ? CustomTextContainer(
                                             textKey:
-                                                "(${Utils.formatDate(_selectedFromDate!)})")
+                                                "${Utils.formatDate(_selectedFromDate!)} (${Utils.weekDays[_selectedFromDate!.weekday - 1].tr})")
                                         : const SizedBox()
                                   ],
                                 ),
@@ -420,7 +518,7 @@ class _ApplyLeaveScreenState extends State<ApplyLeaveScreen> {
                                     _selectedToDate != null
                                         ? CustomTextContainer(
                                             textKey:
-                                                "(${Utils.formatDate(_selectedToDate!)})")
+                                                "${Utils.formatDate(_selectedToDate!)} (${Utils.weekDays[_selectedToDate!.weekday - 1].tr})")
                                         : const SizedBox()
                                   ],
                                 ),

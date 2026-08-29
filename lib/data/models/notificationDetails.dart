@@ -4,10 +4,12 @@ class NotificationDetails {
   final String? message;
   final String? image;
   final String? sendTo;
+  final int? isCustom;
   final int? sessionYearId;
   final int? schoolId;
   final String? createdAt;
   final String? updatedAt;
+  final String? type;
 
   NotificationDetails({
     this.id,
@@ -15,10 +17,12 @@ class NotificationDetails {
     this.message,
     this.image,
     this.sendTo,
+    this.isCustom,
     this.sessionYearId,
     this.schoolId,
     this.createdAt,
     this.updatedAt,
+    this.type,
   });
 
   NotificationDetails copyWith({
@@ -27,10 +31,12 @@ class NotificationDetails {
     String? message,
     String? image,
     String? sendTo,
+    int? isCustom,
     int? sessionYearId,
     int? schoolId,
     String? createdAt,
     String? updatedAt,
+    String? type,
   }) {
     return NotificationDetails(
       id: id ?? this.id,
@@ -38,10 +44,12 @@ class NotificationDetails {
       message: message ?? this.message,
       image: image ?? this.image,
       sendTo: sendTo ?? this.sendTo,
+      isCustom: isCustom ?? this.isCustom,
       sessionYearId: sessionYearId ?? this.sessionYearId,
       schoolId: schoolId ?? this.schoolId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      type: type ?? this.type,
     );
   }
 
@@ -51,10 +59,12 @@ class NotificationDetails {
         message = json['message'] as String?,
         image = json['image'] as String?,
         sendTo = json['send_to'] as String?,
+        isCustom = json['is_custom'] as int?,
         sessionYearId = json['session_year_id'] as int?,
         schoolId = json['school_id'] as int?,
         createdAt = json['created_at'] as String?,
-        updatedAt = json['updated_at'] as String?;
+        updatedAt = json['updated_at'] as String?,
+        type = json['type'] as String?;
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -62,9 +72,11 @@ class NotificationDetails {
         'message': message,
         'image': image,
         'send_to': sendTo,
+        'is_custom': isCustom,
         'session_year_id': sessionYearId,
         'school_id': schoolId,
         'created_at': createdAt,
-        'updated_at': updatedAt
+        'updated_at': updatedAt,
+        'type': type,
       };
 }

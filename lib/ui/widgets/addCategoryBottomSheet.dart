@@ -11,12 +11,14 @@ class AddCategoryBottomSheet extends StatefulWidget {
   final Function(String type, String name)? onAddCategory;
   final Function(int id, String type, String name)? onUpdateCategory;
   final DiaryCategory? categoryToEdit;
+  final String? type;
 
   const AddCategoryBottomSheet({
     super.key,
     this.onAddCategory,
     this.onUpdateCategory,
     this.categoryToEdit,
+    this.type,
   });
 
   @override
@@ -35,6 +37,8 @@ class _AddCategoryBottomSheetState extends State<AddCategoryBottomSheet> {
     if (isEditMode) {
       selectedType = widget.categoryToEdit!.type;
       nameController.text = widget.categoryToEdit!.name;
+    } else {
+      selectedType = widget.type ?? "positive";
     }
   }
 

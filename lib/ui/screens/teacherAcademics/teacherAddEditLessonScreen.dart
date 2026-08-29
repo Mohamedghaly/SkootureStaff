@@ -101,7 +101,9 @@ class _TeacherAddEditLessonScreenState
         context
             .read<ClassSectionsAndSubjectsCubit>()
             .getClassSectionsAndSubjects(
-                classSectionId: [_selectedClassSections!.first.id ?? 0],
+                classSectionId: _selectedClassSections?.isNotEmpty ?? false
+                    ? [_selectedClassSections!.first.id ?? 0]
+                    : [],
                 teacherId: context.read<AuthCubit>().getUserDetails().id ?? 0);
       }
     });
@@ -143,13 +145,13 @@ class _TeacherAddEditLessonScreenState
   }
 
   List<int> _getClassSectionIds() {
-    return _selectedClassSections!.map((e) => e.id ?? 0).toList();
+    return (_selectedClassSections ?? []).map((e) => e.id ?? 0).toList();
   }
 
   void changeSelectedClassSection(List<ClassSection>? classSection,
       {bool fetchNewSubjects = true}) {
     _selectedClassSections = classSection ?? [];
-    if (fetchNewSubjects && _selectedClassSections!.isNotEmpty) {
+    if (fetchNewSubjects && (_selectedClassSections?.isNotEmpty ?? false)) {
       context
           .read<ClassSectionsAndSubjectsCubit>()
           .getNewSubjectsFromSelectedClassSectionIndex(
@@ -187,7 +189,7 @@ class _TeacherAddEditLessonScreenState
       return;
     }
 
-    if (_selectedClassSections!.isEmpty) {
+    if (_selectedClassSections?.isEmpty ?? true) {
       showErrorMessage(Utils.getTranslatedLabel(noClassSectionSelectedKey));
       return;
     }
@@ -208,8 +210,7 @@ class _TeacherAddEditLessonScreenState
               _lessonDescriptionTextEditingController.text.trim(),
           lessonName: _lessonNameTextEditingController.text.trim(),
           lessonId: widget.lesson!.id,
-          classSectionId:
-              _selectedClassSections!.map((e) => e.id ?? 0).toList(),
+          classSectionId: _getClassSectionIds(),
           classSubjectId: _selectedSubject?.classSubjectId ?? 0,
           files: _addedStudyMaterials,
         );
@@ -233,8 +234,7 @@ class _TeacherAddEditLessonScreenState
     }
 
     context.read<CreateLessonCubit>().createLesson(
-          classSectionId:
-              _selectedClassSections!.map((e) => e.id ?? 0).toList(),
+          classSectionId: _getClassSectionIds(),
           files: _addedStudyMaterials,
           classSubjectId: _selectedSubject?.classSubjectId ?? 0,
           lessonDescription:
@@ -290,13 +290,9 @@ class _TeacherAddEditLessonScreenState
             : BlocConsumer<CreateLessonCubit, CreateLessonState>(
                 listener: (context, state) {
                   if (state is CreateLessonSuccess) {
+                    Get.back(result: true);
                     Utils.showSnackBar(
                         context: context, message: lessonAddedKey);
-                    _lessonDescriptionTextEditingController.text = "";
-                    _lessonNameTextEditingController.text = "";
-                    _addedStudyMaterials = [];
-                    refreshLessonsInPreviousPage = true;
-                    setState(() {});
                   } else if (state is CreateLessonFailure) {
                     Utils.showSnackBar(
                       context: context,
@@ -343,14 +339,14 @@ class _TeacherAddEditLessonScreenState
             ClassSectionsAndSubjectsState>(
           listener: (context, state) {
             if (state is ClassSectionsAndSubjectsFetchSuccess) {
-              if (_selectedClassSections!.isEmpty &&
+              if ((_selectedClassSections?.isEmpty ?? true) &&
                   state.classSections.isNotEmpty) {
                 final firstClassSection = state.classSections.first;
                 changeSelectedClassSection([firstClassSection],
                     fetchNewSubjects: false);
               }
-              if (_selectedSubject == null) {
-                changeSelectedTeacherSubject(state.subjects.firstOrNull);
+              if (_selectedSubject == null && state.subjects.isNotEmpty) {
+                changeSelectedTeacherSubject(state.subjects.first);
               }
             }
           },
@@ -363,7 +359,7 @@ class _TeacherAddEditLessonScreenState
                       context
                           .read<ClassSectionsAndSubjectsCubit>()
                           .getClassSectionsAndSubjects(
-                              classSectionId: [_selectedClassSections],
+                              classSectionId: _getClassSectionIds(),
                               teacherId: context
                                       .read<AuthCubit>()
                                       .getUserDetails()
@@ -393,7 +389,7 @@ class _TeacherAddEditLessonScreenState
                             );
                           }
                         },
-                        titleKey: _selectedClassSections!.isEmpty
+                        titleKey: (_selectedClassSections?.isEmpty ?? true)
                             ? classKey
                             : _selectedClassSections!
                                 .map((e) => e.fullName ?? "")
@@ -408,11 +404,22 @@ class _TeacherAddEditLessonScreenState
                         isDisabled: widget.lesson != null,
                         onTap: () {
                           if (state is ClassSectionsAndSubjectsFetchSuccess) {
+                            // Check if subjects list is empty
+                            if (state.subjects.isEmpty) {
+                              Utils.showSnackBar(
+                                message:
+                                    Utils.getTranslatedLabel(noSubjectsKey),
+                                context: context,
+                              );
+                              return;
+                            }
+
                             Utils.showBottomSheet(
                                 child:
                                     FilterSelectionBottomsheet<TeacherSubject>(
                                   showFilterByLabel: false,
-                                  selectedValue: _selectedSubject!,
+                                  selectedValue:
+                                      _selectedSubject ?? state.subjects.first,
                                   titleKey: subjectKey,
                                   values: state.subjects,
                                   onSelection: (value) {
@@ -477,6 +484,7 @@ class _TeacherAddEditLessonScreenState
                         customTitleKey: addStudyMaterialKey,
                         onTap: () {
                           FocusScope.of(context).unfocus();
+
                           Utils.showBottomSheet(
                             child: AddStudyMaterialBottomsheet(
                               editFileDetails: false,

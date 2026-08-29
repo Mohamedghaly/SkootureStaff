@@ -49,6 +49,27 @@ class ParentsUserChatHistoryCubit extends Cubit<ParentsUserChatHistoryState> {
     );
   }
 
+  /// Silently refresh chat history without showing loading indicator.
+  /// Used after WebSocket reconnection to pick up missed messages.
+  void silentRefresh() async {
+    if (state is! ParentsUserChatHistoryFetchSuccess) return;
+
+    try {
+      final freshHistory = await _chatRepository.getUserChatHistory(
+        role: ChatUserRole.guardian,
+        page: 1,
+      );
+
+      if (!isClosed) {
+        emit(ParentsUserChatHistoryFetchSuccess(
+          userChatHistory: freshHistory,
+        ));
+      }
+    } catch (_) {
+      // Silent — don't show any error for background refresh
+    }
+  }
+
   bool get hasMore {
     if (state is ParentsUserChatHistoryFetchSuccess) {
       final history =
@@ -102,6 +123,7 @@ class ParentsUserChatHistoryCubit extends Cubit<ParentsUserChatHistoryState> {
     required String message,
     required String updatedAt,
     required bool incrementUnreadCount,
+    bool? hasAttachment,
   }) async {
     if (state is ParentsUserChatHistoryFetchSuccess) {
       final history =
@@ -118,6 +140,7 @@ class ParentsUserChatHistoryCubit extends Cubit<ParentsUserChatHistoryState> {
         lastMessage: message,
         updatedAt: updatedAt,
         unreadCount: incrementUnreadCount ? chatContact.unreadCount + 1 : null,
+        hasAttachment: hasAttachment,
       );
 
       final newContacts = history.chatContacts

@@ -36,4 +36,39 @@ class UserDetailsRepository {
       throw ApiException(e.toString());
     }
   }
+
+  Future<({List<UserDetails> users, int currentPage, int totalPage})>
+      getUsersByRole(
+          {int? page,
+          required List<String> roles,
+          String? search,
+          String? type}) async {
+    try {
+      final body = {
+        "page": page ?? 1,
+        for (int i = 0; i < roles.length; i++) "roles[$i]": roles[i],
+      };
+
+      // Add search parameter if provided
+      if (search != null && search.trim().isNotEmpty) {
+        body["search"] = search.trim();
+      }
+
+      // Add type parameter if provided
+      if (type != null && type.trim().isNotEmpty) {
+        body["type"] = type.trim();
+      }
+
+      final result = await Api.post(url: Api.getUsersByRole, body: body);
+      return (
+        users: ((result['data']['data'] ?? []) as List)
+            .map((user) => UserDetails.fromJson(Map.from(user ?? {})))
+            .toList(),
+        currentPage: (result['data']['current_page'] as int),
+        totalPage: (result['data']['last_page'] as int),
+      );
+    } catch (e) {
+      throw ApiException(e.toString());
+    }
+  }
 }

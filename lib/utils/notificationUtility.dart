@@ -1,17 +1,12 @@
-// ignore_for_file: library_prefixes
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
-import 'package:eschool_saas_staff/data/models/notificationDetails.dart'
-    as notificationDetails;
 import 'package:eschool_saas_staff/app/routes.dart';
-import 'package:eschool_saas_staff/data/repositories/announcementRepository.dart';
-import 'package:eschool_saas_staff/data/repositories/authRepository.dart';
+import 'package:eschool_saas_staff/ui/screens/home/widgets/chatContainer/chatScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/leaves/leavesScreen.dart';
 import 'package:eschool_saas_staff/utils/api.dart';
-import 'package:eschool_saas_staff/utils/hiveBoxKeys.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:eschool_saas_staff/utils/utils.dart';
 
@@ -19,30 +14,226 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:get/get.dart';
-import 'package:hive_flutter/adapters.dart';
 import 'package:path_provider/path_provider.dart';
 
 class NotificationUtility {
-  static String notificationType = "Notification";
+  static String notificationType = "custom";
   static String leaveType = "Leave";
   static String messageType = "Message";
+  static String attendanceType = "Attendance";
+  static String payrollType = "Payroll";
+  static String transportationType = "Transportation";
 
   //
+
+  static Future<void> _handleMessageNotification(
+      Map<String, dynamic> data) async {
+    debugPrint(
+        '[Broadcast][message] Processing message notification with data: $data');
+
+    // Check if we have the required data for direct chat navigation
+    final String? receiverIdStr = data['receiver_id'] ??
+        data['receiverId'] ??
+        data['sender_id'] ??
+        data['senderId'];
+    final String? teacherName = data['teacher_name'] ??
+        data['teacherName'] ??
+        data['sender_name'] ??
+        data['senderName'];
+    final String? teacherImage = data['teacher_image'] ??
+        data['teacherImage'] ??
+        data['sender_image'] ??
+        data['senderImage'];
+    final String? subjectName =
+        data['subject_name'] ?? data['subjectName'] ?? data['subject'];
+
+    if (receiverIdStr != null && teacherName != null) {
+      // We have enough data to navigate directly to chat
+      try {
+        final int receiverId = int.parse(receiverIdStr);
+        final String image = teacherImage ?? '';
+
+        debugPrint(
+            '[Broadcast][message] Navigating directly to chat with receiverId=$receiverId, teacherName=$teacherName');
+
+        if (Get.currentRoute != Routes.chatScreen) {
+          // Add a flag to indicate this chat was opened from notification
+          final arguments = ChatScreen.buildArguments(
+            receiverId: receiverId,
+            receiverName: teacherName,
+            receiverImage: image,
+          );
+          arguments['fromNotification'] =
+              true; // Flag to indicate notification navigation
+
+          Get.toNamed(
+            Routes.chatScreen,
+            arguments: arguments,
+          );
+        }
+      } catch (e) {
+        debugPrint(
+            '[Broadcast][message][error] Failed to parse receiverId: $e');
+        // Fallback to chat contacts
+        _navigateToChatContacts();
+      }
+    } else {
+      // Not enough data for direct navigation, fallback to chat contacts
+      debugPrint(
+          '[Broadcast][message] Insufficient data for direct chat navigation, falling back to chat contacts');
+      debugPrint(
+          '[Broadcast][message] Available data: receiverId=$receiverIdStr, teacherName=$teacherName, teacherImage=$teacherImage, subjectName=$subjectName');
+      _navigateToChatContacts();
+    }
+  }
+
+  // Helper method to navigate to chat contacts
+  static void _navigateToChatContacts() {
+    debugPrint('[Broadcast][message] Navigating to chat contacts');
+    if (Get.currentRoute != Routes.chatContacts) {
+      Get.toNamed(Routes.chatContacts);
+    }
+  }
+
+  /// Handle attendance notification and navigate to teacher attendance screen
+  static Future<void> _handleAttendanceNotification(
+      Map<String, dynamic> data) async {
+    debugPrint(
+        '[Broadcast][attendance] Processing attendance notification with data: $data');
+
+    try {
+      // Check if we're not already on the attendance screen
+      if (Get.currentRoute != Routes.teacherMyAttendanceScreen) {
+        debugPrint(
+            '[Broadcast][attendance] Navigating to teacher my attendance screen');
+
+        // Add a small delay to ensure the app is ready for navigation
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Navigate to teacher attendance screen
+        await Get.toNamed(Routes.teacherMyAttendanceScreen);
+
+        debugPrint(
+            '[Broadcast][attendance] Successfully navigated to teacher attendance screen');
+      } else {
+        debugPrint(
+            '[Broadcast][attendance] Already on teacher attendance screen, skipping navigation');
+      }
+    } catch (e) {
+      debugPrint(
+          '[Broadcast][attendance][error] Failed to navigate to attendance screen: $e');
+    }
+  }
+
+  /// Handle payroll notification and navigate to my payroll screen
+  static Future<void> _handlePayrollNotification(
+      Map<String, dynamic> data) async {
+    debugPrint(
+        '[Broadcast][payroll] Processing payroll notification with data: $data');
+
+    try {
+      // Check if we're not already on the payroll screen
+      if (Get.currentRoute != Routes.myPayrollScreen) {
+        debugPrint('[Broadcast][payroll] Navigating to my payroll screen');
+
+        // Add a small delay to ensure the app is ready for navigation
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Navigate to my payroll screen
+        await Get.toNamed(Routes.myPayrollScreen);
+
+        debugPrint(
+            '[Broadcast][payroll] Successfully navigated to my payroll screen');
+      } else {
+        debugPrint(
+            '[Broadcast][payroll] Already on my payroll screen, skipping navigation');
+      }
+    } catch (e) {
+      debugPrint(
+          '[Broadcast][payroll][error] Failed to navigate to payroll screen: $e');
+    }
+  }
+
+  /// Handle transportation notification and navigate to transport enroll home screen
+  static Future<void> _handleTransportationNotification(
+      Map<String, dynamic> data) async {
+    debugPrint(
+        '[Broadcast][transportation] Processing transportation notification with data: $data');
+
+    try {
+      // Extract userId from the notification data
+      // Check multiple possible key formats for userId
+      final String? userIdStr = data['user_id'] ??
+          data['userId'] ??
+          data['staff_id'] ??
+          data['staffId'];
+
+      if (userIdStr != null) {
+        debugPrint(
+            '[Broadcast][transportation] Extracted userId: $userIdStr from notification data');
+      } else {
+        debugPrint(
+            '[Broadcast][transportation] No userId found in notification data, using logged-in user');
+      }
+
+      // Check if we're not already on the transport home screen
+      if (Get.currentRoute != Routes.transportEnrollHomeScreen) {
+        debugPrint(
+            '[Broadcast][transportation] Navigating to transport enroll home screen');
+
+        // Add a small delay to ensure the app is ready for navigation
+        await Future.delayed(const Duration(milliseconds: 100));
+
+        // Navigate to transport enroll home screen
+        // Note: TransportHomeScreen fetches userId from AuthCubit internally
+        // The userId from notification is logged for debugging purposes
+        await Get.toNamed(Routes.transportEnrollHomeScreen);
+
+        debugPrint(
+            '[Broadcast][transportation] Successfully navigated to transport enroll home screen');
+      } else {
+        debugPrint(
+            '[Broadcast][transportation] Already on transport enroll home screen, skipping navigation');
+      }
+    } catch (e) {
+      debugPrint(
+          '[Broadcast][transportation][error] Failed to navigate to transport screen: $e');
+    }
+  }
 
   static void _onTapNotificationScreenNavigateCallback({
     required Map<String, dynamic> notificationData,
   }) {
-    final type = (notificationData['type'] ?? "").toString();
+    print("This is the Notification Data ${notificationData}");
+    final type = (notificationData['type'] ?? "").toString().toLowerCase();
+
+    debugPrint('[Notification] Processing notification with type: $type');
 
     if (type.isNotEmpty) {
       if (type == notificationType) {
         Get.toNamed(Routes.notificationsScreen);
-      } else if (type == leaveType) {
-        Get.toNamed(Routes.leaveRequestScreen);
-      } else if (type == messageType) {
+      } else if (type == leaveType.toLowerCase()) {
+        Get.toNamed(Routes.leavesScreen,
+            arguments: LeavesScreen.buildArguments(showMyLeaves: true));
+        // Get.toNamed(Routes.leaveRequestScreen);
+      } else if (type == messageType.toLowerCase()) {
         if (Get.currentRoute != Routes.chatContacts) {
-          Get.toNamed(Routes.chatContacts);
+          _handleMessageNotification(notificationData);
         }
+      } else if (type == attendanceType.toLowerCase()) {
+        // Handle attendance notification with dedicated async method
+        debugPrint('[Notification] Matched attendance type, navigating...');
+        _handleAttendanceNotification(notificationData);
+      } else if (type == payrollType.toLowerCase()) {
+        // Handle payroll notification with dedicated async method
+        debugPrint('[Notification] Matched payroll type, navigating...');
+        _handlePayrollNotification(notificationData);
+      } else if (type == transportationType.toLowerCase()) {
+        // Handle transportation notification with dedicated async method
+        debugPrint('[Notification] Matched transportation type, navigating...');
+        _handleTransportationNotification(notificationData);
+      } else {
+        debugPrint('[Notification] Unknown notification type: $type');
       }
     }
   }
@@ -94,9 +285,33 @@ class NotificationUtility {
     _initNotificationListener();
   }
 
+  static Future<void> recheckNotificationPermissions() async {
+    try {
+      // Check Firebase Messaging permission status
+      NotificationSettings notificationSettings =
+          await FirebaseMessaging.instance.getNotificationSettings();
+
+      debugPrint(
+          'Rechecking notification permissions: ${notificationSettings.authorizationStatus}');
+
+      // If permission is now granted, initialize and register token
+      if (notificationSettings.authorizationStatus ==
+              AuthorizationStatus.authorized ||
+          notificationSettings.authorizationStatus ==
+              AuthorizationStatus.provisional) {
+        // Initialize listeners if not already done
+        _initNotificationListener();
+
+        debugPrint('Notification services re-initialized successfully');
+      }
+    } catch (e) {
+      debugPrint('Failed to recheck notification permissions: $e');
+    }
+  }
+
   static void _initNotificationListener() {
     if (kDebugMode) {
-      print("Notification setup done");
+      debugPrint("Notification setup done");
     }
     FirebaseMessaging.instance.setForegroundNotificationPresentationOptions(
       alert: false, // Required to display a heads up notification
@@ -109,8 +324,8 @@ class NotificationUtility {
 
     FirebaseMessaging.instance.getInitialMessage().then((value) {
       if (kDebugMode) {
-        print("Initial notification");
-        print(value?.toMap());
+        debugPrint("Initial notification");
+        debugPrint(value?.toMap().toString());
       }
       _onTapNotificationScreenNavigateCallback(
         notificationData: value?.data ?? {},
@@ -123,22 +338,7 @@ class NotificationUtility {
   }
 
   static void foregroundMessageListener(RemoteMessage remoteMessage) async {
-    //await FirebaseMessaging.instance.getToken();
-
     final additionalData = remoteMessage.data;
-
-    final type = (additionalData['type'] ?? "").toString();
-
-    if (type == notificationType) {
-      AnnouncementRepository.addNotification(
-          notificationDetails: notificationDetails.NotificationDetails(
-        createdAt: DateTime.now().toString(),
-        id: AuthRepository.getUserDetails().id,
-        image: remoteMessage.data['image'] ?? "",
-        message: remoteMessage.notification?.body ?? "",
-        title: remoteMessage.notification?.title ?? "",
-      ));
-    }
 
     createLocalNotification(
         dismissable: true,
@@ -427,23 +627,9 @@ class NotificationUtility {
 Future<void> onBackgroundMessage(
   RemoteMessage remoteMessage,
 ) async {
-  final additionalData = remoteMessage.data;
-  final type = (additionalData['type'] ?? "").toString();
-
   if (kDebugMode) {
-    print(remoteMessage.toMap());
+    debugPrint(remoteMessage.toMap().toString());
   }
-
-  if (type == "Notification") {
-    await Hive.initFlutter();
-    await Hive.openBox(authBoxKey);
-    await AnnouncementRepository.addNotificationTemporarily(
-        data: notificationDetails.NotificationDetails(
-      createdAt: DateTime.now().toString(),
-      id: AuthRepository.getUserDetails().id,
-      image: remoteMessage.data['image'] ?? "",
-      message: remoteMessage.notification?.body ?? "",
-      title: remoteMessage.notification?.title ?? "",
-    ).toJson());
-  }
+  // Background message received - notification will be shown by Firebase
+  // Data will be fetched from API when user opens the notification screen
 }

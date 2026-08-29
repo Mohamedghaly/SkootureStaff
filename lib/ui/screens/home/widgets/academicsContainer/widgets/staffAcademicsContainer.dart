@@ -1,19 +1,46 @@
 import 'package:eschool_saas_staff/app/routes.dart';
 import 'package:eschool_saas_staff/cubits/authentication/authCubit.dart';
+import 'package:eschool_saas_staff/cubits/transport/vehicleAssignmentStatusCubit.dart';
 import 'package:eschool_saas_staff/cubits/userDetails/staffAllowedPermissionsAndModulesCubit.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/menusWithTitleContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/leaves/leavesScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffAttendance/staffAttendanceScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/staffsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/teachersScreen.dart';
 import 'package:eschool_saas_staff/ui/widgets/customMenuTile.dart';
+import 'package:eschool_saas_staff/ui/widgets/transportNavigationTile.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:eschool_saas_staff/utils/systemModulesAndPermissions.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
 
-class StaffAcademicsContainer extends StatelessWidget {
+class StaffAcademicsContainer extends StatefulWidget {
   const StaffAcademicsContainer({super.key});
+
+  @override
+  State<StaffAcademicsContainer> createState() =>
+      _StaffAcademicsContainerState();
+}
+
+class _StaffAcademicsContainerState extends State<StaffAcademicsContainer> {
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration.zero, () {
+      _fetchVehicleAssignmentStatus();
+    });
+  }
+
+  void _fetchVehicleAssignmentStatus() {
+    final authCubit = context.read<AuthCubit>();
+    final userDetails = authCubit.getUserDetails();
+    final userId = userDetails.id ?? 0;
+
+    context.read<VehicleAssignmentStatusCubit>().fetchVehicleAssignmentStatus(
+          userId: userId,
+        );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,19 +72,24 @@ class StaffAcademicsContainer extends StatelessWidget {
               ])
             : const SizedBox(),
         MenusWithTitleContainer(title: leaveKey, menus: [
-          CustomMenuTile(
-              iconImageName: "apply_leave.svg",
-              titleKey: applyLeaveKey,
-              onTap: () {
-                Get.toNamed(Routes.applyLeaveScreen);
-              }),
-          CustomMenuTile(
-              iconImageName: "my_leave.svg",
-              titleKey: myLeaveKey,
-              onTap: () {
-                Get.toNamed(Routes.leavesScreen,
-                    arguments: LeavesScreen.buildArguments(showMyLeaves: true));
-              }),
+          !context.read<AuthCubit>().getUserDetails().isSchoolAdmin()
+              ? CustomMenuTile(
+                  iconImageName: "apply_leave.svg",
+                  titleKey: applyLeaveKey,
+                  onTap: () {
+                    Get.toNamed(Routes.applyLeaveScreen);
+                  })
+              : const SizedBox(),
+          !context.read<AuthCubit>().getUserDetails().isSchoolAdmin()
+              ? CustomMenuTile(
+                  iconImageName: "my_leave.svg",
+                  titleKey: myLeaveKey,
+                  onTap: () {
+                    Get.toNamed(Routes.leavesScreen,
+                        arguments:
+                            LeavesScreen.buildArguments(showMyLeaves: true));
+                  })
+              : const SizedBox(),
           (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
                       moduleId: staffLeaveManagementModuleId.toString()) &&
                   staffAllowedPermissionsAndModulesCubit.isPermissionGiven(
@@ -98,6 +130,41 @@ class StaffAcademicsContainer extends StatelessWidget {
                     onTap: () {
                       Get.toNamed(Routes.studentsAttendanceScreen);
                     }),
+                // Teacher/Staff Attendance - School Admin or staff with permission
+                (context.read<AuthCubit>().getUserDetails().isSchoolAdmin() ||
+                        (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
+                                moduleId: staffAttendanceManagementModuleId
+                                    .toString()) &&
+                            staffAllowedPermissionsAndModulesCubit
+                                .isPermissionGiven(
+                                    permission:
+                                        viewStaffAttendancePermissionKey)))
+                    ? CustomMenuTile(
+                        iconImageName: "my_attendance.svg",
+                        titleKey: staffAttendanceKey,
+                        onTap: () {
+                          final canEdit = context
+                                  .read<AuthCubit>()
+                                  .getUserDetails()
+                                  .isSchoolAdmin() ||
+                              staffAllowedPermissionsAndModulesCubit
+                                  .isPermissionGiven(
+                                      permission:
+                                          editStaffAttendancePermissionKey);
+                          Get.toNamed(Routes.staffAttendanceScreen,
+                              arguments: StaffAttendanceScreen.buildArguments(
+                                  canEdit: canEdit));
+                        })
+                    : const SizedBox(),
+
+                !context.read<AuthCubit>().getUserDetails().isSchoolAdmin()
+                    ? CustomMenuTile(
+                        iconImageName: "my_attendance.svg",
+                        titleKey: myAttendanceKey,
+                        onTap: () {
+                          Get.toNamed(Routes.teacherMyAttendanceScreen);
+                        })
+                    : const SizedBox(),
               ])
             : const SizedBox(),
         (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
@@ -151,6 +218,13 @@ class StaffAcademicsContainer extends StatelessWidget {
                     : const SizedBox(),
               ])
             : const SizedBox(),
+        !context.read<AuthCubit>().getUserDetails().isSchoolAdmin() &&
+                staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
+                    moduleId: transportationModuleId.toString())
+            ? MenusWithTitleContainer(title: transportationKey, menus: [
+                const TransportNavigationTile(),
+              ])
+            : const SizedBox(),
         (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
                         moduleId: announcementManagementModuleId.toString()) &&
                     staffAllowedPermissionsAndModulesCubit.isPermissionGiven(
@@ -186,6 +260,17 @@ class StaffAcademicsContainer extends StatelessWidget {
                           Get.toNamed(Routes.manageAnnouncementScreen);
                         })
                     : const SizedBox(),
+              ])
+            : const SizedBox(),
+        (staffAllowedPermissionsAndModulesCubit.isPermissionGiven(
+                permission: createStudentDiaryPermissionKey))
+            ? MenusWithTitleContainer(title: studentDiaryKey, menus: [
+                CustomMenuTile(
+                    iconImageName: "note_book.svg",
+                    titleKey: addStudentDiaryKey,
+                    onTap: () {
+                      Get.toNamed(Routes.studentDiarySelectionScreen);
+                    }),
               ])
             : const SizedBox(),
         (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
@@ -231,12 +316,17 @@ class StaffAcademicsContainer extends StatelessWidget {
                 //
                 staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
                         moduleId: expenseManagementModuleId.toString())
-                    ? CustomMenuTile(
-                        iconImageName: "allowances_and_deductions.svg",
-                        titleKey: allowancesAndDeductionsKey,
-                        onTap: () {
-                          Get.toNamed(Routes.allowancesAndDeductionsScreen);
-                        })
+                    ? !context
+                            .read<AuthCubit>()
+                            .getUserDetails()
+                            .isSchoolAdmin()
+                        ? CustomMenuTile(
+                            iconImageName: "allowances_and_deductions.svg",
+                            titleKey: allowancesAndDeductionsKey,
+                            onTap: () {
+                              Get.toNamed(Routes.allowancesAndDeductionsScreen);
+                            })
+                        : const SizedBox()
                     : const SizedBox(),
               ])
             : const SizedBox(),

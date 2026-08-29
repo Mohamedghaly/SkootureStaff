@@ -1,4 +1,5 @@
 import 'package:eschool_saas_staff/data/models/leaveSettings.dart';
+import 'package:eschool_saas_staff/data/models/publicHoliday.dart';
 import 'package:eschool_saas_staff/data/models/sessionYear.dart';
 import 'package:eschool_saas_staff/data/repositories/academicRepository.dart';
 import 'package:eschool_saas_staff/data/repositories/leaveRepository.dart';
@@ -17,9 +18,12 @@ class LeaveSettingsAndSessionYearsFetchSuccess
     extends LeaveSettingsAndSessionYearsState {
   final LeaveSettings leaveSettings;
   final List<SessionYear> sessionYears;
+  final List<PublicHoliday> publicHolidays;
 
   LeaveSettingsAndSessionYearsFetchSuccess(
-      {required this.leaveSettings, required this.sessionYears});
+      {required this.leaveSettings,
+      required this.sessionYears,
+      required this.publicHolidays});
 }
 
 class LeaveSettingsAndSessionYearsFetchFailure
@@ -29,18 +33,22 @@ class LeaveSettingsAndSessionYearsFetchFailure
   LeaveSettingsAndSessionYearsFetchFailure(this.errorMessage);
 }
 
-class LeaveSettingsAndSessionYearsCubit extends Cubit<LeaveSettingsAndSessionYearsState> {
+class LeaveSettingsAndSessionYearsCubit
+    extends Cubit<LeaveSettingsAndSessionYearsState> {
   final LeaveRepository _leaveRepository = LeaveRepository();
   final AcademicRepository _settingsRepository = AcademicRepository();
 
-  LeaveSettingsAndSessionYearsCubit() : super(LeaveSettingsAndSessionYearsInitial());
+  LeaveSettingsAndSessionYearsCubit()
+      : super(LeaveSettingsAndSessionYearsInitial());
 
   void getLeaveSettingsAndSessionYears() async {
     emit(LeaveSettingsAndSessionYearsFetchInProgress());
     try {
+      final leaveSettingsResult = await _leaveRepository.getLeaveSettings();
       emit(LeaveSettingsAndSessionYearsFetchSuccess(
           sessionYears: await _settingsRepository.getSessionYears(),
-          leaveSettings: await _leaveRepository.getLeaveSettings()));
+          leaveSettings: leaveSettingsResult.leaveSettings,
+          publicHolidays: leaveSettingsResult.publicHolidays));
     } catch (e) {
       emit(LeaveSettingsAndSessionYearsFetchFailure(e.toString()));
     }
@@ -72,5 +80,25 @@ class LeaveSettingsAndSessionYearsCubit extends Cubit<LeaveSettingsAndSessionYea
       return holidayWeekDays;
     }
     return [];
+  }
+
+  /// Returns a map of normalized public holiday dates to their titles.
+  /// The DateTime keys have time set to midnight for reliable comparison.
+  Map<DateTime, String> getPublicHolidayDates() {
+    if (state is LeaveSettingsAndSessionYearsFetchSuccess) {
+      final publicHolidays =
+          (state as LeaveSettingsAndSessionYearsFetchSuccess).publicHolidays;
+      Map<DateTime, String> holidayMap = {};
+      for (var holiday in publicHolidays) {
+        if (holiday.date != null && holiday.title != null) {
+          // Normalize to midnight for reliable date comparison
+          final normalizedDate = DateTime(
+              holiday.date!.year, holiday.date!.month, holiday.date!.day);
+          holidayMap[normalizedDate] = holiday.title!;
+        }
+      }
+      return holidayMap;
+    }
+    return {};
   }
 }

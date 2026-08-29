@@ -39,7 +39,10 @@ class StudentRepository {
       return (result['data'] as List).map((e) {
         return StudentDetails.fromJson(Map.from(e));
       }).toList();
-    } catch (e) {
+    } catch (e, st) {
+      print("This is the ${e}");
+      print("This is the ${st}");
+
       throw ApiException(e.toString());
     }
   }
@@ -54,8 +57,8 @@ class StudentRepository {
       final result = await Api.get(url: Api.getStudents, queryParameters: {
         "class_section_id": classSectionId,
         "page": page ?? 1,
-        "session_year_id": sessionYearId,
-        "search": search,
+        if (sessionYearId != null) "session_year_id": sessionYearId,
+        if (search != null) "search": search,
       });
 
       return (
@@ -67,8 +70,10 @@ class StudentRepository {
         totalPage: (result['data']['last_page'] as int),
       );
     } catch (e, stk) {
+      print("This is the ${e}");
+      print("This is the ${stk}");
       if (kDebugMode) {
-        print(stk.toString());
+        debugPrint(stk.toString());
       }
       throw ApiException(e.toString());
     }
@@ -133,7 +138,8 @@ class StudentRepository {
           .map((e) => Exam.fromExamJson(Map.from(e)))
           .toList();
     } catch (e, st) {
-      print("This is main error $st");
+      debugPrint("This is main error $st");
+      debugPrint("This is main error $e");
       throw ApiException(e.toString());
     }
   }
@@ -142,11 +148,13 @@ class StudentRepository {
     required int examId,
     required int classSubjectId,
     required Map<String, dynamic> marksDataValue,
+    required int status,
   }) async {
     try {
       Map<String, dynamic> queryParameters = {
         "exam_id": examId,
         "class_subject_id": classSubjectId,
+        "status": status,
       };
       await Api.post(
         body: marksDataValue,

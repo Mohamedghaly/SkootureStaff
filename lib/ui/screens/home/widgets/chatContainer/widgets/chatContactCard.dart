@@ -80,9 +80,9 @@ class ChatContactCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 5.0),
                           Text(
-                            Utils.extractTimeFromDateString(contact.updatedAt),
+                            Utils.extractTimeFromDateString(
+                                contact.lastMessageTime ?? contact.updatedAt),
                             maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w400,
@@ -98,7 +98,7 @@ class ChatContactCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              contact.lastMessage ?? '',
+                              contact.displayMessage,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(

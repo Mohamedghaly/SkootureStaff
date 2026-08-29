@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+3
+version: 1.2.0+4
 
 environment:
     sdk: ">=3.0.2 <4.0.0"
@@ -48,14 +48,13 @@ dependencies:
   firebase_auth:
   firebase_messaging:
   flutter_local_notifications: ^18.0.1
-  google_fonts:
   flutter_svg:
   flutter_widget_from_html:
   url_launcher:
   intl: any
   timeago:
   file_picker: ^8.1.4
-  permission_handler:
+  permission_handler: ^12.0.1
   device_info_plus:
   path_provider:
   readmore:
@@ -94,7 +93,7 @@ dependency_overrides:
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/appLogo.png"
+  image_path: "assets/images/staff.png"
   remove_alpha_ios: true
 
 flutter_launcher_name:
@@ -116,7 +115,6 @@ flutter:
 
   assets:
     - assets/images/
-    - google_fonts/
     - assets/languages/
     # - assets/animations/
 
@@ -146,3 +144,21 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/cairo/Cairo-Regular.ttf
+        - asset: assets/fonts/cairo/Cairo-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/cairo/Cairo-Black.ttf
+          weight: 900
+        - asset: assets/fonts/cairo/Cairo-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/cairo/Cairo-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/cairo/Cairo-Light.ttf
+          weight: 300
+        - asset: assets/fonts/cairo/Cairo-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/cairo/Cairo-SemiBold.ttf
+          weight: 600

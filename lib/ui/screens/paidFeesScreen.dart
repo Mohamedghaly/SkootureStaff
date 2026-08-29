@@ -120,7 +120,11 @@ class _PaidFeesScreenState extends State<PaidFeesScreen> {
       builder: (context, state) {
         if (state is StudentsFeeStatusFetchSuccess) {
           if (state.students.isEmpty) {
-            return const SizedBox();
+            return const Center(
+              child: noDataContainer(
+                titleKey: noDataFoundKey,
+              ),
+            );
           }
           return Align(
             alignment: Alignment.topCenter,
@@ -535,7 +539,7 @@ class _StudentPaidFeeDetailsContainerState
                                           ? "-"
                                           : Utils.extractDateFromDateString(
                                               widget.studentDetails
-                                                  .paidFeeDetails!.createdAt!),
+                                                  .paidFeeDetails!.date!),
                                     ),
                                     _buildLeaveDaysAndDateContainer(
                                         title: classKey,

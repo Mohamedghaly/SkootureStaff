@@ -49,6 +49,27 @@ class StudentsUserChatHistoryCubit extends Cubit<StudentsUserChatHistoryState> {
     );
   }
 
+  /// Silently refresh chat history without showing loading indicator.
+  /// Used after WebSocket reconnection to pick up missed messages.
+  void silentRefresh() async {
+    if (state is! StudentsUserChatHistoryFetchSuccess) return;
+
+    try {
+      final freshHistory = await _chatRepository.getUserChatHistory(
+        role: ChatUserRole.student,
+        page: 1,
+      );
+
+      if (!isClosed) {
+        emit(StudentsUserChatHistoryFetchSuccess(
+          userChatHistory: freshHistory,
+        ));
+      }
+    } catch (_) {
+      // Silent — don't show any error for background refresh
+    }
+  }
+
   bool get hasMore {
     if (state is StudentsUserChatHistoryFetchSuccess) {
       final history =
@@ -102,6 +123,7 @@ class StudentsUserChatHistoryCubit extends Cubit<StudentsUserChatHistoryState> {
     required String message,
     required String updatedAt,
     required bool incrementUnreadCount,
+    bool? hasAttachment,
   }) async {
     if (state is StudentsUserChatHistoryFetchSuccess) {
       final history =
@@ -118,6 +140,7 @@ class StudentsUserChatHistoryCubit extends Cubit<StudentsUserChatHistoryState> {
         lastMessage: message,
         updatedAt: updatedAt,
         unreadCount: incrementUnreadCount ? chatContact.unreadCount + 1 : null,
+        hasAttachment: hasAttachment,
       );
 
       final newContacts = history.chatContacts

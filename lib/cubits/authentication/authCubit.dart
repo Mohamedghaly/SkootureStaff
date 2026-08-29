@@ -43,6 +43,11 @@ class AuthCubit extends Cubit<AuthState> {
     authRepository.setUserDetails(userDetails);
     authRepository.setIsLogIn(true);
 
+    // Store FCM token from login response
+    if (userDetails.fcmId != null && userDetails.fcmId!.isNotEmpty) {
+      authRepository.setFcmToken(userDetails.fcmId!);
+    }
+
     //emit new state
     emit(
       Authenticated(userDetails: userDetails),
@@ -63,25 +68,38 @@ class AuthCubit extends Cubit<AuthState> {
     return false;
   }
 
+  bool isDriver() {
+    if (state is Authenticated) {
+      final userDetails = (state as Authenticated).userDetails;
+      final roles = userDetails.getRoles().toLowerCase();
+      return roles.contains('driver') || roles.contains('helper');
+    }
+    return false;
+  }
+
   void signOut() {
     authRepository.signOutUser();
     emit(Unauthenticated());
   }
 
+  /// Updates the user details in the auth state and persists to storage
+  /// This method ensures all fields including custom fields are properly updated
   void updateuserDetail(UserDetails userdetails) {
     UserDetails currentUserDetails = (state as Authenticated).userDetails;
 
     currentUserDetails = currentUserDetails.copyWith(
-        firstName: userdetails.firstName,
-        lastName: userdetails.lastName,
-        mobile: userdetails.mobile,
-        email: userdetails.email,
-        dob: userdetails.dob,
-        currentAddress: userdetails.currentAddress,
-        permanentAddress: userdetails.permanentAddress,
-        gender: userdetails.gender,
-        image: userdetails.image,
-        fullName: userdetails.fullName);
+      firstName: userdetails.firstName,
+      lastName: userdetails.lastName,
+      mobile: userdetails.mobile,
+      email: userdetails.email,
+      dob: userdetails.dob,
+      currentAddress: userdetails.currentAddress,
+      permanentAddress: userdetails.permanentAddress,
+      gender: userdetails.gender,
+      image: userdetails.image,
+      fullName: userdetails.fullName,
+      customFields: userdetails.customFields, // Critical: Update custom fields
+    );
     authRepository.setUserDetails(currentUserDetails);
 
     emit(Authenticated(userDetails: currentUserDetails));

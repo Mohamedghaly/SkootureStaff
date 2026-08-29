@@ -8,6 +8,7 @@ class Diary {
   final int? subjectId;
   final int sessionYearId;
   final String? description;
+  final String? title;
   final String date;
   final String createdAt;
   final String updatedAt;
@@ -22,6 +23,7 @@ class Diary {
     this.subjectId,
     required this.sessionYearId,
     this.description,
+    this.title,
     required this.date,
     required this.createdAt,
     required this.updatedAt,
@@ -31,15 +33,16 @@ class Diary {
   });
 
   Diary.fromJson(Map<String, dynamic> json)
-      : id = json['id'] as int,
-        diaryCategoryId = json['diary_category_id'] as int,
-        userId = json['user_id'] as int,
+      : id = json['id'] as int? ?? 0,
+        diaryCategoryId = json['diary_category_id'] as int? ?? 0,
+        userId = json['user_id'] as int? ?? 0,
         subjectId = json['subject_id'] as int?,
-        sessionYearId = json['session_year_id'] as int,
+        sessionYearId = json['session_year_id'] as int? ?? 0,
         description = json['description'] as String?,
-        date = json['date'] as String,
-        createdAt = json['created_at'] as String,
-        updatedAt = json['updated_at'] as String,
+        title = json['title'] as String?,
+        date = json['date'] as String? ?? '',
+        createdAt = json['created_at'] as String? ?? '',
+        updatedAt = json['updated_at'] as String? ?? '',
         deletedAt = json['deleted_at'] as String?,
         diaryCategory =
             DiaryCategory.fromJson(Map.from(json['diary_category'] ?? {})),
@@ -54,6 +57,7 @@ class Diary {
         'subject_id': subjectId,
         'session_year_id': sessionYearId,
         'description': description,
+        'title': title,
         'date': date,
         'created_at': createdAt,
         'updated_at': updatedAt,

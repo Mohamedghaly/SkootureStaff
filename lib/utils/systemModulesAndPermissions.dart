@@ -21,6 +21,8 @@ const int staffLeaveManagementModuleId = 15;
 const int feesManagementModuleId = 16;
 const int galleryManagementModuleId = 17;
 const int chatModuleId = 20;
+const int transportationModuleId = 21;
+const int staffAttendanceManagementModuleId = 22;
 const int defaultModuleId = -1;
 const String moduleIdJoiner = "#";
 
@@ -32,6 +34,8 @@ const String viewStudentsPermissionKey = "student-list";
 const String viewStaffsPermissionKey = "staff-list";
 const String viewTimetablePermissionKey = "timetable-list";
 const String viewStudentAttendancePermissionKey = "attendance-list";
+const String viewStaffAttendancePermissionKey = "staff-attendance-list";
+const String editStaffAttendancePermissionKey = "staff-attendance-edit";
 const String viewClassesPermissionKey = "class-list";
 const String viewExamsPermissionKey = "exam-list";
 const String viewExamTimetablePermissionKey = "exam-timetable-list";
@@ -57,6 +61,12 @@ const String viewFeesPaidPermissionKey = "fees-paid";
 const String viewPayrollListPermissionKey = "payroll-list";
 const String editPayrollEditPermissionKey = "payroll-edit";
 const String createPayRollPermissionKey = "payroll-create";
+
+// Student Diary permissions
+const String viewStudentDiaryPermissionKey = "student-diary-list";
+const String createStudentDiaryPermissionKey = "student-diary-create";
+const String editStudentDiaryPermissionKey = "student-diary-edit";
+const String deleteStudentDiaryPermissionKey = "student-diary-delete";
 
 //"teacher-list",
 /*

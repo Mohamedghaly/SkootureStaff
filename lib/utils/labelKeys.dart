@@ -11,6 +11,7 @@ const String passwordKey = "password";
 const String schoolCodeKey = "schoolCode";
 const String pleaseEnterSchoolCodeKey = "pleaseEnterSchoolCode";
 const String pleaseEnterEmailKey = "pleaseEnterEmail";
+const String pleaseEnterValidEmailKey = "pleaseEnterValidEmail";
 const String pleaseEnterPasswordKey = "pleaseEnterPassword";
 const String pleaseEnterNewPasswordKey = "pleaseEnterNewPassword";
 const String pleaseEnterConfirmPasswordKey = "pleaseEnterConfirmPassword";
@@ -64,6 +65,7 @@ const String activeKey = "active";
 const String inactiveKey = "inactive";
 const String allKey = "all";
 const String selectAllKey = "selectAll";
+const String deselectAllKey = "deselectAll";
 const String continueKey = "continue";
 const String addStudentKey = "addStudent";
 const String studentsKey = "students";
@@ -117,8 +119,25 @@ const String messageKey = "message";
 const String manageNotificationKey = "manageNotification";
 const String manageAnnouncementKey = "manageAnnouncement";
 const String studentDiaryKey = "studentDiary";
+const String addStudentDiaryKey = "addStudentDiary";
+const String transportationKey = "transportation";
 const String manageStudentDiaryKey = "manageStudentDiary";
 const String addNoteKey = "addNote";
+// Transport enrollment labels
+const String reviewYourSelectionKey = "reviewYourSelection";
+const String requestSubmittedKey = "requestSubmitted";
+const String requestSubmittedDescriptionKey = "requestSubmittedDescription";
+const String selectRouteKey = "selectRoute";
+const String selectTransportationRouteKey = "selectTransportationRoute";
+const String selectPickDropPointKey = "selectPickDropPoint";
+const String selectShiftKey = "selectShift";
+const String selectDurationKey = "selectDuration";
+const String pleaseSelectRouteKey = "pleaseSelectRoute";
+const String pleaseSelectPickDropPointKey = "pleaseSelectPickDropPoint";
+const String pleaseSelectShiftKey = "pleaseSelectShift";
+const String pleaseSelectDurationKey = "pleaseSelectDuration";
+const String confirmKey = "confirm";
+const String durationKey = "duration";
 const String positiveKey = "positive";
 const String negativeKey = "negative";
 const String noteTitleKey = "noteTitle";
@@ -131,6 +150,45 @@ const String paidFeesKey = "paidFees";
 const String managePayRollsKey = "managePayRolls";
 const String myPayRollKey = "myPayRoll";
 const String readMoreKey = "readMore";
+const String myTripKey = "myTrip";
+const String liveTransportKey = "liveTransport";
+const String transportKey = "transport";
+const String busRouteKey = "busRoute";
+const String tripDetailsKey = "tripDetails";
+const String routeNameKey = "routeName";
+const String shiftTimeKey = "shiftTime";
+const String pickupPointKey = "pickupPoint";
+const String inProgressKey = "inProgress";
+const String tripCompletedKey = "completed";
+const String tripUpcomingKey = "upcoming";
+const String morningShiftKey = "morningShift";
+const String afternoonShiftKey = "afternoonShift";
+const String eveningShiftKey = "eveningShift";
+const String pickupKey = "pickup";
+const String dropKey = "drop";
+const String noTripsFoundKey = "noTripsFound";
+const String newStudentKey = "newStudent";
+const String alertNoteKey = "alertNote";
+const String routeUpdateKey = "routeUpdate";
+const String stopDetailsKey = "stopDetails";
+const String stopsKey = "stops";
+const String passengerKey = "passenger";
+const String markReachedKey = "markReached";
+const String markAttendanceKey = "markAttendance";
+const String reachedKey = "reached";
+const String attendanceConfirmedKey = "attendanceConfirmed";
+const String presentKey = "present";
+const String absentKey = "absent";
+const String totalPresentKey = "totalPresent";
+const String totalAbsentKey = "totalAbsent";
+const String totalHolidaysKey = "totalHolidays";
+const String myAttendanceKey = "myAttendance";
+const String onTimeKey = "onTime";
+const String facingProblemKey = "facingProblem";
+const String reportDelaysPassengersKey = "reportDelaysPassengers";
+const String reportIssueKey = "reportIssue";
+const String liveMapViewKey = "liveMapView";
+const String startTripKey = "startTrip";
 const String holidayKey = "holiday";
 const String reasonKey = "reason";
 const String pleaseSelectFromDateKey = "pleaseSelectFromDate";
@@ -147,8 +205,6 @@ const String leaveDateKey = "leaveDate";
 const String totalDaysKey = "totalDays";
 const String pendingKey = "pending";
 const String approvedKey = "approved";
-const String presentKey = "present";
-const String absentKey = "absent";
 const String dateKey = "date";
 const String examKey = "exam";
 const String examTimetableKey = "examTimetable";
@@ -207,20 +263,20 @@ const String sureToLogoutKey = "sureToLogout";
 const String yesKey = "yes";
 const String noKey = "no";
 const String logoutKey = "logout";
-const String januaryKey = "january";
-const String februaryKey = "february";
-const String marchKey = "march";
-const String aprilKey = "april";
-const String mayKey = "may";
-const String juneKey = "june";
-const String julyKey = "july";
-const String augustKey = "august";
-const String septemberKey = "september";
-const String octoberKey = "october";
-const String novemberKey = "november";
+const String januaryKey = "January";
+const String februaryKey = "February";
+const String marchKey = "March";
+const String aprilKey = "April";
+const String mayKey = "May";
+const String juneKey = "June";
+const String julyKey = "July";
+const String augustKey = "August";
+const String septemberKey = "September";
+const String octoberKey = "October";
+const String novemberKey = "November";
 const String passwordResetLinkSentToYourEmailKey =
     "passwordResetLinkSentToYourEmail";
-const String decemberKey = "december";
+const String decemberKey = "December";
 const String leaveDetailsKey = "leaveDetails";
 const String salaryKey = "salary";
 
@@ -287,6 +343,10 @@ const String examDateKey = "examDate";
 const String marksKey = "marks";
 const String submitResultKey = "submitResult";
 const String offlineExamResultKey = "offlineExamResult";
+const String saveAsDraftKey = "saveAsDraft";
+const String draftSavedSuccessfullyKey = "draftSavedSuccessfully";
+const String submitAndPublishKey = "submitAndPublish";
+const String pleaseAddAtLeastOneMarkForDraftKey = "pleaseAddAtLeastOneMarkForDraft";
 const String attendanceNotTakenKey = "attendanceNotTaken";
 const String classTeacherKey = "classTeacher";
 
@@ -318,6 +378,7 @@ const String pleaseEnterStudyMaterialNameKey = "pleaseEnterStudyMaterialName";
 const String pleaseSelectFileKey = "pleaseSelectFile";
 const String pleaseSelectThumbnailImageKey = "pleaseSelectThumbnailImage";
 const String pleaseEnterYoutubeLinkKey = "pleaseEnterYoutubeLink";
+const String invalidYoutubeLinkKey = "invalidYoutubeLink";
 const String pleaseEnterOtherLinkKey = "pleaseEnterOtherLink";
 const String pleaseSelectVideoKey = "pleaseSelectVideo";
 const String videoUploadKey = "videoUpload";
@@ -434,6 +495,7 @@ const String overDueFeesKey = "overDueFees";
 const String specificRolesKey = "specificRoles";
 const String specificUsersKey = "specificUsers";
 const String selectRolesKey = "selectRoles";
+const String selectRoleKey = "selectRole";
 const String selectUsersKey = "selectUsers";
 const String searchUsersKey = "searchUsers";
 const String feeKey = "fee";
@@ -480,6 +542,7 @@ const String noAboutUsKey = "noAboutUs";
 const String noContactUsKey = "noContactUs";
 const String noTermsAndConditionKey = "noTermsAndCondition";
 const String noClassSectionKey = "noClassSection";
+const String noDataFoundKey = "noDataFound";
 const String noAttendanceKey = "noAttendance";
 const String noLessonKey = "noLesson";
 const String noTopicKey = "noTopic";
@@ -506,3 +569,281 @@ const String downloadCompleteKey = "downloadComplete";
 const String downloadFailedKey = "downloadFailed";
 const String fileDownloadedSuccessfullyKey = "fileDownloadedSuccessfully";
 const String failedToDownloadKey = "failedToDownload";
+const String changeRouteKey = "changeRoute";
+const String sortByKey = "sortBy";
+const String newestFirstKey = "newestFirst";
+const String oldestFirstKey = "oldestFirst";
+const String negativeNotesKey = "negativeNotes";
+const String positiveNotesKey = "positiveNotes";
+const String filterKey = "filter";
+const String noDiaryEntriesFoundKey = "noDiaryEntriesFound";
+const String noCategoryFoundKey = "noCategoryFound";
+const String createNewCategoryKey = "createNewCategory";
+const String leaveOverviewKey = "leaveOverview";
+const String myExpensesKey = "myExpenses";
+
+// Expense Screen Labels
+const String selectYourVehicleKey = "selectYourVehicle";
+const String categoryKey = "category";
+const String expenseAmountKey = "expenseAmount";
+const String expenseReasonKey = "expenseReason";
+const String fileUploadNoteKey = "fileUploadNote";
+const String historyKey = "history";
+const String noExpensesFoundKey = "noExpensesFound";
+const String pleaseSelectVehicleKey = "pleaseSelectVehicle";
+const String pleaseSelectCategoryKey = "pleaseSelectCategory";
+const String pleaseEnterExpenseAmountKey = "pleaseEnterExpenseAmount";
+const String pleaseEnterValidAmountKey = "pleaseEnterValidAmount";
+const String pleaseEnterExpenseReasonKey = "pleaseEnterExpenseReason";
+const String errorPickingFileKey = "errorPickingFile";
+const String busNoPlaceholderKey = "busNoPlaceholder";
+const String fuelPlaceholderKey = "fuelPlaceholder";
+const String amountPlaceholderKey = "amountPlaceholder";
+const String fillingFuelPlaceholderKey = "fillingFuelPlaceholder";
+const String viewAttachmentKey = "viewAttachment";
+const String attachmentKey = "attachment";
+const String noAttachmentKey = "noAttachment";
+const String noLeaveRequiredForHolidayWeekendKey =
+    "noLeaveRequiredForHolidayWeekend";
+const String holidayWeekendKey = "holidayWeekend";
+const String publicHolidayKey = "publicHoliday";
+const String sessionYearEndedKey = "sessionYearEnded";
+const String invalidSessionYearEndDateKey = "invalidSessionYearEndDate";
+
+// Driver dashboard specific keys
+const String staffOnLeaveKey = "staffOnLeave";
+const String myLeavesKey = "myLeaves";
+const String noStaffOnLeaveKey = "noStaffOnLeave";
+const String noMyLeavesKey = "noMyLeaves";
+const String noLiveTripsKey = "noLiveTrips";
+const String noNewPassengersKey = "noNewPassengers";
+const String noHolidaysKey = "noHolidays";
+const String fullDayLeaveKey = "fullDayLeave";
+const String halfDayLeaveKey = "halfDayLeave";
+const String toKey = "to";
+
+// Transport Attendance Keys
+const String transportationAttendanceKey = "transportationAttendance";
+const String attendanceSummaryKey = "attendanceSummary";
+const String tripKey = "trip";
+const String selectMonthKey = "selectMonth";
+const String noAttendanceRecordsFoundKey = "noAttendanceRecordsFound";
+const String trySelectingDifferentFiltersKey = "trySelectingDifferentFilters";
+const String attendanceRecordsFetchedSuccessfullyKey =
+    "attendanceRecordsFetchedSuccessfully";
+const String unknownKey = "unknown";
+const String waitingKey = "waiting";
+
+// Diary Delete Keys
+const String deleteNoteKey = "deleteNote";
+const String deleteNoteConfirmationKey = "deleteNoteConfirmation";
+const String diaryDeletedSuccessfullyKey = "diaryDeletedSuccessfully";
+
+// Additional Transport Keys (items 631-650)
+const String noTransportationDataFoundKey = "noTransportationDataFound";
+const String noRouteDataAvailableKey = "noRouteDataAvailable";
+const String yourPickupKey = "yourPickup";
+const String unknownTimeKey = "unknownTime";
+const String notFoundKey = "notFound";
+const String routeAndPickupDetailsKey = "routeAndPickupDetails";
+const String vehicleKey = "vehicle";
+const String pickupLocationKey = "pickupLocation";
+const String notAssignedKey = "notAssigned";
+const String pickupTimeKey = "pickupTime";
+const String notAvailableKey = "notAvailable";
+const String planDetailsKey = "planDetails";
+const String routeIdKey = "routeId";
+const String totalStopsKey = "totalStops";
+const String yourStopPositionKey = "yourStopPosition";
+const String serviceStatusKey = "serviceStatus";
+const String requestDetailsKey = "requestDetails";
+const String requestIdKey = "requestId";
+const String planDurationKey = "planDuration";
+const String planRenewalKey = "planRenewal";
+const String validityPeriodKey = "validityPeriod";
+const String paymentModeKey = "paymentMode";
+const String contactInformationKey = "contactInformation";
+const String schoolEmailKey = "schoolEmail";
+const String schoolPhoneKey = "schoolPhone";
+const String contactSupportKey = "contactSupport";
+const String phoneNumberNotAvailableKey = "phoneNumberNotAvailable";
+const String noTransportPlanDataAvailableKey = "noTransportPlanDataAvailable";
+const String requestedOnKey = "requestedOn";
+const String newRequestKey = "newRequest";
+const String busInfoKey = "busInfo";
+const String busNoKey = "busNo";
+const String driverKey = "driver";
+const String attenderKey = "attender";
+const String transportationPlanKey = "transportationPlan";
+const String ofKey = "of";
+const String stopsLowerKey = "stops";
+const String requestedRouteKey = "requestedRoute";
+const String requestedPickupPointKey = "requestedPickupPoint";
+const String requestInformationKey = "requestInformation";
+const String requestedOnKey2 = "requestedOn";
+const String pickupStopIdKey = "pickupStopId";
+const String contactDetailsKey = "contactDetails";
+const String noActiveRequestsKey = "noActiveRequests";
+const String noPendingTransportationRequestsKey =
+    "noPendingTransportationRequests";
+
+// Trip Details Screen Keys
+const String startingTripKey = "startingTrip";
+const String completingTripKey = "completingTrip";
+const String attendanceAlreadyMarkedKey = "attendanceAlreadyMarked";
+const String pleaseSelectAttendanceKey = "pleaseSelectAttendance";
+const String markingAttendanceKey = "markingAttendance";
+const String unknownRouteKey = "unknownRoute";
+const String unknownTimeKey2 = "unknownTime";
+const String selectTripTypeKey = "selectTripType";
+const String shiftTimeKey2 = "shiftTime";
+const String stopDetailsKey2 = "stopDetails";
+const String stopsKey2 = "stops";
+const String studentsKey2 = "students";
+const String tripTypeKey = "tripType";
+const String pickupTripKey = "pickupTrip";
+const String pickupTripDescriptionKey = "pickupTripDescription";
+const String dropTripKey = "dropTrip";
+const String dropTripDescriptionKey = "dropTripDescription";
+const String startTripKey2 = "startTrip";
+const String completeTripKey = "completeTrip";
+const String passengersKey2 = "passengers";
+const String unknownKey2 = "unknown";
+const String passengersKey = "passengers";
+
+// Driver Home Container Keys
+const String shiftTimeLabelKey = "shiftTimeLabel";
+const String pickupPointLabelKey = "pickupPointLabel";
+const String phoneNumberNotAvailableForKey = "phoneNumberNotAvailableFor";
+const String fullDayLeaveKey2 = "fullDayLeave";
+const String halfDayLeaveKey2 = "halfDayLeave";
+const String reasonLabelKey = "reasonLabel";
+const String noNewStudentsTodayKey = "noNewStudentsToday";
+const String newStudentsEmptyMessageKey = "newStudentsEmptyMessage";
+const String allStaffArePresentTodayKey = "allStaffArePresentToday";
+const String staffLeaveEmptyMessageKey = "staffLeaveEmptyMessage";
+const String youHaveNoUpcomingLeavesKey = "youHaveNoUpcomingLeaves";
+const String myLeavesEmptyMessageKey = "myLeavesEmptyMessage";
+const String noUpcomingHolidaysKey2 = "noUpcomingHolidays";
+const String holidaysEmptyMessageKey = "holidaysEmptyMessage";
+const String noUpcomingHolidaysKey = "noUpcomingHolidays";
+const String dropTimeKey = "dropTime";
+
+// Change Route Screen Keys
+const String changeStopKey = "changeStop";
+const String choosePayViaKey = "choosePayVia";
+const String payUsingKey = "payUsing";
+const String invalidPickupPointKey = "invalidPickupPoint";
+const String invalidFeePlanKey = "invalidFeePlan";
+const String invalidShiftKey = "invalidShift";
+const String noPaymentMethodsAvailableKey = "noPaymentMethodsAvailable";
+const String routeDetailsKey = "routeDetails";
+const String currentRouteKey = "currentRoute";
+const String requestedRouteKey2 = "requestedRoute";
+const String currentPickupKey = "currentPickup";
+const String requestedPickupKey = "requestedPickup";
+const String currentFeeKey = "currentFee";
+const String requestedFeeKey = "requestedFee";
+
+// Staff/Teacher Attendance Keys
+const String teacherAttendanceKey = "teacherAttendance";
+const String staffAttendanceKey = "staffAttendance";
+const String markAttendanceStatusKey = "markAttendanceStatus";
+const String withApologyKey = "withApology";
+const String withoutApologyKey = "withoutApology";
+const String onLeaveKey = "onLeave";
+const String confirmAttendanceSubmissionKey = "confirmAttendanceSubmission";
+const String areYouSureToSubmitAttendanceKey = "areYouSureToSubmitAttendance";
+const String totalTeachersSelectedKey = "totalTeachersSelected";
+const String sendNotificationToAbsentStaffKey = "sendNotificationToAbsentStaff";
+const String markAsHolidayKey = "markAsHoliday";
+const String attendanceSubmittedSuccessfullyForStaffKey =
+    "attendanceSubmittedSuccessfullyForStaff";
+const String pleaseSelectClassFirstKey = "pleaseSelectClassFirst";
+const String pleaseMarkAttendanceForAtLeastOneStaffKey =
+    "pleaseMarkAttendanceForAtLeastOneStaff";
+const String noTeachersFoundForClassKey = "noTeachersFoundForClass";
+const String markKey = "mark";
+const String clearKey = "clear";
+const String staff_member_selected = "staff_member_selected";
+const String staff_members_selected = "staff_members_selected";
+const String tap_mark_to_set_attendance = "tap_mark_to_set_attendance";
+
+// Staff Attendance - Status Bottom Sheet
+const String attendanceStatusKey = "attendanceStatus";
+const String fullWorkingDayKey = "fullWorkingDay";
+const String willAutomaticallyCreateLeaveEntryKey =
+    "willAutomaticallyCreateLeaveEntry";
+const String halfDayKey = "halfDay";
+const String halfDayPresentKey = "halfDayPresent";
+const String whichHalfWasPresentKey = "whichHalfWasPresent";
+const String morningSessionPresentKey = "morningSessionPresent";
+const String afternoonSessionPresentKey = "afternoonSessionPresent";
+const String reasonOptionalKey = "reasonOptional";
+const String reasonPlaceholderKey = "reasonPlaceholder";
+const String reasonHelperTextKey = "reasonHelperText";
+const String cannotMarkFullDayPresentForHalfLeaveKey =
+    "cannotMarkFullDayPresentForHalfLeave";
+const String fullDayPresentNotAvailableForHalfLeaveKey =
+    "fullDayPresentNotAvailableForHalfLeave";
+const String someOptionsDisabledDueToLeaveKey = "someOptionsDisabledDueToLeave";
+const String thisDateMarkedAsHolidayKey = "thisDateMarkedAsHoliday";
+
+// Staff Attendance - Leave Labels
+const String leaveBadgeLabelKey = "leaveBadgeLabel";
+const String leaveFirstHalfKey = "leaveFirstHalf";
+const String leaveSecondHalfKey = "leaveSecondHalf";
+const String onLeaveFullDayKey = "onLeaveFullDay";
+const String onLeaveFirstHalfKey = "onLeaveFirstHalf";
+const String onLeaveSecondHalfKey = "onLeaveSecondHalf";
+const String staffOnFirstHalfLeaveKey = "staffOnFirstHalfLeave";
+const String staffOnSecondHalfLeaveKey = "staffOnSecondHalfLeave";
+
+// Transport Report Issue Keys
+const String reportIssuesKey = "reportIssues";
+const String raiseAnySchoolTransportDelaysKey = "raiseAnySchoolTransportDelays";
+const String facingAProblemKey = "facingAProblem";
+const String selectIssueTypeKey = "selectIssueType";
+const String enterDescriptionKey = "enterDescription";
+const String reportSuccessKey = "reportSuccess";
+const String reportFailureKey = "reportFailure";
+const String pleaseSelectIssueTypeKey = "pleaseSelectIssueType";
+const String pleaseEnterDescriptionKey = "pleaseEnterDescription";
+
+// Driver Report Issue Keys
+const String reportDelaysAbsentPassengersKey = "reportDelaysAbsentPassengers";
+const String writeIssueKey = "writeIssue";
+
+// Transport Report Issue Label Keys (Staff/Teacher)
+const String unsafeDrivingKey = "unsafeDriving";
+const String unauthorizedPersonKey = "unauthorizedPerson";
+const String missedPickupKey = "missedPickup";
+const String uncleanBusInteriorKey = "uncleanBusInterior";
+const String busBreakdownKey = "busBreakdown";
+
+// Driver Report Issue Label Keys
+const String delayAtStopKey = "delayAtStop";
+const String studentNotAvailableKey = "studentNotAvailable";
+const String routeBlockageKey = "routeBlockage";
+const String vehicleProblemKey = "vehicleProblem";
+const String parentLateKey = "parentLate";
+
+const String liveTrackingKey = "liveTracking";
+const String noOngoingTripKey = "noOngoingTrip";
+const String currentLocationKey = "currentLocation";
+const String nextPointKey = "nextPoint";
+const String delayedKey = "delayed";
+const String earlyKey = "early";
+const String transportationRequestKey = "transportationRequest";
+const String attendanceConfirmedLabelKey = "attendanceConfirmedLabel";
+
+// Transport Plan Renewal Keys
+const String planExpiringSoonKey = "planExpiringSoon";
+const String yourPlanWillExpireInDaysKey = "yourPlanWillExpireInDays";
+const String renewPlanKey = "renewPlan";
+
+// Staff Attendance Status Keys
+const String notMarkedKey = "notMarked";
+const String submittingAttendanceKey = "submittingAttendance";
+const String halfDayFirstKey = "halfDayFirst";
+const String halfDaySecondKey = "halfDaySecond";

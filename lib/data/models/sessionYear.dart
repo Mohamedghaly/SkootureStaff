@@ -74,12 +74,17 @@ class SessionYear {
 
    @override
   bool operator ==(covariant SessionYear other) {
+    // If both IDs are null, compare by name to avoid all being equal
+    if (id == null && other.id == null) {
+      return name == other.name;
+    }
     return other.id == id;
   }
 
   @override
   int get hashCode {
-    return id.hashCode;
+    // Use name hashCode if id is null
+    return id?.hashCode ?? name.hashCode;
   }
 
   @override

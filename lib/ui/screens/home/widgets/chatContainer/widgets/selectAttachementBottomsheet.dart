@@ -24,20 +24,6 @@ class SelectAttachmentBottomSheet extends StatefulWidget {
 class _SelectAttachmentBottomSheetState
     extends State<SelectAttachmentBottomSheet> {
   Future<void> _getFromGallery() async {
-    // Check gallery permission first
-    bool hasPermission = await Utils.hasGalleryPermissionGiven();
-
-    if (!hasPermission) {
-      // Show permission denied message
-      Get.snackbar(
-        Utils.getTranslatedLabel(permissionDeniedKey),
-        Utils.getTranslatedLabel(galleryAccessDeniedKey),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        colorText: Theme.of(context).colorScheme.onError,
-      );
-      return;
-    }
-
     final images = await ImagePicker().pickMultiImage(
       maxWidth: 1000,
       maxHeight: 1000,
@@ -52,20 +38,6 @@ class _SelectAttachmentBottomSheetState
   }
 
   Future<void> _getFromCamera() async {
-    // Check camera permission first
-    bool hasPermission = await Utils.hasCameraPermissionGiven();
-
-    if (!hasPermission) {
-      // Show permission denied message
-      Get.snackbar(
-        Utils.getTranslatedLabel(permissionDeniedKey),
-        Utils.getTranslatedLabel(cameraAccessDeniedKey),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        colorText: Theme.of(context).colorScheme.onError,
-      );
-      return;
-    }
-
     final image = await ImagePicker().pickImage(
       source: ImageSource.camera,
       maxWidth: 1000,
@@ -81,20 +53,6 @@ class _SelectAttachmentBottomSheetState
   }
 
   Future<void> _getFromDocument() async {
-    // Check storage permission first
-    bool hasPermission = await Utils.hasStoragePermissionGiven();
-
-    if (!hasPermission) {
-      // Show permission denied message
-      Get.snackbar(
-        Utils.getTranslatedLabel(permissionDeniedKey),
-        Utils.getTranslatedLabel(storageAccessDeniedKey),
-        backgroundColor: Theme.of(context).colorScheme.error,
-        colorText: Theme.of(context).colorScheme.onError,
-      );
-      return;
-    }
-
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
     );

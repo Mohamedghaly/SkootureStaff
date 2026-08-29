@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:eschool_saas_staff/data/models/userDetails.dart';
 import 'package:eschool_saas_staff/utils/api.dart';
@@ -14,6 +16,8 @@ class AuthRepository {
     setUserDetails(UserDetails());
     setAuthToken("");
     schoolCode = "";
+    // Clear FCM token from local storage on logout
+    setFcmToken("");
   }
 
   static String getAuthToken() {
@@ -22,6 +26,16 @@ class AuthRepository {
 
   Future<void> setAuthToken(String value) async {
     return Hive.box(authBoxKey).put(authTokenKey, value);
+  }
+
+  /// Get FCM token from local storage
+  static String getFcmTokenFromStorage() {
+    return Hive.box(authBoxKey).get(fcmTokenKey) ?? "";
+  }
+
+  /// Save FCM token to local storage
+  Future<void> setFcmToken(String value) async {
+    return Hive.box(authBoxKey).put(fcmTokenKey, value);
   }
 
   String get schoolCode => Hive.box(authBoxKey).get('schoolCode') ?? "";
@@ -64,6 +78,7 @@ class AuthRepository {
         "password": password,
         "school_code": schoolCode,
         "fcm_id": await getFcmToken(),
+        "device_type": Platform.isIOS ? "ios" : "android",
       }, url: Api.login, useAuthToken: false);
 
       return (
@@ -79,8 +94,13 @@ class AuthRepository {
 
   Future<void> logout() async {
     try {
+      // Get FCM token from storage to send to server for clearing
+      String fcmToken = getFcmTokenFromStorage();
+
       await Api.post(
-        body: {},
+        body: {
+          "fcm_id": fcmToken,
+        },
         url: Api.logout,
         useAuthToken: true,
       );
@@ -101,7 +121,6 @@ class AuthRepository {
         },
       );
     } catch (e) {
-   
       throw ApiException(e.toString());
     }
   }
@@ -123,19 +142,21 @@ class AuthRepository {
     }
   }
 
-  Future<({UserDetails userDetails, String successmessage})> editProfile(
-      {required String firstName,
-      required String lastName,
-      required String mobileNumber,
-      required String email,
-      required String dateOfBirth,
-      required String currentAddress,
-      required String permanentAddress,
-      required String gender,
-      String? image}) async {
+  Future<({UserDetails userDetails, String successmessage})> editProfile({
+    required String firstName,
+    required String lastName,
+    required String mobileNumber,
+    required String email,
+    required String dateOfBirth,
+    required String currentAddress,
+    required String permanentAddress,
+    required String gender,
+    String? image,
+    List<Map<String, dynamic>>? customFieldsData,
+  }) async {
     try {
-   
-      final result = await Api.post(body: {
+      // Prepare body
+      final Map<String, dynamic> body = {
         "first_name": firstName,
         "last_name": lastName,
         "mobile": mobileNumber,
@@ -146,18 +167,61 @@ class AuthRepository {
         "gender": gender,
         "image":
             (image ?? "").isEmpty ? null : await MultipartFile.fromFile(image!),
-      }, useAuthToken: true, url: Api.editProfile);
+      };
+
+      // Add custom fields data if present
+      // Format: custom_fields[i][id], custom_fields[i][form_field_id],
+      //         custom_fields[i][input_type], custom_fields[i][data]
+      if (customFieldsData != null && customFieldsData.isNotEmpty) {
+        for (int i = 0; i < customFieldsData.length; i++) {
+          final fieldData = customFieldsData[i];
+          final fieldId = fieldData['id'];
+          final formFieldId = fieldData['form_field_id'];
+          final inputType = fieldData['input_type'] ?? '';
+          final data = fieldData['data'] ?? '';
+          final uploadedFile = fieldData['uploaded_file'];
+
+          // Add required fields matching API format
+          if (fieldId != null) {
+            body['custom_fields[$i][id]'] = fieldId.toString();
+          }
+          if (formFieldId != null) {
+            body['custom_fields[$i][form_field_id]'] = formFieldId.toString();
+          }
+          body['custom_fields[$i][input_type]'] = inputType;
+
+          // Handle file upload for file type fields
+          if (inputType == 'file' &&
+              uploadedFile != null &&
+              uploadedFile.isNotEmpty) {
+            body['custom_fields[$i][data]'] =
+                await MultipartFile.fromFile(uploadedFile);
+          } else {
+            body['custom_fields[$i][data]'] = data;
+          }
+        }
+      }
+
+      final result = await Api.post(
+        body: body,
+        useAuthToken: true,
+        url: Api.editProfile,
+      );
 
       if (kDebugMode) {
-        print(result['data']);
+        debugPrint(result['data'].toString());
       }
       return (
         successmessage: (result['message'] ?? "").toString(),
         userDetails: UserDetails.fromJson(Map.from(result['data'] ?? {})),
       );
-    } on ApiException catch (e) {
+    } on ApiException catch (e, st) {
+      print("this is the error: $e");
+      print("this is the stack trace: $st");
       throw ApiException(e.toString());
-    } catch (e) {
+    } catch (e, st) {
+      print("this is the error: $e");
+      print("this is the stack trace: $st");
       throw ApiException(defaultErrorMessageKey);
     }
   }

@@ -5,6 +5,7 @@ import 'package:eschool_saas_staff/cubits/chat/chatStaffsUserChatHistoryCubit.da
 import 'package:eschool_saas_staff/cubits/chat/chatStudentsUserChatHistoryCubit.dart';
 import 'package:eschool_saas_staff/cubits/chat/socketSettingsCubit.dart';
 import 'package:eschool_saas_staff/cubits/homeScreenDataCubit.dart';
+import 'package:eschool_saas_staff/cubits/transport/tripsCubit.dart';
 import 'package:eschool_saas_staff/cubits/userDetails/staffAllowedPermissionsAndModulesCubit.dart';
 import 'package:eschool_saas_staff/data/models/bottomNavItem.dart';
 import 'package:eschool_saas_staff/data/models/notificationDetails.dart';
@@ -16,6 +17,8 @@ import 'package:eschool_saas_staff/ui/screens/home/widgets/forceUpdateDialogCont
 import 'package:eschool_saas_staff/ui/screens/home/widgets/homeContainer/homeContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/profileContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/teacherHomeContainer/teacherHomeContainer.dart';
+import 'package:eschool_saas_staff/ui/screens/home/widgets/driverHomeContainer/driverHomeContainer.dart';
+import 'package:eschool_saas_staff/ui/screens/home/widgets/myTripContainer/myTripContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/bottomNavItemContainer.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:eschool_saas_staff/utils/notificationUtility.dart';
@@ -36,9 +39,20 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
+class _HomeScreenState extends State<HomeScreen>
+    with WidgetsBindingObserver, RouteAware {
   int _currentSelectedBottomNavIndex = 0;
   var canPop = false;
+
+  // Track which tabs have been visited for lazy loading
+  final Set<int> _visitedTabs = {0}; // Home tab is always visited initially
+  TripsCubit? _tripsCubit; // Keep reference to avoid recreating
+
+  // Global key to access MyTripContainer
+  final GlobalKey _myTripContainerKey = GlobalKey();
+
+  // Global key to access DriverHomeContainer
+  final GlobalKey _driverHomeContainerKey = GlobalKey();
 
   @override
   void initState() {
@@ -56,8 +70,35 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // This will be called when returning from other screens
+    final modalRoute = ModalRoute.of(context);
+    if (modalRoute != null && modalRoute.isCurrent) {
+      final isDriver = context.read<AuthCubit>().isDriver();
+
+      // Check if we're currently on Home tab (for driver) and refresh if needed
+      if (_currentSelectedBottomNavIndex == 0 &&
+          isDriver &&
+          _visitedTabs.contains(0)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _refreshDriverHomeTabIfNeeded();
+        });
+      }
+
+      // Check if we're currently on My Trip tab and refresh if needed
+      if (_currentSelectedBottomNavIndex == 1 && _visitedTabs.contains(1)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _refreshMyTripTabIfNeeded();
+        });
+      }
+    }
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _tripsCubit?.close(); // Clean up the cubit
     super.dispose();
   }
 
@@ -82,32 +123,181 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
     if (state == AppLifecycleState.resumed) {
       loadTemporarilyStoredNotifications();
+      NotificationUtility.recheckNotificationPermissions();
+
+      // Reconnect WebSocket when app returns from background
+      final chatModuleEnabled = context
+          .read<StaffAllowedPermissionsAndModulesCubit>()
+          .isModuleEnabled(moduleId: chatModuleId.toString());
+
+      if (chatModuleEnabled) {
+        context.read<SocketSettingCubit>().reconnect();
+      }
     }
   }
 
-  late final List<BottomNavItem> _bottomNavItems = [
-    BottomNavItem(
-        iconPath: "home.svg",
-        title: homeKey,
-        selectedIconPath: "home_active.svg"),
-    BottomNavItem(
-        iconPath: "academics.svg",
-        title: academicsKey,
-        selectedIconPath: "academics_active.svg"),
-    BottomNavItem(
-        iconPath: "chat.svg",
-        title: chatKey,
-        selectedIconPath: "chat_active.svg"),
-    BottomNavItem(
-        iconPath: "profile.svg",
-        title: profileKey,
-        selectedIconPath: "profile_active.svg"),
-  ];
+  List<BottomNavItem> _getBottomNavItems() {
+    final authCubit = context.read<AuthCubit>();
+    final chatModuleEnabled = context
+        .read<StaffAllowedPermissionsAndModulesCubit>()
+        .isModuleEnabled(moduleId: chatModuleId.toString());
+
+    if (authCubit.isDriver()) {
+      List<BottomNavItem> items = [
+        BottomNavItem(
+            iconPath: "home.svg",
+            title: homeKey,
+            selectedIconPath: "home_active.svg"),
+        BottomNavItem(
+            iconPath: "my_trip.svg",
+            title: myTripKey,
+            selectedIconPath: "my_trip_active.svg"),
+      ];
+
+      if (chatModuleEnabled) {
+        items.add(BottomNavItem(
+            iconPath: "chat.svg",
+            title: chatKey,
+            selectedIconPath: "chat_active.svg"));
+      }
+
+      items.add(BottomNavItem(
+          iconPath: "profile.svg",
+          title: profileKey,
+          selectedIconPath: "profile_active.svg"));
+
+      return items;
+    } else {
+      List<BottomNavItem> items = [
+        BottomNavItem(
+            iconPath: "home.svg",
+            title: homeKey,
+            selectedIconPath: "home_active.svg"),
+        BottomNavItem(
+            iconPath: "academics.svg",
+            title: academicsKey,
+            selectedIconPath: "academics_active.svg"),
+      ];
+
+      if (chatModuleEnabled) {
+        items.add(BottomNavItem(
+            iconPath: "chat.svg",
+            title: chatKey,
+            selectedIconPath: "chat_active.svg"));
+      }
+
+      items.add(BottomNavItem(
+          iconPath: "profile.svg",
+          title: profileKey,
+          selectedIconPath: "profile_active.svg"));
+
+      return items;
+    }
+  }
 
   void changeCurrentBottomNavIndex(int index) {
     setState(() {
       _currentSelectedBottomNavIndex = index;
+      _visitedTabs.add(index); // Mark tab as visited
+
+      // Refresh Home tab when user switches to it (for driver)
+      if (index == 0 && context.read<AuthCubit>().isDriver()) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _refreshDriverHomeTabIfNeeded();
+        });
+      }
+
+      // Refresh My Trip tab when user switches to it
+      if (index == 1 && _visitedTabs.contains(1)) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _refreshMyTripTabIfNeeded();
+        });
+      }
     });
+  }
+
+  void _refreshMyTripTabIfNeeded() {
+    // Refresh My Trip tab data when user switches to it or returns from other screens
+    MyTripContainer.refreshData(_myTripContainerKey);
+  }
+
+  void _refreshDriverHomeTabIfNeeded() {
+    // Refresh Driver Home tab data when user switches to it or returns from other screens
+    DriverHomeContainer.refreshData(_driverHomeContainerKey);
+  }
+
+  Widget _buildMyTripContainer() {
+    // For driver, My Trip is at index 1
+    const myTripTabIndex = 1;
+
+    // Only create and provide the cubit if the tab has been visited
+    if (_visitedTabs.contains(myTripTabIndex)) {
+      // Create cubit only once and reuse it
+      _tripsCubit ??= TripsCubit();
+
+      return BlocProvider.value(
+        value: _tripsCubit!,
+        child: MyTripContainer(key: _myTripContainerKey),
+      );
+    } else {
+      // Return a placeholder that will be replaced when tab is visited
+      return const SizedBox.shrink();
+    }
+  }
+
+  List<Widget> _buildScreens(bool chatModuleEnabled) {
+    final authCubit = context.read<AuthCubit>();
+
+    if (authCubit.isDriver()) {
+      return [
+        DriverHomeContainer(
+          key: _driverHomeContainerKey,
+          onNavigateToMyTrips: () => changeCurrentBottomNavIndex(1),
+        ),
+        _buildMyTripContainer(),
+        if (chatModuleEnabled)
+          MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => ParentsUserChatHistoryCubit(),
+              ),
+              BlocProvider(
+                create: (_) => StudentsUserChatHistoryCubit(),
+              ),
+              BlocProvider(
+                create: (_) => StaffsUserChatHistoryCubit(),
+              ),
+            ],
+            child: const ChatContainer(),
+          ),
+        const ProfileContainer(),
+      ];
+    } else {
+      return [
+        if (authCubit.isTeacher()) ...[
+          const TeacherHomeContainer(),
+        ] else ...[
+          HomeContainer(key: HomeContainer.widgetKey),
+        ],
+        const AcademicsContainer(),
+        if (chatModuleEnabled)
+          MultiBlocProvider(
+            providers: [
+              BlocProvider(
+                create: (_) => ParentsUserChatHistoryCubit(),
+              ),
+              BlocProvider(
+                create: (_) => StudentsUserChatHistoryCubit(),
+              ),
+              BlocProvider(
+                create: (_) => StaffsUserChatHistoryCubit(),
+              ),
+            ],
+            child: const ChatContainer(),
+          ),
+        const ProfileContainer(),
+      ];
+    }
   }
 
   Widget _buildBottomNavigationContainer() {
@@ -129,10 +319,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_bottomNavItems.length, (index) => index)
+          children: List.generate(_getBottomNavItems().length, (index) => index)
               .map((index) => BottomNavItemContainer(
                   index: index,
-                  bottomNavItem: _bottomNavItems[index],
+                  bottomNavItem: _getBottomNavItems()[index],
                   onTap: changeCurrentBottomNavIndex,
                   selectedBottomNavIndex: _currentSelectedBottomNavIndex))
               .toList(),
@@ -185,10 +375,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
                         context.read<SocketSettingCubit>().init(userId: userId);
                       } else {
-                        setState(() {
-                          _bottomNavItems
-                              .removeWhere((e) => e.title == chatKey);
-                        });
+                        // Chat module disabled - handled in _getBottomNavItems()
                       }
                     }
                   },
@@ -203,33 +390,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           alignment: Alignment.topCenter,
                           child: IndexedStack(
                             index: _currentSelectedBottomNavIndex,
-                            children: [
-                              if (context.read<AuthCubit>().isTeacher()) ...[
-                                const TeacherHomeContainer(),
-                              ] else ...[
-                                HomeContainer(key: HomeContainer.widgetKey),
-                              ],
-                              const AcademicsContainer(),
-                              if (chatModuleEnabled)
-                                MultiBlocProvider(
-                                  providers: [
-                                    BlocProvider(
-                                      create: (_) =>
-                                          ParentsUserChatHistoryCubit(),
-                                    ),
-                                    BlocProvider(
-                                      create: (_) =>
-                                          StudentsUserChatHistoryCubit(),
-                                    ),
-                                    BlocProvider(
-                                      create: (_) =>
-                                          StaffsUserChatHistoryCubit(),
-                                    ),
-                                  ],
-                                  child: const ChatContainer(),
-                                ),
-                              const ProfileContainer(),
-                            ],
+                            children: _buildScreens(chatModuleEnabled),
                           ),
                         ),
                         if (state

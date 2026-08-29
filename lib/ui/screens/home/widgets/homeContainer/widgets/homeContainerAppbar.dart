@@ -7,6 +7,7 @@ import 'package:eschool_saas_staff/utils/constants.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:get/get.dart';
 
 class HomeContainerAppbar extends StatelessWidget {
@@ -34,15 +35,28 @@ class HomeContainerAppbar extends StatelessWidget {
           alignment: Alignment.center,
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                radius: 25,
-                backgroundImage: profileImage.isNotEmpty
-                    ? CachedNetworkImageProvider(
-                        profileImage,
-                      )
+              GestureDetector(
+                onTap: profileImage.isNotEmpty
+                    ? () => Utils.showImagePreview(
+                          context: context,
+                          imageUrl: profileImage,
+                          heroTag: 'profile_image_preview',
+                        )
                     : null,
-                child: profileImage.isEmpty ? const Icon(Icons.person) : null,
+                child: Hero(
+                  tag: 'profile_image_preview',
+                  child: CircleAvatar(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    radius: 25,
+                    backgroundImage: profileImage.isNotEmpty
+                        ? CachedNetworkImageProvider(
+                            profileImage,
+                          )
+                        : null,
+                    child:
+                        profileImage.isEmpty ? const Icon(Icons.person) : null,
+                  ),
+                ),
               ),
               const SizedBox(
                 width: 15.0,

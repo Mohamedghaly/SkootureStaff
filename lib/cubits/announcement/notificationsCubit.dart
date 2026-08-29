@@ -9,32 +9,39 @@ class NotificationsInitial extends NotificationsState {}
 class NotificationsFetchInProgress extends NotificationsState {}
 
 class NotificationsFetchSuccess extends NotificationsState {
-  final int totalPage;
-  final int currentPage;
+  final int offset;
+  final int limit;
+  final bool hasMore;
   final List<NotificationDetails> notifications;
 
   final bool fetchMoreError;
   final bool fetchMoreInProgress;
 
-  NotificationsFetchSuccess(
-      {required this.currentPage,
-      required this.notifications,
-      required this.fetchMoreError,
-      required this.fetchMoreInProgress,
-      required this.totalPage});
+  NotificationsFetchSuccess({
+    required this.offset,
+    required this.limit,
+    required this.hasMore,
+    required this.notifications,
+    required this.fetchMoreError,
+    required this.fetchMoreInProgress,
+  });
 
-  NotificationsFetchSuccess copyWith(
-      {int? currentPage,
-      bool? fetchMoreError,
-      bool? fetchMoreInProgress,
-      int? totalPage,
-      List<NotificationDetails>? notifications}) {
+  NotificationsFetchSuccess copyWith({
+    int? offset,
+    int? limit,
+    bool? hasMore,
+    bool? fetchMoreError,
+    bool? fetchMoreInProgress,
+    List<NotificationDetails>? notifications,
+  }) {
     return NotificationsFetchSuccess(
-        currentPage: currentPage ?? this.currentPage,
-        notifications: notifications ?? this.notifications,
-        fetchMoreError: fetchMoreError ?? this.fetchMoreError,
-        fetchMoreInProgress: fetchMoreInProgress ?? this.fetchMoreInProgress,
-        totalPage: totalPage ?? this.totalPage);
+      offset: offset ?? this.offset,
+      limit: limit ?? this.limit,
+      hasMore: hasMore ?? this.hasMore,
+      notifications: notifications ?? this.notifications,
+      fetchMoreError: fetchMoreError ?? this.fetchMoreError,
+      fetchMoreInProgress: fetchMoreInProgress ?? this.fetchMoreInProgress,
+    );
   }
 }
 
@@ -48,18 +55,25 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   final AnnouncementRepository _announcementRepository =
       AnnouncementRepository();
 
+  static const int _notificationsLimit = 10;
+
   NotificationsCubit() : super(NotificationsInitial());
 
   void getNotifications() async {
     emit(NotificationsFetchInProgress());
     try {
-      final result = await _announcementRepository.getNotifications();
+      final result = await _announcementRepository.getNotifications(
+        offset: 0,
+        limit: _notificationsLimit,
+      );
       emit(NotificationsFetchSuccess(
-          currentPage: result.currentPage,
-          notifications: result.notifications,
-          fetchMoreError: false,
-          fetchMoreInProgress: false,
-          totalPage: result.totalPage));
+        offset: result.offset,
+        limit: result.limit,
+        hasMore: result.hasMore,
+        notifications: result.notifications,
+        fetchMoreError: false,
+        fetchMoreInProgress: false,
+      ));
     } catch (e) {
       emit(NotificationsFetchFailure(e.toString()));
     }
@@ -67,51 +81,80 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   bool hasMore() {
     if (state is NotificationsFetchSuccess) {
-      return (state as NotificationsFetchSuccess).currentPage <
-          (state as NotificationsFetchSuccess).totalPage;
+      final currentState = state as NotificationsFetchSuccess;
+      return currentState.hasMore;
     }
     return false;
   }
 
   void fetchMore() async {
-    //
     if (state is NotificationsFetchSuccess) {
-      if ((state as NotificationsFetchSuccess).fetchMoreInProgress) {
+      final currentState = state as NotificationsFetchSuccess;
+
+      // Prevent multiple simultaneous requests
+      if (currentState.fetchMoreInProgress) {
         return;
       }
+
+      // Check if there are more items to load
+      if (!hasMore()) {
+        return;
+      }
+
       try {
-        emit((state as NotificationsFetchSuccess)
-            .copyWith(fetchMoreInProgress: true));
+        emit(currentState.copyWith(fetchMoreInProgress: true));
 
+        final nextOffset = currentState.notifications.length;
         final result = await _announcementRepository.getNotifications(
-            page: (state as NotificationsFetchSuccess).currentPage + 1);
+          offset: nextOffset,
+          limit: _notificationsLimit,
+        );
 
-        final currentState = (state as NotificationsFetchSuccess);
-        List<NotificationDetails> notifications = currentState.notifications;
-
-        notifications.addAll(result.notifications);
+        final updatedNotifications = List<NotificationDetails>.from(
+          currentState.notifications,
+        )..addAll(result.notifications);
 
         emit(NotificationsFetchSuccess(
-            currentPage: result.currentPage,
-            fetchMoreError: false,
-            fetchMoreInProgress: false,
-            totalPage: result.totalPage,
-            notifications: notifications));
+          offset: nextOffset,
+          limit: result.limit,
+          hasMore: result.hasMore,
+          notifications: updatedNotifications,
+          fetchMoreError: false,
+          fetchMoreInProgress: false,
+        ));
       } catch (e) {
-        emit((state as NotificationsFetchSuccess)
-            .copyWith(fetchMoreInProgress: false, fetchMoreError: true));
+        emit(currentState.copyWith(
+          fetchMoreInProgress: false,
+          fetchMoreError: true,
+        ));
+      }
+    }
+  }
+
+  void retryFetchMore() {
+    if (state is NotificationsFetchSuccess) {
+      final currentState = state as NotificationsFetchSuccess;
+      if (currentState.fetchMoreError) {
+        emit(currentState.copyWith(fetchMoreError: false));
+        fetchMore();
       }
     }
   }
 
   void deleteNotification({required int notificationId}) {
     if (state is NotificationsFetchSuccess) {
-      List<NotificationDetails> notifications =
-          (state as NotificationsFetchSuccess).notifications;
-      notifications.removeWhere((element) => element.id == notificationId);
+      final currentState = state as NotificationsFetchSuccess;
+      final updatedNotifications = List<NotificationDetails>.from(
+        currentState.notifications,
+      )..removeWhere((element) => element.id == notificationId);
 
-      emit((state as NotificationsFetchSuccess)
-          .copyWith(notifications: notifications));
+      emit(currentState.copyWith(
+        notifications: updatedNotifications,
+      ));
     }
+  }
+
+  void refresh() {
+    getNotifications();
   }
 }

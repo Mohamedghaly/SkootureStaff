@@ -156,18 +156,17 @@ class _TeacherManageLessonScreenState extends State<TeacherManageLessonScreen> {
                     height: 15,
                   ),
                   GestureDetector(
-                    onTap: () {
-                      Get.toNamed(
+                    onTap: () async {
+                      final result = await Get.toNamed(
                         Routes.teacherManageTopicScreen,
                         arguments: TeacherManageTopicScreen.buildArguments(
                             selectedLesson: lesson,
                             selectedClassSection: _selectedClassSection,
                             selectedSubject: _selectedSubject),
-                      )?.then((value) {
-                        if (value != null && value is bool && value) {
-                          getLessons();
-                        }
-                      });
+                      );
+                      if (mounted && result == true) {
+                        getLessons();
+                      }
                     },
                     child: CustomTextContainer(
                       textKey:
@@ -194,18 +193,17 @@ class _TeacherManageLessonScreenState extends State<TeacherManageLessonScreen> {
                   }
                 });
               },
-              onEdit: () {
-                Get.toNamed(Routes.teacherAddEditLessonScreen,
-                        arguments: TeacherAddEditLessonScreen.buildArguments(
-                            lesson: lesson,
-                            selectedClassSection: _selectedClassSection,
-                            selectedSubject: _selectedSubject))
-                    ?.then((value) {
-                  if (value != null && value is bool && value) {
-                    //re-fetch lessons if they edit or add
-                    getLessons();
-                  }
-                });
+              onEdit: () async {
+                final result = await Get.toNamed(
+                  Routes.teacherAddEditLessonScreen,
+                  arguments: TeacherAddEditLessonScreen.buildArguments(
+                      lesson: lesson,
+                      selectedClassSection: _selectedClassSection,
+                      selectedSubject: _selectedSubject),
+                );
+                if (mounted && result == true) {
+                  getLessons();
+                }
               },
             );
           },
@@ -302,20 +300,19 @@ class _TeacherManageLessonScreenState extends State<TeacherManageLessonScreen> {
           backgroundColor: Theme.of(context).colorScheme.primary,
           buttonTitle: createLessonKey,
           showBorder: false,
-          onTap: () {
+          onTap: () async {
             if (_selectedClassSection != null &&
                 _selectedClassSection!.isNotEmpty) {
-              Get.toNamed(Routes.teacherAddEditLessonScreen,
-                      arguments: TeacherAddEditLessonScreen.buildArguments(
-                          lesson: null,
-                          selectedClassSection: _selectedClassSection,
-                          selectedSubject: _selectedSubject))
-                  ?.then((value) {
-                if (value != null && value is bool && value) {
-                  //re-fetch lessons if they edit or add
-                  getLessons();
-                }
-              });
+              final result = await Get.toNamed(
+                Routes.teacherAddEditLessonScreen,
+                arguments: TeacherAddEditLessonScreen.buildArguments(
+                    lesson: null,
+                    selectedClassSection: _selectedClassSection,
+                    selectedSubject: _selectedSubject),
+              );
+              if (mounted && result == true) {
+                getLessons();
+              }
             } else {
               Utils.showSnackBar(
                 context: context,

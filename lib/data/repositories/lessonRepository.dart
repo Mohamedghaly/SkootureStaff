@@ -45,7 +45,7 @@ class LessonRepository {
           .toList();
     } catch (e, stk) {
       if (kDebugMode) {
-        print(stk.toString());
+        debugPrint(stk.toString());
       }
       throw ApiException(e.toString());
     }

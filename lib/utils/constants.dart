@@ -193,3 +193,31 @@ const String overDueFeesNotificationTypeKey = "Over Due Fees";
 const String specificRolesSendNotificationTypeKey = "Roles";
 
 const String schoolAdminRoleKey = "School Admin";
+
+// Reverb WebSocket URL (Pusher protocol)
+const reverbUrl = "ws://stage-eschool-saas.wrteam.net:9090/app/e2mhe9gu4tb2x2vkncxa";
+
+// Reverb reconnect delay
+const reverbReconnectDelay = Duration(seconds: 3);
+
+const bool showDefaultCredentials = true;
+
+const String driverRoleKey = "Driver";
+
+// Transport Report Issue Labels (Staff/Teacher)
+const List<String> transportReportIssueLabels = [
+  unsafeDrivingKey,
+  unauthorizedPersonKey,
+  missedPickupKey,
+  uncleanBusInteriorKey,
+  busBreakdownKey,
+];
+
+// Driver Report Issue Labels
+const List<String> driverReportIssueLabels = [
+  delayAtStopKey,
+  studentNotAvailableKey,
+  routeBlockageKey,
+  vehicleProblemKey,
+  parentLateKey,
+];

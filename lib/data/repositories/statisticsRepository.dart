@@ -13,7 +13,7 @@ class StatisticsRepository {
       final result = await Api.get(url: Api.getSystemStatistics);
 
       if (kDebugMode) {
-        print(result);
+        debugPrint(result.toString());
       }
 
       return (
