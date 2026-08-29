@@ -20,6 +20,7 @@ const int expenseManagementModuleId = 14;
 const int staffLeaveManagementModuleId = 15;
 const int feesManagementModuleId = 16;
 const int galleryManagementModuleId = 17;
+const int certificateGenerationModuleId = 18;
 const int chatModuleId = 20;
 const int transportationModuleId = 21;
 const int staffAttendanceManagementModuleId = 22;
@@ -67,6 +68,12 @@ const String viewStudentDiaryPermissionKey = "student-diary-list";
 const String createStudentDiaryPermissionKey = "student-diary-create";
 const String editStudentDiaryPermissionKey = "student-diary-edit";
 const String deleteStudentDiaryPermissionKey = "student-diary-delete";
+
+// Task permissions
+const String createTaskPermissionKey = "task-create";
+const String editTaskPermissionKey = "task-edit";
+const String deleteTaskPermissionKey = "task-delete";
+const String assignTaskPermissionKey = "task-assign";
 
 //"teacher-list",
 /*

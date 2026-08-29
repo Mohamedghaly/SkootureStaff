@@ -1,3 +1,5 @@
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
+import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/material.dart';
 
 class WeekdayHeadersWidget extends StatelessWidget {
@@ -5,7 +7,15 @@ class WeekdayHeadersWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const weekdays = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+    const weekdays = [
+      sundayKey,
+      mondayKey,
+      tuesdayKey,
+      wednesdayKey,
+      thursdayKey,
+      fridayKey,
+      saturdayKey
+    ];
 
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
@@ -14,7 +24,7 @@ class WeekdayHeadersWidget extends StatelessWidget {
             .map((day) => Expanded(
                   child: Center(
                     child: Text(
-                      day,
+                      Utils.getTranslatedLabel(day).toUpperCase(),
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

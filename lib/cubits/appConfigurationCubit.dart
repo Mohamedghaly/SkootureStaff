@@ -68,7 +68,9 @@ class AppConfigurationCubit extends Cubit<AppConfigurationState> {
 
   bool appUnderMaintenance() {
     if (state is AppConfigurationFetchSuccess) {
-      return getAppConfiguration().teacherAppMaintenance == "1";
+      final config = getAppConfiguration();
+      return config.teacherAppMaintenance == "1" ||
+          config.systemMaintenance == "1";
     }
     return false;
   }

@@ -32,7 +32,12 @@ class StaffAllowedPermissionsAndModulesCubit
   StaffAllowedPermissionsAndModulesCubit()
       : super(StaffAllowedPermissionsAndModulesInitial());
 
-  void getPermissionAndAllowedModules() async {
+  void getPermissionAndAllowedModules({bool forceRefresh = false}) async {
+    if (!forceRefresh &&
+        (state is StaffAllowedPermissionsAndModulesFetchSuccess ||
+            state is StaffAllowedPermissionsAndModulesFetchInProgress)) {
+      return;
+    }
     try {
       emit(StaffAllowedPermissionsAndModulesFetchInProgress());
       final result =

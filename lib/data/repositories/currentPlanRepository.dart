@@ -15,7 +15,8 @@ class CurrentPlanRepository {
       );
 
       return CurrentPlanResponse.fromJson(result);
-    } catch (e) {
+    } catch (e, st) {
+      print("this is error for fetch current plan ${e} and ${st}");
       throw ApiException(e.toString());
     }
   }

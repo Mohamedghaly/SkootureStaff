@@ -1,8 +1,11 @@
 import 'package:eschool_saas_staff/ui/screens/aboutUsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/addAnnouncementScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/addNotification/addNotificationScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/tasksScreen/addTaskScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/selectStaffScreen/selectStaffScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/allowancesAndDeductionsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/applyLeaveScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/certificate/certificateScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/changePasswordScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/classTimeTableScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/classesScreen.dart';
@@ -26,6 +29,7 @@ import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome
 import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/transportRequestDetailsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/planRenewal/planRenewalScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/planRenewal/planRenewalReviewScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/transportPlanHistoryScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/teacherAcademics/techerMyAttendanceScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/tripDetailsScreen/tripDetailsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/myExpenseScreen/myExpenseScreen.dart';
@@ -40,6 +44,9 @@ import 'package:eschool_saas_staff/ui/screens/manageDiary/studentDiarySelectionS
 import 'package:eschool_saas_staff/ui/screens/manageNotification/manageNotificationScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/managePayrolls/managePayrollsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/myPayrollScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/onlineClass/createOnlineClassScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/onlineClass/onlineClassesScreen.dart';
+import 'package:eschool_saas_staff/ui/screens/tasksScreen/myTasksScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/notificationsScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/offlineResult/offlineResultScreen.dart';
 import 'package:eschool_saas_staff/ui/screens/paidFeesScreen.dart';
@@ -170,13 +177,18 @@ class Routes {
   static String attendanceScreen = "/attendance";
   static String transportRequestDetailsScreen = "/transportRequestDetails";
 
+  static String certificateScreen = "/certificate";
+  static String myTasksScreen = "/myTasks";
+  static String addTaskScreen = "/addTask";
+
+  //online class routes
+  static String onlineClassesScreen = "/onlineClasses";
+  static String createOnlineClassScreen = "/createOnlineClass";
+  static String selectStaffScreen = "/selectStaff";
+  static String transportPlanHistoryScreen = "/transportPlanHistory";
+
   static final List<GetPage> getPages = [
-    GetPage(
-      name: splashScreen,
-      page: () => SplashScreen.getRouteInstance(),
-      transition: Transition.fade, // You can use fade, rightToLeft, etc.
-      transitionDuration: Duration(milliseconds: 800), // Adjust as needed
-    ),
+    GetPage(name: splashScreen, page: () => SplashScreen.getRouteInstance()),
     GetPage(
         name: onbordingScreen, page: () => OnbordingScreen.getRouteInstance()),
     GetPage(name: loginScreen, page: () => LoginScreen.getRouteInstance()),
@@ -442,6 +454,35 @@ class Routes {
     GetPage(
       name: planRenewalReviewScreen,
       page: () => PlanRenewalReviewScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: certificateScreen,
+      page: () => CertificateScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: myTasksScreen,
+      page: () => MyTasksScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: addTaskScreen,
+      page: () => AddTaskScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: selectStaffScreen,
+      page: () => SelectStaffScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: transportPlanHistoryScreen,
+      page: () => TransportPlanHistoryScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: onlineClassesScreen,
+      page: () => OnlineClassesScreen.getRouteInstance(),
+    ),
+    GetPage(
+      name: createOnlineClassScreen,
+      page: () => CreateOnlineClassScreen.getRouteInstance(),
+      popGesture: false,
     ),
   ];
 }

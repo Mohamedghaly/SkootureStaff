@@ -11,6 +11,7 @@ class AppConfiguration {
   final String? teacherIosAppVersion;
   final String? teacherForceAppUpdate;
   final String? teacherAppMaintenance;
+  final String? systemMaintenance;
   final String? tagline;
 
   AppConfiguration({
@@ -26,6 +27,7 @@ class AppConfiguration {
     this.teacherIosAppVersion,
     this.teacherForceAppUpdate,
     this.teacherAppMaintenance,
+    this.systemMaintenance,
     this.tagline,
   });
 
@@ -42,6 +44,7 @@ class AppConfiguration {
     String? teacherIosAppVersion,
     String? teacherForceAppUpdate,
     String? teacherAppMaintenance,
+    String? systemMaintenance,
     String? tagline,
   }) {
     return AppConfiguration(
@@ -59,6 +62,7 @@ class AppConfiguration {
           teacherForceAppUpdate ?? this.teacherForceAppUpdate,
       teacherAppMaintenance:
           teacherAppMaintenance ?? this.teacherAppMaintenance,
+      systemMaintenance: systemMaintenance ?? this.systemMaintenance,
       tagline: tagline ?? this.tagline,
     );
   }
@@ -76,6 +80,7 @@ class AppConfiguration {
         teacherIosAppVersion = json['teacher_ios_app_version'] as String?,
         teacherForceAppUpdate = json['teacher_force_app_update'] as String?,
         teacherAppMaintenance = json['teacher_app_maintenance'] as String?,
+        systemMaintenance = json['system_maintenance'] as String?,
         tagline = json['tagline'] as String?;
 
   Map<String, dynamic> toJson() => {
@@ -91,6 +96,7 @@ class AppConfiguration {
         'teacher_ios_app_version': teacherIosAppVersion,
         'teacher_force_app_update': teacherForceAppUpdate,
         'teacher_app_maintenance': teacherAppMaintenance,
+        'system_maintenance': systemMaintenance,
         'tagline': tagline
       };
 }

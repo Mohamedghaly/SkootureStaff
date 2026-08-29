@@ -147,6 +147,8 @@ class _TeacherTodaysTimetableContainerState
                             timeTableSlot.classSection?.fullName ?? "-",
                         startTime: timeTableSlot.startTime ?? "",
                         subjectName: timeTableSlot.subject?.name ?? "-",
+                        isOnlineClass: timeTableSlot.isOnlineClass,
+                        isLive: timeTableSlot.isLiveOnlineClass,
                       );
                     },
                   ),
@@ -174,6 +176,8 @@ class _TeacherTodaysTimetableContainerState
                                     timeTableSlot.classSection?.fullName ?? "-",
                                 startTime: timeTableSlot.startTime ?? "",
                                 subjectName: timeTableSlot.subject?.name ?? "-",
+                                isOnlineClass: timeTableSlot.isOnlineClass,
+                                isLive: timeTableSlot.isLiveOnlineClass,
                               );
                             },
                           ),

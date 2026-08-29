@@ -51,21 +51,20 @@ class StaffChatUsersCubit extends Cubit<StaffChatUsersState> {
   StaffChatUsersCubit() : super(const StaffChatUsersState());
 
   final _chatRepository = ChatRepository();
-void fetchChatUsers({
-  required ChatUserRole role,
-  int page = 1,
-  String? childId,
-  String? classSectionId,
-}) async {
-  emit(state.copyWith(status: StaffChatUsersFetchStatus.loading));
+
+  void fetchChatUsers({
+    required ChatUserRole role,
+    int page = 1,
+    String? childId,
+  }) async {
+    emit(state.copyWith(status: StaffChatUsersFetchStatus.loading));
 
     _chatRepository
         .getUsers(
-          role: role,
-          childId: childId,
-          classSectionId: classSectionId,
-          page: page,
-        )
+      role: role,
+      childId: childId,
+      page: page,
+    )
         .then((chatUsersResponse) {
       emit(state.copyWith(
         status: StaffChatUsersFetchStatus.success,

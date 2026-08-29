@@ -92,6 +92,19 @@ class AuthRepository {
     }
   }
 
+  /// Fetches the freshest details of the logged-in user (`GET profile`).
+  ///
+  /// The app stores user details at login; this re-reads them from the server
+  /// so changes made from the admin panel appear without a re-login.
+  Future<UserDetails> getProfile() async {
+    try {
+      final result = await Api.get(url: Api.profile);
+      return UserDetails.fromJson(Map.from(result['data'] ?? {}));
+    } catch (e) {
+      throw ApiException(e.toString());
+    }
+  }
+
   Future<void> logout() async {
     try {
       // Get FCM token from storage to send to server for clearing
@@ -146,6 +159,7 @@ class AuthRepository {
     required String firstName,
     required String lastName,
     required String mobileNumber,
+    required String countryCode,
     required String email,
     required String dateOfBirth,
     required String currentAddress,
@@ -168,6 +182,12 @@ class AuthRepository {
         "image":
             (image ?? "").isEmpty ? null : await MultipartFile.fromFile(image!),
       };
+
+      // Only sent once the user actually has a code selected — sending an empty
+      // value would clear whatever the panel has on record.
+      if (countryCode.isNotEmpty) {
+        body["country_code"] = countryCode;
+      }
 
       // Add custom fields data if present
       // Format: custom_fields[i][id], custom_fields[i][form_field_id],
@@ -211,9 +231,17 @@ class AuthRepository {
       if (kDebugMode) {
         debugPrint(result['data'].toString());
       }
+
+      final userDetails = UserDetails.fromJson(Map.from(result['data'] ?? {}));
+
       return (
         successmessage: (result['message'] ?? "").toString(),
-        userDetails: UserDetails.fromJson(Map.from(result['data'] ?? {})),
+        // The update response isn't guaranteed to echo the country code back;
+        // keep the value that was just saved so it survives locally too.
+        userDetails: userDetails.countryCode == null
+            ? userDetails.copyWith(
+                countryCode: countryCode.isEmpty ? null : countryCode)
+            : userDetails,
       );
     } on ApiException catch (e, st) {
       print("this is the error: $e");

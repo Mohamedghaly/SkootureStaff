@@ -33,19 +33,11 @@ class NotificationItemContainer extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if ((notificationDetails.image ?? "").isNotEmpty) ...[
-                Container(
-                    height: 80,
-                    width: 80,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: CachedNetworkImage(
-                      fit: BoxFit.cover,
-                      imageUrl: notificationDetails.image ?? "",
-                      errorWidget: (context, url, error) =>
-                          Image.asset('assets/images/splash_logo.png'),
-                    )),
+                _NotificationImagePreview(
+                  imageUrl: notificationDetails.image ?? "",
+                  heroTag:
+                      'notification-image-${notificationDetails.id ?? notificationDetails.image ?? notificationDetails.hashCode}',
+                ),
                 const SizedBox(
                   width: 15,
                 ),
@@ -81,14 +73,69 @@ class NotificationItemContainer extends StatelessWidget {
             height: 10,
           ),
           CustomTextContainer(
-            textKey:
-                timeago.format(Utils.parseDateSafely(notificationDetails.createdAt!) ?? DateTime.now()),
+            textKey: timeago.format(
+                Utils.parseDateSafely(notificationDetails.createdAt!) ??
+                    DateTime.now()),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
                 fontSize: 12.0, color: Theme.of(context).colorScheme.secondary),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _NotificationImagePreview extends StatelessWidget {
+  const _NotificationImagePreview(
+      {required this.imageUrl, required this.heroTag});
+
+  final String imageUrl;
+  final String heroTag;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 80,
+      width: 80,
+      child: GestureDetector(
+        onTap: () => Utils.showImagePreview(
+            context: context, imageUrl: imageUrl, heroTag: heroTag),
+        child: Hero(
+          tag: heroTag,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: CachedNetworkImage(
+              fit: BoxFit.cover,
+              imageUrl: imageUrl,
+              placeholder: (context, url) => Container(
+                color: Theme.of(context)
+                    .colorScheme
+                    .surface
+                    .withValues(alpha: 0.2),
+                child: Center(
+                  child: SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                          Theme.of(context).colorScheme.primary),
+                    ),
+                  ),
+                ),
+              ),
+              errorWidget: (context, url, error) => Container(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                child: Icon(
+                  Icons.broken_image_outlined,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

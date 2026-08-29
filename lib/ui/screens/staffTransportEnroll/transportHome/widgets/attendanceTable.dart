@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/widgets/attendanceStatusPill.dart';
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
 
 class AttendanceTable extends StatelessWidget {
   final List<AttendanceRowData> rows;
@@ -37,11 +38,11 @@ class AttendanceTable extends StatelessWidget {
                 Expanded(
                     flex: 2,
                     child: CustomTextContainer(
-                        textKey: 'Date',
+                        textKey: dateKey,
                         style: TextStyle(fontWeight: FontWeight.w700))),
                 Expanded(
                     child: CustomTextContainer(
-                        textKey: 'Status',
+                        textKey: statusKey,
                         style: TextStyle(fontWeight: FontWeight.w700))),
               ],
             ),

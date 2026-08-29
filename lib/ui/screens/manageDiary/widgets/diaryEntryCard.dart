@@ -213,7 +213,7 @@ class _DiaryEntryCardState extends State<DiaryEntryCard> {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: const CustomTextContainer(
-                      textKey: 'delete',
+                      textKey: deleteKey,
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,

@@ -45,10 +45,11 @@ class ClassListItemContainer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _boldText(
-              "${(index + 1)}.  ${classSectionDetails.fullName ?? classSectionDetails.name ?? ""} ${classSectionDetails.classDetails?.semesterName != '' ? "\n" : ""}"),
+              "${(index + 1)}.  ${classSectionDetails.fullName ?? classSectionDetails.name ?? ""} ${(classSectionDetails.classDetails?.semesterName != null && classSectionDetails.classDetails?.semesterName != '') ? "\n" : ""}"),
           Text.rich(
             TextSpan(
-              text: classSectionDetails.classDetails?.semesterName != ''
+              text: (classSectionDetails.classDetails?.semesterName != null &&
+                      classSectionDetails.classDetails?.semesterName != '')
                   ? '(${classSectionDetails.classDetails!.semesterName})'
                   : '',
               style: const TextStyle(

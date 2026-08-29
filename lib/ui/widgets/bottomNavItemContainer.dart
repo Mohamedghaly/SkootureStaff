@@ -26,6 +26,7 @@ class BottomNavItemContainer extends StatelessWidget {
       onTap: () {
         onTap.call(index);
       },
+      behavior: HitTestBehavior.opaque,
       child: Container(
         decoration:
             BoxDecoration(border: Border.all(color: Colors.transparent)),
@@ -48,15 +49,21 @@ class BottomNavItemContainer extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 5),
-            CustomTextContainer(
-              textKey: bottomNavItem.title,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: Theme.of(context)
-                    .colorScheme
-                    .secondary
-                    .withValues(alpha: isSelected ? 1.0 : 0.75),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2.0),
+              child: CustomTextContainer(
+                textKey: bottomNavItem.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .secondary
+                      .withValues(alpha: isSelected ? 1.0 : 0.75),
+                ),
               ),
             ),
           ],

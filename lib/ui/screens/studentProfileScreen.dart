@@ -354,7 +354,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                   ),
                   CustomTextContainer(
                     textKey:
-                        "GR No : ${widget.studentDetails.student?.admissionNo ?? '-'}",
+                        "${Utils.getTranslatedLabel(grNoKey)} : ${widget.studentDetails.student?.admissionNo ?? '-'}",
                     style: TextStyle(
                         color: Theme.of(context)
                             .colorScheme

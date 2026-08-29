@@ -18,7 +18,8 @@ class HolidayContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final holidayDateTime = Utils.parseDateSafely(holiday.date ?? "") ?? DateTime.now();
+    // Use dmyFormat which is in dd-MM-yyyy format (e.g., "06-02-2026" = 6th February)
+    final holidayDateTime = Utils.parseDateSafely(holiday.dmyFormat ?? holiday.date ?? "") ?? DateTime.now();
     return Container(
       margin: margin,
       width: width,
@@ -131,11 +132,12 @@ class HolidayDetailsBottomsheet extends StatelessWidget {
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       textColor: Theme.of(context).colorScheme.surface,
                       titleKey: () {
-                        final parsedDate = Utils.parseDateSafely(holiday.date!);
+                        // Use dmyFormat which is in dd-MM-yyyy format (e.g., "06-02-2026" = 6th February)
+                        final parsedDate = Utils.parseDateSafely(holiday.dmyFormat ?? holiday.date ?? "");
                         if (parsedDate != null) {
                           return Utils.formatDate(parsedDate);
                         }
-                        return holiday.date ?? "";
+                        return holiday.dmyFormat ?? holiday.date ?? "";
                       }()),
                 ),
               ),

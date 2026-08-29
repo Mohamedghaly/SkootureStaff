@@ -4,8 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../widgets/customTextContainer.dart';
-
 class ConfirmDeleteDialog extends StatelessWidget {
   const ConfirmDeleteDialog({super.key});
 
@@ -14,8 +12,8 @@ class ConfirmDeleteDialog extends StatelessWidget {
     return AlertDialog(
       actions: [
         CupertinoButton(
-          child: CustomTextContainer(
-            textKey: yesKey,
+          child: Text(
+            Utils.getTranslatedLabel(yesKey),
             style: TextStyle(color: Theme.of(context).colorScheme.primary),
           ),
           onPressed: () {
@@ -23,8 +21,8 @@ class ConfirmDeleteDialog extends StatelessWidget {
           },
         ),
         CupertinoButton(
-          child: CustomTextContainer(
-            textKey: noKey,
+          child: Text(
+            Utils.getTranslatedLabel(noKey),
             style: TextStyle(color: Theme.of(context).colorScheme.primary),
           ),
           onPressed: () {
@@ -33,8 +31,8 @@ class ConfirmDeleteDialog extends StatelessWidget {
         ),
       ],
       backgroundColor: Colors.white,
-      content: const CustomTextContainer(textKey: deleteDialogMessageKey),
-      title: const CustomTextContainer(textKey: deleteDialogTitleKey),
+      content: Text(Utils.getTranslatedLabel(deleteDialogMessageKey)),
+      title: Text(Utils.getTranslatedLabel(deleteDialogTitleKey)),
     );
   }
 }

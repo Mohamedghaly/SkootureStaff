@@ -1,4 +1,5 @@
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
+import 'package:eschool_saas_staff/ui/widgets/languageFlagImage.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
 import 'package:flutter/material.dart';
 
@@ -6,12 +7,26 @@ class FilterSelectionTile extends StatelessWidget {
   final bool isSelected;
   final String title;
 
+  /// Whether a leading flag/icon circle is shown before the title (e.g. for a
+  /// language picker). Off for every other use of this shared tile.
+  ///
+  /// Kept separate from [leadingImageUrl] so a language whose panel has no
+  /// flag set still gets the placeholder icon and stays aligned with the rows
+  /// that do have one.
+  final bool showLeadingImage;
+
+  /// Url of the leading flag/icon. May be null even when [showLeadingImage] is
+  /// true, in which case a placeholder icon is shown.
+  final String? leadingImageUrl;
+
   final Function onTap;
   const FilterSelectionTile(
       {super.key,
       required this.onTap,
       required this.isSelected,
-      required this.title});
+      required this.title,
+      this.showLeadingImage = false,
+      this.leadingImageUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +43,10 @@ class FilterSelectionTile extends StatelessWidget {
           alignment: Alignment.topCenter,
           child: Row(
             children: [
+              if (showLeadingImage) ...[
+                LanguageFlagImage(imageUrl: leadingImageUrl),
+                const SizedBox(width: 12),
+              ],
               Expanded(
                   child: CustomTextContainer(
                 textKey: title,

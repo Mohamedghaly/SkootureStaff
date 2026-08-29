@@ -28,6 +28,20 @@ class TripItemCard extends StatelessWidget {
     return Colors.orange.withValues(alpha: 0.1); // upcoming
   }
 
+  String _getStatusKey(String status) {
+    switch (status.trim().toLowerCase()) {
+      case 'inprogress':
+      case 'in_progress':
+        return inProgressKey;
+      case 'upcoming':
+        return upcomingKey;
+      case 'completed':
+        return completedKey;
+      default:
+        return status;
+    }
+  }
+
   void _navigateToTripDetails(BuildContext context) {
     // Call the get-trips API with trip_id before navigating
     if (trip.tripId != null) {
@@ -82,7 +96,7 @@ class TripItemCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: CustomTextContainer(
-                  textKey: trip.displayStatus,
+                  textKey: _getStatusKey(trip.status),
                   style: TextStyle(
                     color: _getStatusColor(),
                     fontSize: 12,

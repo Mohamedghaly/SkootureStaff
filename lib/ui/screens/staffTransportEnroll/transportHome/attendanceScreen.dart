@@ -510,12 +510,12 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         bgColor =
             const Color(0xFFE8F5E8); // Light green background like in image
         textColor = const Color(0xFF2E7D32); // Dark green text
-        displayText = 'P';
+        displayText = Utils.getTranslatedLabel(presentShortKey);
         break;
       case 'A':
         bgColor = const Color(0xFFFFEBEE); // Light red background like in image
         textColor = const Color(0xFFC62828); // Dark red text
-        displayText = 'A';
+        displayText = Utils.getTranslatedLabel(absentShortKey);
         break;
       default:
         bgColor = const Color(0xFFF5F5F5); // Light grey background
@@ -599,21 +599,22 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
   String _formatDate(String dateString) {
     try {
       final date = DateTime.parse(dateString);
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec'
+      const monthKeys = [
+        janShortKey,
+        febShortKey,
+        marShortKey,
+        aprShortKey,
+        mayShortKey,
+        junShortKey,
+        julShortKey,
+        augShortKey,
+        sepShortKey,
+        octShortKey,
+        novShortKey,
+        decShortKey,
       ];
-      return '${date.day.toString().padLeft(2, '0')} ${months[date.month - 1]} ${date.year}';
+      final month = Utils.getTranslatedLabel(monthKeys[date.month - 1]);
+      return '${date.day.toString().padLeft(2, '0')} $month ${date.year}';
     } catch (e) {
       return dateString;
     }

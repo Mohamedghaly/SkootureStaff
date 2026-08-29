@@ -15,8 +15,11 @@ class CurrentPlanResponse {
     return CurrentPlanResponse(
       error: json['error'] ?? false,
       message: json['message'] ?? '',
-      data: json['data'] != null
-          ? CurrentPlan.fromJson(Map<String, dynamic>.from(json['data']))
+      data: json['data'] != null &&
+              json['data'] is List &&
+              (json['data'] as List).isNotEmpty
+          ? CurrentPlan.fromJson(
+              Map<String, dynamic>.from((json['data'] as List).first))
           : null,
       code: json['code'] ?? 200,
     );

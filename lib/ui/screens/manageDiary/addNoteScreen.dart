@@ -208,7 +208,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                 if (mounted) {
                   Utils.showSnackBar(
                     context: context,
-                    message: "Failed to open manage categories: $e",
+                    message: failedToOpenManageCategoriesKey,
                   );
                 }
               }
@@ -221,13 +221,13 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
       // Show loading message
       Utils.showSnackBar(
         context: context,
-        message: "Loading categories...",
+        message: loadingCategoriesKey,
       );
     } else if (diaryCategoriesState is DiaryCategoriesFetchFailure) {
       // Show error message and retry
       Utils.showSnackBar(
         context: context,
-        message: "Failed to load categories. Retrying...",
+        message: failedToLoadCategoriesRetryingKey,
       );
       // Retry loading categories
       context
@@ -241,7 +241,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
           .fetchDiaryCategories(type: selectedNoteType);
       Utils.showSnackBar(
         context: context,
-        message: "Loading categories...",
+        message: loadingCategoriesKey,
       );
     }
   }
@@ -272,20 +272,20 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
         // Show message if no subjects found
         Utils.showSnackBar(
           context: context,
-          message: "No subjects found for this class",
+          message: noSubjectsFoundForClassKey,
         );
       }
     } else if (subjectsState is ClassSectionsAndSubjectsFetchInProgress) {
       // Show loading message
       Utils.showSnackBar(
         context: context,
-        message: "Loading subjects...",
+        message: loadingSubjectsKey,
       );
     } else if (subjectsState is ClassSectionsAndSubjectsFetchFailure) {
       // Show error message and retry
       Utils.showSnackBar(
         context: context,
-        message: "Failed to load subjects. Retrying...",
+        message: failedToLoadSubjectsRetryingKey,
       );
       // Retry loading subjects
       if (classSection != null) {
@@ -307,12 +307,12 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
             );
         Utils.showSnackBar(
           context: context,
-          message: "Loading subjects...",
+          message: loadingSubjectsKey,
         );
       } else {
         Utils.showSnackBar(
           context: context,
-          message: "Class section not available",
+          message: classSectionNotAvailableKey,
         );
       }
     }
@@ -322,7 +322,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     if (titleController.text.trim().isEmpty) {
       Utils.showSnackBar(
         context: context,
-        message: "Please enter a title",
+        message: pleaseEnterTitleKey,
       );
       return false;
     }
@@ -330,7 +330,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     if (descriptionController.text.trim().isEmpty) {
       Utils.showSnackBar(
         context: context,
-        message: "Please enter a description",
+        message: pleaseEnterDescriptionKey,
       );
       return false;
     }
@@ -338,7 +338,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     if (selectedCategory == null) {
       Utils.showSnackBar(
         context: context,
-        message: "Please select a category",
+        message: pleaseSelectCategoryKey,
       );
       return false;
     }
@@ -346,7 +346,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     if (selectedStudents.isEmpty) {
       Utils.showSnackBar(
         context: context,
-        message: "Please select at least one student",
+        message: pleaseSelectAtLeastOneStudentKey,
       );
       return false;
     }
@@ -354,7 +354,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     if (classSection == null) {
       Utils.showSnackBar(
         context: context,
-        message: "Class section information is missing",
+        message: classSectionInfoMissingKey,
       );
       return false;
     }
@@ -409,7 +409,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
     if (!hasCreatePermission) {
       Utils.showSnackBar(
         context: context,
-        message: "You don't have permission to create diary entries",
+        message: noPermissionToCreateDiaryKey,
       );
       return;
     }
@@ -528,9 +528,9 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
             bool isLoading = state is DiaryCategoriesFetchInProgress;
 
             if (isLoading) {
-              titleKey = "Loading categories...";
+              titleKey = loadingCategoriesKey;
             } else if (state is DiaryCategoriesFetchFailure) {
-              titleKey = "Failed to load categories";
+              titleKey = failedToLoadCategoriesKey;
             }
 
             return CustomSelectionDropdownSelectionButton(
@@ -558,9 +558,9 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
             bool isLoading = state is ClassSectionsAndSubjectsFetchInProgress;
 
             if (isLoading) {
-              titleKey = "Loading subjects...";
+              titleKey = loadingSubjectsKey;
             } else if (state is ClassSectionsAndSubjectsFetchFailure) {
-              titleKey = "Failed to load subjects";
+              titleKey = failedToLoadSubjectsKey;
             }
 
             return CustomSelectionDropdownSelectionButton(
@@ -632,7 +632,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
             ),
             child: Center(
               child: CustomTextContainer(
-                textKey: "No students selected",
+                textKey: noStudentsSelectedKey,
                 style: TextStyle(
                   fontSize: 14,
                   color: Theme.of(context).colorScheme.secondary,
@@ -687,7 +687,8 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                     ),
                     const SizedBox(height: 2),
                     CustomTextContainer(
-                      textKey: "GR No: ${student.student?.admissionNo ?? '-'}",
+                      textKey:
+                          "${Utils.getTranslatedLabel(grNoKey)}: ${student.student?.admissionNo ?? '-'}",
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).colorScheme.secondary,
@@ -784,7 +785,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                         .secondary
                         .withValues(alpha: 0.3)
                     : Theme.of(context).colorScheme.primary,
-                buttonTitle: isLoading ? "Creating..." : addKey,
+                buttonTitle: isLoading ? creatingKey : addKey,
                 showBorder: false,
                 widthPercentage: 1.0,
                 height: 50,
@@ -809,7 +810,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                 if (state is DiaryCategoriesFetchFailure) {
                   Utils.showSnackBar(
                     context: context,
-                    message: "Failed to load categories: ${state.errorMessage}",
+                    message: failedToLoadCategoriesKey,
                   );
                 }
               },
@@ -820,7 +821,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                 if (state is ClassSectionsAndSubjectsFetchFailure) {
                   Utils.showSnackBar(
                     context: context,
-                    message: "Failed to load subjects: ${state.errorMessage}",
+                    message: failedToLoadSubjectsKey,
                   );
                 }
               },
@@ -840,7 +841,7 @@ class _AddNoteScreenState extends State<AddNoteScreen> {
                   if (context.mounted) {
                     Utils.showSnackBar(
                       context: context,
-                      message: "Failed to create diary: ${state.errorMessage}",
+                      message: failedToCreateDiaryKey,
                     );
                   }
                 }
@@ -991,7 +992,7 @@ class _CategorySelectionBottomSheetState
                             CustomCircularProgressIndicator(),
                             const SizedBox(height: 16),
                             CustomTextContainer(
-                              textKey: "Loading categories...",
+                              textKey: loadingCategoriesKey,
                               style: TextStyle(
                                 fontSize: 16.0,
                                 color: Theme.of(context)
@@ -1026,7 +1027,7 @@ class _CategorySelectionBottomSheetState
                             ),
                             const SizedBox(height: 16),
                             CustomTextContainer(
-                              textKey: "Failed to load categories. Retrying...",
+                              textKey: failedToLoadCategoriesRetryingKey,
                               style: TextStyle(
                                 fontSize: 16.0,
                                 color: Theme.of(context)
@@ -1046,7 +1047,7 @@ class _CategorySelectionBottomSheetState
                               },
                               backgroundColor:
                                   Theme.of(context).colorScheme.primary,
-                              buttonTitle: "Retry",
+                              buttonTitle: retryKey,
                               showBorder: false,
                               widthPercentage: 0.8,
                               height: 50,
@@ -1141,7 +1142,7 @@ class _CategorySelectionBottomSheetState
                             ),
                             const SizedBox(height: 16),
                             CustomTextContainer(
-                              textKey: "No categories loaded",
+                              textKey: noCategoriesLoadedKey,
                               style: TextStyle(
                                 fontSize: 16.0,
                                 color: Theme.of(context)
@@ -1170,7 +1171,7 @@ class _CategorySelectionBottomSheetState
                     child: CustomRoundedButton(
                       onTap: widget.onManage,
                       backgroundColor: Theme.of(context).colorScheme.surface,
-                      buttonTitle: "Manage",
+                      buttonTitle: manageKey,
                       showBorder: true,
                       widthPercentage: 1.0,
                       height: 50,
@@ -1190,7 +1191,7 @@ class _CategorySelectionBottomSheetState
                         widget.onApply();
                       },
                       backgroundColor: Theme.of(context).colorScheme.primary,
-                      buttonTitle: "Apply",
+                      buttonTitle: applyKey,
                       showBorder: false,
                       widthPercentage: 1.0,
                       height: 50,

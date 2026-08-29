@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
 
 class AttendanceStatusPill extends StatelessWidget {
   final String status; // 'P' or 'A'
@@ -21,7 +22,7 @@ class AttendanceStatusPill extends StatelessWidget {
       ),
       child: Center(
         child: CustomTextContainer(
-          textKey: present ? 'P' : 'A',
+          textKey: present ? presentShortKey : absentShortKey,
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w700,

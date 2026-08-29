@@ -1,6 +1,7 @@
 import 'package:eschool_saas_staff/cubits/authentication/authCubit.dart';
 import 'package:eschool_saas_staff/cubits/transport/routeStopsCubit.dart';
 import 'package:eschool_saas_staff/cubits/transport/transportDashboardCubit.dart';
+import 'package:eschool_saas_staff/cubits/transport/transportPlanHistoryCubit.dart';
 import 'package:eschool_saas_staff/cubits/transport/transportRequestCubit.dart';
 import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/widgets/commonTransportWidgets.dart';
 import 'package:eschool_saas_staff/ui/screens/staffTransportEnroll/transportHome/widgets/busInfoCard.dart';
@@ -24,6 +25,7 @@ class TransportHomeScreen extends StatefulWidget {
           BlocProvider(create: (context) => RouteStopsCubit()),
           BlocProvider(create: (context) => TransportDashboardCubit()),
           BlocProvider(create: (context) => TransportRequestCubit()),
+          BlocProvider(create: (context) => TransportPlanHistoryCubit()),
         ],
         child: const TransportHomeScreen(),
       );
@@ -107,6 +109,7 @@ class _TransportHomeScreenState extends State<TransportHomeScreen>
           const CustomAppbar(
             titleKey: transportationKey,
             showBackButton: true,
+            trailingWidget: TransportHistoryButton(),
           ),
           Expanded(
             child: BlocConsumer<RouteStopsCubit, RouteStopsState>(

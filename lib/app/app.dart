@@ -7,9 +7,12 @@ import 'package:eschool_saas_staff/cubits/appLocalizationCubit.dart';
 import 'package:eschool_saas_staff/cubits/authentication/authCubit.dart';
 import 'package:eschool_saas_staff/cubits/chat/socketSettingsCubit.dart';
 import 'package:eschool_saas_staff/cubits/driverDashboardCubit.dart';
+import 'package:eschool_saas_staff/cubits/homeScreenDataCubit.dart';
 import 'package:eschool_saas_staff/cubits/schoolDetailsCubit.dart';
+import 'package:eschool_saas_staff/cubits/task/homeTasksCubit.dart';
 import 'package:eschool_saas_staff/cubits/teacherAcademics/teacherMyTimetableCubit.dart';
 import 'package:eschool_saas_staff/cubits/userDetails/staffAllowedPermissionsAndModulesCubit.dart';
+import 'package:eschool_saas_staff/data/repositories/localizationRepository.dart';
 import 'package:eschool_saas_staff/data/repositories/settingsRepository.dart';
 import 'package:eschool_saas_staff/firebase_options.dart';
 import 'package:eschool_saas_staff/ui/styles/colors.dart';
@@ -72,6 +75,16 @@ Future<void> initializeApp() async {
   await Hive.openBox(authBoxKey);
   await Hive.openBox(settingsBoxKey);
   await Hive.openBox(notificationsBoxKey);
+  await Hive.openBox(localizationBoxKey);
+
+  // Overlay labels previously fetched from the panel on top of the bundled
+  // ones so the first frame already renders them, even when offline.
+  final cachedRemoteLabels = LocalizationRepository().getAllCachedLabels();
+  AppTranslation.overlayRemoteLabels(cachedRemoteLabels);
+  if (kDebugMode) {
+    debugPrint(
+        "Localization: startup overlay of cached labels for ${cachedRemoteLabels.keys.toList()}");
+  }
 
   runApp(
     DevicePreview(
@@ -108,6 +121,12 @@ class _MyAppState extends State<MyApp> {
         BlocProvider<StaffAllowedPermissionsAndModulesCubit>(
           create: (_) => StaffAllowedPermissionsAndModulesCubit(),
         ),
+        BlocProvider<HomeScreenDataCubit>(
+          create: (_) => HomeScreenDataCubit(),
+        ),
+        BlocProvider<HomeTasksCubit>(
+          create: (_) => HomeTasksCubit(),
+        ),
         BlocProvider<TeacherMyTimetableCubit>(
           create: (_) => TeacherMyTimetableCubit(),
         ),
@@ -143,20 +162,21 @@ class _MyAppState extends State<MyApp> {
               cupertinoOverrideTheme: CupertinoThemeData(
                 textTheme: CupertinoTextThemeData(
                   primaryColor: primaryColor,
-                  textStyle: const TextStyle(fontFamily: 'Cairo'),
-                  actionTextStyle: const TextStyle(fontFamily: 'Cairo'),
-                  navActionTextStyle: const TextStyle(fontFamily: 'Cairo'),
-                  navLargeTitleTextStyle: const TextStyle(fontFamily: 'Cairo'),
-                  navTitleTextStyle: const TextStyle(fontFamily: 'Cairo'),
-                  pickerTextStyle: const TextStyle(fontFamily: 'Cairo'),
-                  dateTimePickerTextStyle: const TextStyle(fontFamily: 'Cairo'),
+                  textStyle: TextStyle(fontFamily: 'Cairo'),
+                  actionTextStyle: TextStyle(fontFamily: 'Cairo'),
+                  navActionTextStyle: TextStyle(fontFamily: 'Cairo'),
+                  navLargeTitleTextStyle: TextStyle(fontFamily: 'Cairo'),
+                  navTitleTextStyle: TextStyle(fontFamily: 'Cairo'),
+                  pickerTextStyle: TextStyle(fontFamily: 'Cairo'),
+                  dateTimePickerTextStyle: TextStyle(fontFamily: 'Cairo'),
                 ),
               ),
             ),
             getPages: Routes.getPages,
             initialRoute: Routes.splashScreen,
             locale: context.read<AppLocalizationCubit>().state.language,
-            fallbackLocale: const Locale("en"),
+            fallbackLocale: context.read<AppLocalizationCubit>().fallbackLocale,
+            textDirection: context.read<AppLocalizationCubit>().textDirection,
           );
         },
       ),

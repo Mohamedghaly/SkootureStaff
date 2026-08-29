@@ -60,6 +60,34 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
   int? _selectedFeeId;
   int? _currentUserId;
 
+  String _formatDuration(String duration) {
+    if (duration.isEmpty) return duration;
+    
+    final lowercaseDuration = duration.toLowerCase();
+    int? intDuration;
+    
+    if (lowercaseDuration.contains('days')) {
+      final numberMatch = RegExp(r'\d+').firstMatch(duration);
+      if (numberMatch != null) {
+        intDuration = int.tryParse(numberMatch.group(0) ?? '');
+      }
+    } else {
+      intDuration = int.tryParse(duration);
+    }
+    
+    if (intDuration == 30) {
+      return Utils.getTranslatedLabel(monthlyKey);
+    } else if (intDuration == 90) {
+      return Utils.getTranslatedLabel(quarterlyKey);
+    } else if (intDuration == 365) {
+      return Utils.getTranslatedLabel(yearlyKey);
+    } else if (intDuration != null) {
+      return '$intDuration ${Utils.getTranslatedLabel(daysKey)}';
+    }
+    
+    return duration;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -105,7 +133,7 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
     if (_selectedDuration == null || _selectedFeeId == null) {
       Utils.showSnackBar(
         context: context,
-        message: "Please select a duration",
+        message: Utils.getTranslatedLabel(pleaseSelectDurationKey),
       );
       return;
     }
@@ -117,7 +145,7 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
     if (planDetails == null) {
       Utils.showSnackBar(
         context: context,
-        message: "Plan details not available. Please try again.",
+        message: Utils.getTranslatedLabel(planDetailsNotAvailableKey),
       );
       return;
     }
@@ -127,7 +155,7 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
     if (feesState is! FeesFetchSuccess) {
       Utils.showSnackBar(
         context: context,
-        message: "Fee information not available. Please try again.",
+        message: Utils.getTranslatedLabel(feeInformationNotAvailableKey),
       );
       return;
     }
@@ -151,7 +179,7 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
         'feeAmount': selectedFeePlan.formattedFeeAmount,
         'validity': planDetails.validFrom != null && planDetails.validTo != null
             ? '${planDetails.validFrom} - ${planDetails.validTo}'
-            : 'N/A',
+            : Utils.getTranslatedLabel(notAvailableKey),
       },
     );
   }
@@ -216,7 +244,7 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
                   }
                 },
                 icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+                label: Text(Utils.getTranslatedLabel(retryKey)),
               ),
             ],
           ),
@@ -235,7 +263,7 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const CustomTextContainer(
-                textKey: 'Current Plan',
+                textKey: currentPlanKey,
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
@@ -254,7 +282,7 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
                   children: [
                     if (planDetails.route?.name != null) ...[
                       LabelValue(
-                        label: 'Route Name',
+                        label: Utils.getTranslatedLabel(routeNameKey),
                         value: planDetails.route!.name!,
                         addTopSpacing: false,
                       ),
@@ -267,30 +295,29 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
                     ],
                     if (planDetails.duration != null) ...[
                       LabelValue(
-                        label: 'Plan',
-                        value: planDetails.duration!,
+                        label: Utils.getTranslatedLabel(planKey),
+                        value: _formatDuration(planDetails.duration!),
                       ),
                     ],
                     LabelValue(
-                      label: 'Validity',
+                      label: Utils.getTranslatedLabel(validityPeriodKey),
                       value: planDetails.validFrom != null &&
                               planDetails.validTo != null
                           ? '${planDetails.validFrom} - ${planDetails.validTo}'
-                          : 'N/A',
+                          : Utils.getTranslatedLabel(notAvailableKey),
                     ),
                     LabelValue(
-                      label: 'Total Fee',
+                      label: Utils.getTranslatedLabel(totalFeeKey),
                       value: planDetails.totalFee != null
                           ? '${planDetails.totalFee}'
-                          : 'N/A',
+                          : Utils.getTranslatedLabel(notAvailableKey),
                     ),
                   ],
                 ),
               ),
               const SizedBox(height: 10),
               CustomTextContainer(
-                textKey:
-                    'No changes will be made to your route or pickup point',
+                textKey: noChangesToRouteOrPickupKey,
                 style: TextStyle(
                   fontSize: 12,
                   color: Theme.of(context).colorScheme.secondary,
@@ -310,21 +337,22 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
 
                   final bool hasError = feesState is FeesFetchFailure;
                   final bool noPickupPoint = planDetails.pickupStop?.id == null;
-                  final bool disabled = isLoading || durations.isEmpty || noPickupPoint;
+                  final bool disabled =
+                      isLoading || durations.isEmpty || noPickupPoint;
 
-                  String hint = 'Select Duration';
+                  String hint = Utils.getTranslatedLabel(selectDurationKey);
                   if (noPickupPoint && feesState is FeesInitial) {
-                    hint = 'Loading fees...';
+                    hint = Utils.getTranslatedLabel(loadingFeesKey);
                   } else if (isLoading) {
-                    hint = 'Loading fees...';
+                    hint = Utils.getTranslatedLabel(loadingFeesKey);
                   } else if (hasError) {
-                    hint = 'Failed to load fees';
+                    hint = Utils.getTranslatedLabel(failedToLoadFeesKey);
                   } else if (durations.isEmpty) {
                     hint = Utils.getTranslatedLabel(noDataFoundKey);
                   }
 
                   return InlineExpandableSelector(
-                    label: 'Select Duration',
+                    label: Utils.getTranslatedLabel(selectDurationKey),
                     hint: hint,
                     selected: _selectedDuration,
                     values: durations,
@@ -376,6 +404,7 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
             CustomAppbar(
               titleKey: Utils.getTranslatedLabel(planRenewalKey),
               showBackButton: true,
+              trailingWidget: const TransportHistoryButton(),
             ),
             Expanded(
               child: SingleChildScrollView(
@@ -451,7 +480,9 @@ class _PlanRenewalScreenState extends State<PlanRenewalScreen> {
                           onTap: isDisabled ? null : _showPlanReviewBottomSheet,
                           backgroundColor:
                               Theme.of(context).colorScheme.primary,
-                          buttonTitle: isLoading ? 'Loading...' : 'Continue',
+                          buttonTitle: isLoading
+                              ? Utils.getTranslatedLabel(loadingKey)
+                              : Utils.getTranslatedLabel(continueKey),
                           showBorder: false,
                           widthPercentage: 1.0,
                           height: 50,

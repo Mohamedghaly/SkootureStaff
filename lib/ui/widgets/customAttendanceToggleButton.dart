@@ -1,4 +1,6 @@
 import 'package:eschool_saas_staff/utils/constants.dart';
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
+import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/material.dart';
 
 class CustomAttendanceToggleButton extends StatelessWidget {
@@ -37,7 +39,7 @@ class CustomAttendanceToggleButton extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                'P',
+                Utils.getTranslatedLabel(presentShortKey),
                 style: TextStyle(
                   fontSize: 14.0,
                   fontWeight: FontWeight.w600,
@@ -68,7 +70,7 @@ class CustomAttendanceToggleButton extends StatelessWidget {
             ),
             child: Center(
               child: Text(
-                'A',
+                Utils.getTranslatedLabel(absentShortKey),
                 style: TextStyle(
                   fontSize: 14.0,
                   fontWeight: FontWeight.w600,

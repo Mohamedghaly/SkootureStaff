@@ -27,6 +27,11 @@ class Api {
   static String passwordResetEmail = "${databaseUrl}forgot-password";
   static String changepassword = "${databaseUrl}change-password";
   static String editProfile = "${databaseUrl}update-profile";
+  static String profile = "${databaseUrl}profile";
+
+  /// Dialling codes for the profile's mobile number. Supports an optional
+  /// `search` query parameter that matches on the code itself.
+  static String getCountryCodes = "${databaseUrl}country-codes";
   static String getStaffPermissionAndFeatures =
       "${databaseUrl}staff/features-permission";
   static String getSystemStatistics = "${databaseUrl}staff/counter";
@@ -36,6 +41,12 @@ class Api {
 
   static String getSettings = "${databaseUrl}settings";
   static String getSchoolSettings = "${databaseUrl}school-settings";
+
+  /// Panel-managed localization. Despite its name, `set-languages` is the
+  /// backend endpoint that RETURNS the label values of a language for a given
+  /// app type — it does not mutate anything on the panel.
+  static String getLanguages = "${databaseUrl}get-languages";
+  static String getLanguageLabels = "${databaseUrl}set-languages";
   static String getHolidays = "${databaseUrl}holidays";
   static String getLeaveRequests = "${databaseUrl}staff/leave-request";
   static String approveOrRejectLeaveRequest =
@@ -191,6 +202,36 @@ class Api {
 
   static String downloadStudentResult = "${databaseUrl}student-exan-result-pdf";
   static String getDriverDashboard = "${databaseUrl}driver-helpr/dashboard";
+
+  /// Certificate
+  static String getCertificateAssignments = "${databaseUrl}certificate/assign";
+  static String generateCertificate = "${databaseUrl}certificate/generate";
+
+  /// Staff ID Card
+  static String downloadStaffIdCard = "${databaseUrl}staff/id-card";
+
+  /// Task APIs
+  static String getTasks = "${databaseUrl}staff/tasks";
+  static String createTask = "${databaseUrl}staff/tasks";
+  static String updateTask = "${databaseUrl}staff/tasks/update";
+  static String deleteTask = "${databaseUrl}staff/tasks/delete";
+  static String updateTaskStatus = "${databaseUrl}staff/tasks/status";
+  static String getUsersRoleWise = "${databaseUrl}staff/users-role-wise";
+
+  /// Online Class APIs.
+  /// The create form mirrors the web admin panel: a combined "Subject & Class"
+  /// list, then a separate periods call once a subject is chosen. The list
+  /// itself reuses [getTeacherMyTimetable] with `type=online_class` (rows
+  /// with a meeting link).
+  static String getOnlineClassSubjects =
+      "${databaseUrl}teacher/online-classes/subject-classes";
+  static String getOnlineClassPeriods =
+      "${databaseUrl}teacher/online-classes/periods";
+  static String createOnlineClass = "${databaseUrl}teacher/online-classes";
+  static String updateOnlineClass =
+      "${databaseUrl}teacher/online-classes/update";
+  static String deleteOnlineClass =
+      "${databaseUrl}teacher/online-classes/delete";
 
   /// URLs that should NOT trigger 401 handling (to avoid infinite loops).
   static final Set<String> _authExemptUrls = {login, logout};
@@ -410,6 +451,66 @@ class Api {
       }
     }
     return false;
+  }
+
+  /// Sends a POST request and returns the raw response body as a String.
+  /// Used for endpoints that return non-JSON data (e.g. HTML).
+  static Future<String> postRaw({
+    required Map<String, dynamic> body,
+    required String url,
+    required bool useAuthToken,
+  }) async {
+    try {
+      if (UnauthenticatedAccessManager().isLoggedOut &&
+          !_isAuthExemptUrl(url)) {
+        throw ApiException(defaultErrorMessageKey);
+      }
+
+      if (kDebugMode) {
+        debugPrint("API Called POST Raw: $url with $body");
+      }
+
+      final Dio dio = Dio();
+      final FormData formData =
+          FormData.fromMap(body, ListFormat.multiCompatible);
+      dio.interceptors.add(CurlLoggerInterceptor(
+        printOnSuccess: true,
+        printOnError: true,
+        convertFormData: true,
+      ));
+
+      final response = await dio.post(
+        url,
+        data: formData,
+        options: Options(
+          headers: useAuthToken ? headers() : null,
+          responseType: ResponseType.plain,
+        ),
+      );
+
+      if (kDebugMode) {
+        debugPrint(
+          "Raw Response length: ${response.data?.toString().length}",
+        );
+      }
+      return response.data?.toString() ?? '';
+    } on DioException catch (e) {
+      if (kDebugMode) {
+        debugPrint(e.response?.data?.toString());
+      }
+      if (e.response?.statusCode == 401 && !_isAuthExemptUrl(url)) {
+        _handleUnauthorized(url);
+        throw ApiException(defaultErrorMessageKey);
+      }
+      if (e.error is SocketException) {
+        throw ApiException(noInternetKey);
+      }
+      throw ApiException(defaultErrorMessageKey);
+    } on ApiException catch (e) {
+      throw ApiException(e.errorMessage);
+    } catch (e) {
+      throw ApiException(defaultErrorMessageKey);
+    }
   }
 
   /// Triggers the global 401 handler (unless the URL is exempt).

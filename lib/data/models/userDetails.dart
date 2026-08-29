@@ -9,6 +9,10 @@ class UserDetails {
   final String? firstName;
   final String? lastName;
   final String? mobile;
+
+  /// Dialling code of [mobile], as served by the `country-codes` API (`91`,
+  /// `1-242`, ...). Null for users whose code was never set.
+  final String? countryCode;
   final String? email;
   final String? gender;
   final String? image;
@@ -37,6 +41,7 @@ class UserDetails {
       this.firstName,
       this.lastName,
       this.mobile,
+      this.countryCode,
       this.email,
       this.gender,
       this.image,
@@ -63,6 +68,7 @@ class UserDetails {
     String? firstName,
     String? lastName,
     String? mobile,
+    String? countryCode,
     String? email,
     String? gender,
     String? image,
@@ -91,6 +97,7 @@ class UserDetails {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       mobile: mobile ?? this.mobile,
+      countryCode: countryCode ?? this.countryCode,
       email: email ?? this.email,
       gender: gender ?? this.gender,
       image: image ?? this.image,
@@ -119,6 +126,8 @@ class UserDetails {
         firstName = json['first_name'] as String?,
         lastName = json['last_name'] as String?,
         mobile = json['mobile'] as String?,
+        // The panel stores numeric codes, so this can arrive as an int.
+        countryCode = json['country_code']?.toString(),
         email = json['email'] as String?,
         gender = json['gender'] as String?,
         image = json['image'] as String?,
@@ -151,6 +160,7 @@ class UserDetails {
         'first_name': firstName,
         'last_name': lastName,
         'mobile': mobile,
+        'country_code': countryCode,
         'email': email,
         'gender': gender,
         'image': image,

@@ -3,6 +3,7 @@ import 'package:eschool_saas_staff/ui/styles/themeExtensions/customColorsExtensi
 import 'package:eschool_saas_staff/ui/widgets/customAttendanceToggleButton.dart';
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:flutter/material.dart';
 
 class StudentAttendanceItemContainer extends StatefulWidget {
@@ -93,7 +94,7 @@ class _StudentAttendanceItemContainerState
                             .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(5)),
                 child: CustomTextContainer(
-                  textKey: widget.isPresent ? "P" : "A",
+                  textKey: widget.isPresent ? presentShortKey : absentShortKey,
                   style: TextStyle(
                     fontSize: 16.0,
                     fontWeight: FontWeight.w600,

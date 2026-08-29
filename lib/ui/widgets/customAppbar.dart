@@ -11,6 +11,7 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
   final bool? centerTitle;
   final Widget? trailingWidget;
   final double? elevation;
+  final Color? backgroundColor;
 
   const CustomAppbar({
     super.key,
@@ -20,6 +21,7 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
     this.elevation,
     this.trailingWidget,
     this.centerTitle,
+    this.backgroundColor,
   });
 
   Widget _buildAppBarTitle(BuildContext context) {
@@ -37,7 +39,7 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
       decoration: BoxDecoration(
         border: Border(
             bottom: BorderSide(color: Theme.of(context).colorScheme.tertiary)),
-        color: Theme.of(context).colorScheme.surface,
+        color: backgroundColor ?? Theme.of(context).colorScheme.surface,
       ),
       height: kToolbarHeight + MediaQuery.of(context).padding.top,
       padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
@@ -53,6 +55,7 @@ class CustomAppbar extends StatelessWidget implements PreferredSizeWidget {
                 (showBackButton ?? true)
                     ? IconButton(
                         onPressed: () {
+                          debugPrint("onBackButtonTap: $onBackButtonTap");
                           if (onBackButtonTap == null) {
                             Get.back();
                           } else {

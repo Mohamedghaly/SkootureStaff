@@ -96,9 +96,9 @@ class _TripPassengersListState extends State<TripPassengersList> {
   String _getAttendanceText(PassengerStatus status) {
     switch (status) {
       case PassengerStatus.present:
-        return "P";
+        return Utils.getTranslatedLabel(presentShortKey);
       case PassengerStatus.absent:
-        return "A";
+        return Utils.getTranslatedLabel(absentShortKey);
       case PassengerStatus.notMarked:
         return "";
     }
@@ -156,7 +156,7 @@ class _TripPassengersListState extends State<TripPassengersList> {
             ),
             child: Center(
               child: CustomTextContainer(
-                textKey: "P",
+                textKey: presentShortKey,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -186,7 +186,7 @@ class _TripPassengersListState extends State<TripPassengersList> {
             ),
             child: Center(
               child: CustomTextContainer(
-                textKey: "A",
+                textKey: absentShortKey,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -307,7 +307,7 @@ class _TripPassengersListState extends State<TripPassengersList> {
             ),
             const SizedBox(width: 8),
             CustomTextContainer(
-              textKey: Utils.getTranslatedLabel(attendanceConfirmedLabelKey),
+              textKey: attendanceConfirmedLabelKey,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
@@ -316,7 +316,8 @@ class _TripPassengersListState extends State<TripPassengersList> {
             ),
             const SizedBox(width: 8),
             CustomTextContainer(
-              textKey: "$presentCount P, $absentCount A",
+              textKey:
+                  "$presentCount ${Utils.getTranslatedLabel(presentShortKey)}, $absentCount ${Utils.getTranslatedLabel(absentShortKey)}",
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -402,7 +403,7 @@ class _TripPassengersListState extends State<TripPassengersList> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const CustomTextContainer(
-                            textKey: "Reached",
+                            textKey: reachedKey,
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -531,7 +532,7 @@ class _TripPassengersListState extends State<TripPassengersList> {
                         ),
                       ),
                       child: const CustomTextContainer(
-                        textKey: "Mark Attendance",
+                        textKey: markAttendanceKey,
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -575,7 +576,7 @@ class _TripPassengersListState extends State<TripPassengersList> {
               Expanded(
                 child: CustomTextContainer(
                   textKey:
-                      "Stop : ${widget.tripDetails.stops.where((stop) => !stop.name.toLowerCase().contains('school')).length}/${widget.tripDetails.totalStops}",
+                      "${Utils.getTranslatedLabel(stopsKey)} : ${widget.tripDetails.stops.where((stop) => !stop.name.toLowerCase().contains('school')).length}/${widget.tripDetails.totalStops}",
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -589,7 +590,8 @@ class _TripPassengersListState extends State<TripPassengersList> {
               ),
               Expanded(
                 child: CustomTextContainer(
-                  textKey: "Present : ${widget.tripDetails.presentCount}",
+                  textKey:
+                      "${Utils.getTranslatedLabel(presentKey)} : ${widget.tripDetails.presentCount}",
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -604,7 +606,8 @@ class _TripPassengersListState extends State<TripPassengersList> {
               ),
               Expanded(
                 child: CustomTextContainer(
-                  textKey: "Absent : ${widget.tripDetails.absentCount}",
+                  textKey:
+                      "${Utils.getTranslatedLabel(absentKey)} : ${widget.tripDetails.absentCount}",
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

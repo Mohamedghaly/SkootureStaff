@@ -47,8 +47,10 @@ class StudentDiaryScreen extends StatefulWidget {
 }
 
 class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
-  String _selectedCategory = "All Categories";
-  String _selectedSubject = "All Subjects";
+  late String _allCategoriesText = "${Utils.getTranslatedLabel(allKey)} ${Utils.getTranslatedLabel(categoryKey)}";
+  late String _allSubjectsText = "${Utils.getTranslatedLabel(allKey)} ${Utils.getTranslatedLabel(subjectKey)}";
+  late String _selectedCategory = _allCategoriesText;
+  late String _selectedSubject = _allSubjectsText;
   String _selectedSort = "new"; // Default to newest first
   late final ScrollController _scrollController = ScrollController()
     ..addListener(_scrollListener);
@@ -83,11 +85,11 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
         int? categoryId;
         int? subjectId;
 
-        if (_selectedCategory != "All Categories") {
+        if (_selectedCategory != _allCategoriesText) {
           categoryId = _getCategoryIdFromName(_selectedCategory);
         }
 
-        if (_selectedSubject != "All Subjects") {
+        if (_selectedSubject != _allSubjectsText) {
           subjectId = _getSubjectIdFromName(_selectedSubject);
         }
 
@@ -102,7 +104,7 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
 
   void _onCategoryChanged(String? value) {
     setState(() {
-      _selectedCategory = value ?? "All Categories";
+      _selectedCategory = value ?? _allCategoriesText;
     });
     // Refresh data with new filter
     _refreshData();
@@ -110,8 +112,8 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
 
   void _onSubjectChanged(String? value) {
     setState(() {
-      _selectedSubject = value ?? "All Subjects";
-      _selectedCategory = "All Categories";
+      _selectedSubject = value ?? _allSubjectsText;
+      _selectedCategory = _allCategoriesText;
     });
     // Refresh data with new filter
     _refreshData();
@@ -122,11 +124,11 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
     int? categoryId;
     int? subjectId;
 
-    if (_selectedCategory != "All Categories") {
+    if (_selectedCategory != _allCategoriesText) {
       categoryId = _getCategoryIdFromName(_selectedCategory);
     }
 
-    if (_selectedSubject != "All Subjects") {
+    if (_selectedSubject != _allSubjectsText) {
       subjectId = _getSubjectIdFromName(_selectedSubject);
     }
 
@@ -220,9 +222,9 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
     }
 
     return allEntries.where((entry) {
-      bool categoryMatch = _selectedCategory == "All Categories" ||
+      bool categoryMatch = _selectedCategory == _allCategoriesText ||
           entry.diary.diaryCategory.name == _selectedCategory;
-      bool subjectMatch = _selectedSubject == "All Subjects" ||
+      bool subjectMatch = _selectedSubject == _allSubjectsText ||
           entry.diary.subject?.name == _selectedSubject;
       return categoryMatch && subjectMatch;
     }).toList();
@@ -252,8 +254,8 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
           .toString(), // Use diary.id instead of diaryStudent.id
       'category': diaryStudent.diary.diaryCategory.name,
       "type": diaryStudent.diary.diaryCategory.type,
-      'title': diaryStudent.diary.title ?? 'No description',
-      'description': diaryStudent.diary.description ?? 'No description',
+      'title': diaryStudent.diary.title ?? Utils.getTranslatedLabel(noDescriptionKey),
+      'description': diaryStudent.diary.description ?? Utils.getTranslatedLabel(noDescriptionKey),
       'timestamp': _formatTimestamp(diaryStudent.diary.createdAt),
       'name_with_type': diaryStudent.diary.subject?.nameWithType,
       'subject': diaryStudent.diary.subject?.name,
@@ -269,30 +271,30 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
 
       if (dateTime == null) {
         debugPrint('Failed to parse diary date: $createdAt');
-        return 'Unknown time';
+        return Utils.getTranslatedLabel(unknownTimeKey);
       }
 
       final now = DateTime.now();
       final difference = now.difference(dateTime);
 
       if (difference.inDays > 0) {
-        return '${difference.inDays} day${difference.inDays > 1 ? 's' : ''} ago';
+        return '${difference.inDays} ${Utils.getTranslatedLabel(difference.inDays > 1 ? daysAgoKey : dayAgoKey)}';
       } else if (difference.inHours > 0) {
-        return '${difference.inHours} hour${difference.inHours > 1 ? 's' : ''} ago';
+        return '${difference.inHours} ${Utils.getTranslatedLabel(difference.inHours > 1 ? hoursAgoKey : hourAgoKey)}';
       } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} minute${difference.inMinutes > 1 ? 's' : ''} ago';
+        return '${difference.inMinutes} ${Utils.getTranslatedLabel(difference.inMinutes > 1 ? minutesAgoKey : minuteAgoKey)}';
       } else {
-        return 'Just now';
+        return Utils.getTranslatedLabel(justNowKey);
       }
     } catch (e) {
       debugPrint('Error formatting diary timestamp: $createdAt - $e');
-      return 'Unknown time';
+      return Utils.getTranslatedLabel(unknownTimeKey);
     }
   }
 
   // Get unique categories from the API data
   List<String> _getCategories(List<StudentDiaryDetails> students) {
-    Set<String> categories = {"All Categories"};
+    Set<String> categories = {_allCategoriesText};
     for (final student in students) {
       for (final diaryStudent in student.diaryStudent) {
         categories.add(diaryStudent.diary.diaryCategory.name);
@@ -303,7 +305,7 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
 
   // Get unique subjects from the student details API
   List<String> _getSubjects() {
-    Set<String> subjects = {"All Subjects"};
+    Set<String> subjects = {_allSubjectsText};
 
     // Get subjects from StudentDetailsCubit
     final studentDetailsState = context.read<StudentDetailsCubit>().state;
@@ -450,7 +452,7 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
                                         Get.back();
                                       },
                                       selectedValue: _selectedSubject,
-                                      titleKey: "Subjects",
+                                      titleKey: subjectsKey,
                                       values: subjects,
                                       showFilterByLabel: false,
                                     ),
@@ -472,7 +474,7 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
                                           Get.back();
                                         },
                                         selectedValue: _selectedCategory,
-                                        titleKey: "Categories",
+                                        titleKey: categoriesKey,
                                         values: categories,
                                         showFilterByLabel: false,
                                       ),
@@ -521,11 +523,11 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
               int? categoryId;
               int? subjectId;
 
-              if (_selectedCategory != "All Categories") {
+              if (_selectedCategory != _allCategoriesText) {
                 categoryId = _getCategoryIdFromName(_selectedCategory);
               }
 
-              if (_selectedSubject != "All Subjects") {
+              if (_selectedSubject != _allSubjectsText) {
                 subjectId = _getSubjectIdFromName(_selectedSubject);
               }
 
@@ -619,12 +621,12 @@ class _StudentDiaryScreenState extends State<StudentDiaryScreen> {
                             int? categoryId;
                             int? subjectId;
 
-                            if (_selectedCategory != "All Categories") {
+                            if (_selectedCategory != _allCategoriesText) {
                               categoryId =
                                   _getCategoryIdFromName(_selectedCategory);
                             }
 
-                            if (_selectedSubject != "All Subjects") {
+                            if (_selectedSubject != _allSubjectsText) {
                               subjectId =
                                   _getSubjectIdFromName(_selectedSubject);
                             }

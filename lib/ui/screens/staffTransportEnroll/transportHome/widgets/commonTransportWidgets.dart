@@ -591,3 +591,20 @@ class RequestCard extends StatelessWidget {
         ),
       );
 }
+
+/// App bar action that opens the Transportation Plan History screen.
+class TransportHistoryButton extends StatelessWidget {
+  const TransportHistoryButton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: Utils.getTranslatedLabel(historyKey),
+      onPressed: () => Get.toNamed(Routes.transportPlanHistoryScreen),
+      icon: Icon(
+        Icons.history,
+        color: Theme.of(context).colorScheme.primary,
+      ),
+    );
+  }
+}

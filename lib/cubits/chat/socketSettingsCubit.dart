@@ -46,18 +46,22 @@ class SocketSettingCubit extends Cubit<SocketSettingState> {
 
   void _connect() {
     try {
-      _channel = WebSocketChannel.connect(
+      final channel = WebSocketChannel.connect(
         Uri.parse(reverbUrl),
       );
+      _channel = channel;
 
-      // Wait for the WebSocket connection to be ready
-      _channel!.ready.then((_) {
+      channel.ready.then((_) {
+        // Stale connection — a newer _connect() already replaced _channel
+        if (_channel != channel) {
+          channel.sink.close();
+          return;
+        }
+
         log('[Reverb] WebSocket connected, waiting for connection_established...');
 
-        // IMPORTANT: Set up listener FIRST, then wait for connection_established
-        // before subscribing. This follows the correct Pusher protocol flow.
         _streamSubscription?.cancel();
-        _streamSubscription = _channel!.stream.listen(
+        _streamSubscription = channel.stream.listen(
           (raw) {
             try {
               log('[Reverb] Raw message: $raw');
@@ -66,13 +70,11 @@ class SocketSettingCubit extends Cubit<SocketSettingState> {
 
               log('[Reverb] Event received: $event');
 
-              // Log errors from Reverb
               if (event == 'pusher:error') {
                 log('[Reverb] ⚠️ ERROR from server: ${data['data']}');
                 return;
               }
 
-              // When connection is established, NOW subscribe and start pinging
               if (event == 'pusher:connection_established') {
                 log('[Reverb] ✅ Connection established!');
                 if (_isReconnecting) {
@@ -83,39 +85,35 @@ class SocketSettingCubit extends Cubit<SocketSettingState> {
                 }
                 _reconnectAttempts = 0;
 
-                // Subscribe to the user's private channel
                 final subscribeMsg = jsonEncode({
                   "event": "pusher:subscribe",
                   "data": {"channel": "user.$_userId"}
                 });
                 log('[Reverb] Sending subscribe: $subscribeMsg');
-                _channel!.sink.add(subscribeMsg);
+                // Use captured `channel` — not `_channel` which may have changed
+                channel.sink.add(subscribeMsg);
                 return;
               }
 
-              // Subscription confirmed
               if (event == 'pusher_internal:subscription_succeeded') {
                 log('[Reverb] ✅ Subscribed to channel: user.$_userId');
                 return;
               }
 
-              // Server sends ping, we respond with pong to keep alive
               if (event == 'pusher:ping') {
-                _channel?.sink.add(
+                channel.sink.add(
                   jsonEncode({"event": "pusher:pong", "data": "{}"}),
                 );
                 log('[Reverb] Responded with pong');
                 return;
               }
 
-              // Handle new message event from Reverb
               if (event == 'NewMessage') {
                 final payload =
                     jsonDecode(data['data'] as String) as Map<String, dynamic>;
 
                 log('[Reverb] NewMessage payload: $payload');
 
-                // Extract the message data from the payload
                 final messageData = payload['message'] as Map<String, dynamic>?;
 
                 if (messageData != null) {
@@ -135,7 +133,9 @@ class SocketSettingCubit extends Cubit<SocketSettingState> {
             }
           },
           onDone: () {
-            log('[Reverb] Connection closed, reconnecting...');
+            final closeCode = channel.closeCode;
+            final closeReason = channel.closeReason;
+            log('[Reverb] Connection closed — code: $closeCode, reason: $closeReason. Reconnecting...');
             _reconnect();
           },
           onError: (error) {

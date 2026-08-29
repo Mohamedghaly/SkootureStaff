@@ -10,12 +10,18 @@ class SearchContainer extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final bool? showSearchIcon;
 
+  /// Label key for the hint. Defaults to the generic "Search" so existing
+  /// usages keep their wording; pass a specific one where it helps the user
+  /// know what can be searched.
+  final String? hintTextKey;
+
   const SearchContainer(
       {super.key,
       required this.textEditingController,
       this.margin,
       this.padding,
       this.showSearchIcon,
+      this.hintTextKey,
       this.additionalCallback});
 
   @override
@@ -45,7 +51,7 @@ class SearchContainer extends StatelessWidget {
             controller: textEditingController,
             decoration: InputDecoration(
               border: InputBorder.none,
-              hintText: searchKey.tr,
+              hintText: (hintTextKey ?? searchKey).tr,
             ),
           )),
           IconButton(

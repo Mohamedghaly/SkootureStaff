@@ -71,6 +71,14 @@ class _StaffAcademicsContainerState extends State<StaffAcademicsContainer> {
                     }),
               ])
             : const SizedBox(),
+        MenusWithTitleContainer(title: myTaskKey, menus: [
+          CustomMenuTile(
+              iconImageName: "manage_task.svg",
+              titleKey: manageTasksKey,
+              onTap: () {
+                Get.toNamed(Routes.myTasksScreen);
+              }),
+        ]),
         MenusWithTitleContainer(title: leaveKey, menus: [
           !context.read<AuthCubit>().getUserDetails().isSchoolAdmin()
               ? CustomMenuTile(
@@ -191,6 +199,16 @@ class _StaffAcademicsContainerState extends State<StaffAcademicsContainer> {
                     }),
               ])
             : const SizedBox(),
+        // Online Class - new feature (UI only for now). Shown unconditionally
+        // until a dedicated module/permission flag is introduced on the backend.
+        MenusWithTitleContainer(title: onlineClassKey, menus: [
+          CustomMenuTile(
+              iconImageName: "online_class.svg",
+              titleKey: onlineClassKey,
+              onTap: () {
+                Get.toNamed(Routes.onlineClassesScreen);
+              }),
+        ]),
         (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
                     moduleId: examManagementModuleId.toString())) &&
                 (staffAllowedPermissionsAndModulesCubit.isPermissionGiven(

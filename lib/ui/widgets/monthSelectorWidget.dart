@@ -1,5 +1,6 @@
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
+import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/material.dart';
 
 class MonthSelectorWidget extends StatelessWidget {
@@ -24,7 +25,8 @@ class MonthSelectorWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String monthName = months[selectedDate.month - 1];
+    String monthName =
+        Utils.getTranslatedLabel(months[selectedDate.month - 1].toLowerCase());
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),

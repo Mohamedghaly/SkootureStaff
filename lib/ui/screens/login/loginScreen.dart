@@ -16,6 +16,7 @@ import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/route_manager.dart';
+import 'package:eschool_saas_staff/utils/unauthenticatedAccessManager.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -314,6 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 schoolCode: state.schoolCode,
                                 userDetails: state.userDetails,
                               );
+                          UnauthenticatedAccessManager().onUserAuthenticated();
                           Get.offNamed(Routes.homeScreen);
                         } else if (state is SignInFailure) {
                           Utils.showSnackBar(

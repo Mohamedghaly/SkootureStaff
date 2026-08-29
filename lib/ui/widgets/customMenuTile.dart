@@ -6,13 +6,12 @@ class CustomMenuTile extends StatelessWidget {
   final String titleKey;
   final Function onTap;
   final Widget? trailingWidget;
-  const CustomMenuTile({
-    super.key,
-    required this.iconImageName,
-    required this.titleKey,
-    required this.onTap,
-    this.trailingWidget,
-  });
+  const CustomMenuTile(
+      {super.key,
+      required this.iconImageName,
+      required this.titleKey,
+      required this.onTap,
+      this.trailingWidget});
 
   @override
   Widget build(BuildContext context) {

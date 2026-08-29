@@ -130,7 +130,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                       const SizedBox(height: 4),
                       CustomTextContainer(
                         textKey:
-                            "${widget.stop.passengers.length} Students • ${widget.stop.scheduledTime}",
+                            "${widget.stop.passengers.length} ${Utils.getTranslatedLabel(widget.stop.passengers.length > 1 ? studentsKey : studentKey)} • ${widget.stop.scheduledTime}",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade600,
@@ -164,7 +164,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                       ),
                     ),
                     child: const CustomTextContainer(
-                      textKey: "Mark All Present",
+                      textKey: markAllPresentKey,
                       style: TextStyle(
                         color: Colors.green,
                         fontSize: 14,
@@ -184,7 +184,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                       ),
                     ),
                     child: const CustomTextContainer(
-                      textKey: "Mark All Absent",
+                      textKey: markAllAbsentKey,
                       style: TextStyle(
                         color: Colors.red,
                         fontSize: 14,
@@ -215,7 +215,8 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                   child: Column(
                     children: [
                       CustomTextContainer(
-                        textKey: "$_presentCount Present",
+                        textKey:
+                            "$_presentCount ${Utils.getTranslatedLabel(presentKey)}",
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -224,7 +225,8 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                       ),
                       const SizedBox(height: 4),
                       CustomTextContainer(
-                        textKey: "$_absentCount Absent",
+                        textKey:
+                            "$_absentCount ${Utils.getTranslatedLabel(absentKey)}",
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade600,
@@ -241,8 +243,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: CustomTextContainer(
-                    textKey:
-                        Utils.getTranslatedLabel(attendanceConfirmedLabelKey),
+                    textKey: attendanceConfirmedLabelKey,
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -290,7 +291,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                       UserAvatarWithStatus(
                         imageUrl: passenger.imageUrl,
                         name: passenger.name,
-                        role: passenger.role ?? 'Student',
+                        role: passenger.role ?? Utils.getTranslatedLabel(studentKey),
                         radius: 20,
                         statusColor: isPresent
                             ? Colors.green
@@ -298,9 +299,9 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                                 ? Colors.red
                                 : null,
                         statusText: isPresent
-                            ? 'P'
+                            ? Utils.getTranslatedLabel(presentShortKey)
                             : isAbsent
-                                ? 'A'
+                                ? Utils.getTranslatedLabel(absentShortKey)
                                 : null,
                       ),
 
@@ -319,7 +320,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                               ),
                             ),
                             CustomTextContainer(
-                              textKey: passenger.role ?? 'Student',
+                              textKey: passenger.role ?? studentKey,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey.shade600,
@@ -352,7 +353,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                               ),
                               child: Center(
                                 child: CustomTextContainer(
-                                  textKey: "P",
+                                  textKey: presentShortKey,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -385,7 +386,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                               ),
                               child: Center(
                                 child: CustomTextContainer(
-                                  textKey: "A",
+                                  textKey: absentShortKey,
                                   style: TextStyle(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -442,7 +443,7 @@ class _AttendanceBottomSheetState extends State<AttendanceBottomSheet> {
                         ),
                       )
                     : const CustomTextContainer(
-                        textKey: "Mark Reached",
+                        textKey: markReachedKey,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

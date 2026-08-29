@@ -1,4 +1,6 @@
 import 'package:eschool_saas_staff/ui/styles/colors.dart';
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
+import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:eschool_saas_staff/data/models/tripDetails.dart';
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
@@ -13,6 +15,15 @@ class TripTimeline extends StatelessWidget {
     required this.tripDetails,
     required this.onStopReached,
   });
+
+  // Timeline layout metrics (kept in one place so the rail, the dots and the
+  // content stay perfectly aligned across screen sizes).
+  static const double _railWidth = 24; // width reserved for the dot + line
+  static const double _railGap = 20; // gap between the rail and the content
+  static const double _topLineHeight = 20; // connector above a node
+  static const double _itemBottomSpacing = 35; // gap below a node's content
+  static const double _markerBandHeight =
+      20; // height of the band used to vertically center a marker's time
 
   @override
   Widget build(BuildContext context) {
@@ -46,52 +57,48 @@ class TripTimeline extends StatelessWidget {
     final isLast = index == tripDetails.stops.length - 1;
     final isFirst = index == 0;
 
+    // Shift start/end nodes only carry a time (no name, passengers or note),
+    // so they use a dedicated layout that keeps the time vertically centered
+    // with the dot instead of pushing it below an empty name line.
+    if (_isTimeOnlyStop(stop)) {
+      return _buildMarkerItem(
+        context,
+        stop,
+        index,
+        isFirst: isFirst,
+        isLast: isLast,
+      );
+    }
+
     return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Timeline Column (Left side) - Fixed width for perfect alignment
           SizedBox(
-            width: 24,
+            width: _railWidth,
             child: Column(
               children: [
                 // Top connecting line (if not first)
                 if (!isFirst)
-                  _shouldShowSolidLine(index - 1, index)
-                      ? Container(
-                          width: 3,
-                          height: 20,
-                          color: tripTimelineGreenColor,
-                        )
-                      : _buildDottedLine(Colors.grey.shade400, 20),
+                  _buildConnector(index - 1, index, height: _topLineHeight),
 
                 // Stop Node/Icon
                 _buildStopNode(context, stop, index),
 
                 // Bottom connecting line (if not last)
-                if (!isLast)
-                  Expanded(
-                    child: Container(
-                      width: 3,
-                      child: _shouldShowSolidLine(index, index + 1)
-                          ? Container(
-                              width: 3,
-                              color: tripTimelineGreenColor,
-                            )
-                          : _buildDottedLine(Colors.grey.shade400, 40),
-                    ),
-                  ),
+                if (!isLast) Expanded(child: _buildConnector(index, index + 1)),
               ],
             ),
           ),
 
-          const SizedBox(width: 20),
+          const SizedBox(width: _railGap),
 
           // Content Column (Right side)
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(
-                bottom: isLast ? 0 : 35,
+                bottom: isLast ? 0 : _itemBottomSpacing,
                 top: 2,
               ),
               child: Column(
@@ -114,7 +121,8 @@ class TripTimeline extends StatelessWidget {
                     Padding(
                       padding: const EdgeInsets.only(top: 2),
                       child: CustomTextContainer(
-                        textKey: "${stop.passengerCount} Passenger",
+                        textKey:
+                            "${stop.passengerCount} ${Utils.getTranslatedLabel(stop.passengerCount > 1 ? passengersKey : passengerKey)}",
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.grey.shade600,
@@ -139,32 +147,7 @@ class TripTimeline extends StatelessWidget {
                   const SizedBox(height: 12),
 
                   // Time Row
-                  Row(
-                    children: [
-                      // Planned Time (Left, Grey)
-                      CustomTextContainer(
-                        textKey: stop.time,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-
-                      const Spacer(),
-
-                      // Actual Time (Right, Green)
-                      if (stop.actualTime != null)
-                        CustomTextContainer(
-                          textKey: stop.actualTime!,
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: _getActualTimeColor(stop),
-                          ),
-                        ),
-                    ],
-                  ),
+                  _buildTimeRow(stop),
                 ],
               ),
             ),
@@ -172,6 +155,97 @@ class TripTimeline extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Builds a shift start/end marker whose only content is a time.
+  ///
+  /// The dot and the time are each placed inside a band of the same fixed
+  /// height ([_markerBandHeight]) and centered within it, which keeps the time
+  /// vertically centered with the dot regardless of the device text scale.
+  Widget _buildMarkerItem(
+    BuildContext context,
+    TripStop stop,
+    int index, {
+    required bool isFirst,
+    required bool isLast,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Timeline rail (line + dot)
+          SizedBox(
+            width: _railWidth,
+            child: Column(
+              children: [
+                if (!isFirst)
+                  _buildConnector(index - 1, index, height: _topLineHeight),
+                SizedBox(
+                  height: _markerBandHeight,
+                  child: Center(child: _buildStopNode(context, stop, index)),
+                ),
+                if (!isLast) Expanded(child: _buildConnector(index, index + 1)),
+              ],
+            ),
+          ),
+
+          const SizedBox(width: _railGap),
+
+          // Time, centered against the dot via a matching band height
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (!isFirst) const SizedBox(height: _topLineHeight),
+                SizedBox(
+                  height: _markerBandHeight,
+                  child: _buildTimeRow(stop),
+                ),
+                if (!isLast) const SizedBox(height: _itemBottomSpacing),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Planned time (left, grey) and, when available, the actual time
+  /// (right, coloured by arrival status).
+  Widget _buildTimeRow(TripStop stop) {
+    return Row(
+      children: [
+        // Planned Time (Left, Grey)
+        CustomTextContainer(
+          textKey: stop.time,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+
+        const Spacer(),
+
+        // Actual Time (Right, Green)
+        if (stop.actualTime != null)
+          CustomTextContainer(
+            textKey: stop.actualTime!,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: _getActualTimeColor(stop),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// A shift start/end marker carries only a time: no name, passengers or note.
+  bool _isTimeOnlyStop(TripStop stop) {
+    final hasNote =
+        stop.arrivalNote != null && stop.arrivalNote!.trim().isNotEmpty;
+    return stop.name.trim().isEmpty && stop.passengerCount <= 0 && !hasNote;
   }
 
   Widget _buildStopNode(BuildContext context, TripStop stop, int index) {
@@ -253,18 +327,25 @@ class TripTimeline extends StatelessWidget {
             toStop.status == StopStatus.current);
   }
 
-  Widget _buildDottedLine(Color color, double height) {
-    // Constrain to 3px width so the dotted stroke can be centered exactly
+  /// A vertical connector between two nodes: solid green when the route
+  /// between them is completed, otherwise a dashed grey line.
+  ///
+  /// When [height] is null the connector fills the available space (used
+  /// inside an [Expanded]); otherwise it draws a fixed-height segment.
+  Widget _buildConnector(int fromIndex, int toIndex, {double? height}) {
+    final isSolid = _shouldShowSolidLine(fromIndex, toIndex);
     return SizedBox(
       width: 3,
       height: height,
-      child: CustomPaint(
-        painter: DottedLinePainter(
-          color: color,
-          dashWidth: 2,
-          dashSpace: 2,
-        ),
-      ),
+      child: isSolid
+          ? Container(color: tripTimelineGreenColor)
+          : CustomPaint(
+              painter: DottedLinePainter(
+                color: Colors.grey.shade400,
+                dashWidth: 2,
+                dashSpace: 2,
+              ),
+            ),
     );
   }
 

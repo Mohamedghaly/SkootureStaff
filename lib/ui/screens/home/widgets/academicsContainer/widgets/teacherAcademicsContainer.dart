@@ -62,6 +62,12 @@ class _TeacherAcademicsContainerState extends State<TeacherAcademicsContainer> {
               onTap: () {
                 Get.toNamed(Routes.teacherClassSectionScreen);
               }),
+          CustomMenuTile(
+              iconImageName: "online_class.svg",
+              titleKey: onlineClassKey,
+              onTap: () {
+                Get.toNamed(Routes.onlineClassesScreen);
+              }),
         ]),
         if (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
             moduleId: attendanceManagementModuleId.toString()))
@@ -154,6 +160,14 @@ class _TeacherAcademicsContainerState extends State<TeacherAcademicsContainer> {
                   Get.toNamed(Routes.teacherExamResultScreen);
                 }),
           ]),
+        MenusWithTitleContainer(title: myTaskKey, menus: [
+          CustomMenuTile(
+              iconImageName: "manage_task.svg",
+              titleKey: manageTasksKey,
+              onTap: () {
+                Get.toNamed(Routes.myTasksScreen);
+              }),
+        ]),
         if (staffAllowedPermissionsAndModulesCubit.isModuleEnabled(
             moduleId: staffLeaveManagementModuleId.toString()))
           MenusWithTitleContainer(title: leaveKey, menus: [

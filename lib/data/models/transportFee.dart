@@ -1,3 +1,6 @@
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
+import 'package:eschool_saas_staff/utils/utils.dart';
+
 class TransportFeePlan {
   final int? id; // fee plan ID
   final String? duration; // days: e.g., "30", "90", "365"
@@ -31,13 +34,13 @@ class TransportFeePlan {
     final intDuration = int.tryParse(duration ?? '');
     String period;
     if (intDuration == 30) {
-      period = 'Monthly';
+      period = Utils.getTranslatedLabel(monthlyKey);
     } else if (intDuration == 90) {
-      period = 'Quarterly';
+      period = Utils.getTranslatedLabel(quarterlyKey);
     } else if (intDuration == 365) {
-      period = 'Yearly';
+      period = Utils.getTranslatedLabel(yearlyKey);
     } else if (intDuration != null) {
-      period = '$intDuration days';
+      period = '$intDuration ${Utils.getTranslatedLabel(daysKey)}';
     } else {
       period = (duration ?? '').isEmpty ? 'Duration' : duration!;
     }

@@ -9,12 +9,11 @@ import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/errorContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/customCircularProgressIndicator.dart';
 import 'package:eschool_saas_staff/ui/widgets/noDataContainer.dart';
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/get.dart';
-
-import '../../../utils/labelKeys.dart';
 
 class ManageCategoryScreen extends StatefulWidget {
   final String? type;
@@ -90,12 +89,12 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Delete Category'),
-        content: Text('Are you sure you want to delete "${category.name}"?'),
+        title: Text(Utils.getTranslatedLabel(deleteCategoryKey)),
+        content: Text(Utils.getTranslatedLabel(areYouSureDeleteCategoryKey)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const CustomTextContainer(textKey: cancelKey),
+            child: Text(Utils.getTranslatedLabel(cancelKey)),
           ),
           TextButton(
             onPressed: () {
@@ -105,10 +104,8 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
                     diaryCategoryId: category.id,
                   );
             },
-            child: const CustomTextContainer(
-              textKey: deleteKey,
-              style: TextStyle(color: Colors.red),
-            ),
+            child: Text(Utils.getTranslatedLabel(deleteKey),
+                style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -190,7 +187,7 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
 
   Widget _buildCategoryList(List<DiaryCategory> categories) {
     if (categories.isEmpty) {
-      return noDataContainer(titleKey: "No categories found");
+      return noDataContainer(titleKey: noCategoriesFoundKey);
     }
 
     return ListView.builder(
@@ -254,13 +251,13 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
                   // Show success message
                   Utils.showSnackBar(
                     context: context,
-                    message: "Category created successfully",
+                    message: categoryCreatedSuccessfullyKey,
                   );
                 } else if (state is CreateDiaryCategoryFailure) {
                   // Show error message
                   Utils.showSnackBar(
                     context: context,
-                    message: "Failed to create category: ${state.errorMessage}",
+                    message: failedToCreateCategoryKey,
                   );
                 }
               },
@@ -275,13 +272,13 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
                   // Show success message
                   Utils.showSnackBar(
                     context: context,
-                    message: "Category updated successfully",
+                    message: categoryUpdatedSuccessfullyKey,
                   );
                 } else if (state is UpdateDiaryCategoryFailure) {
                   // Show error message
                   Utils.showSnackBar(
                     context: context,
-                    message: "Failed to update category: ${state.errorMessage}",
+                    message: failedToUpdateCategoryKey,
                   );
                 }
               },
@@ -296,13 +293,13 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
                   // Show success message
                   Utils.showSnackBar(
                     context: context,
-                    message: "Category deleted successfully",
+                    message: categoryDeletedSuccessfullyKey,
                   );
                 } else if (state is DeleteDiaryCategoryFailure) {
                   // Show error message
                   Utils.showSnackBar(
                     context: context,
-                    message: "Failed to delete category: ${state.errorMessage}",
+                    message: failedToDeleteCategoryKey,
                   );
                 }
               },
@@ -312,7 +309,7 @@ class _ManageCategoryScreenState extends State<ManageCategoryScreen> {
             children: [
               // Custom App Bar
               CustomAppbar(
-                titleKey: "Manage Category",
+                titleKey: manageCategoryKey,
                 showBackButton: true,
                 onBackButtonTap: () {
                   // Return with a result to indicate categories were managed

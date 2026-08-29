@@ -1,3 +1,6 @@
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
+import 'package:eschool_saas_staff/utils/utils.dart';
+
 class Trip {
   final String status;
   final ShiftTime shiftTime;
@@ -93,14 +96,14 @@ class Trip {
   }
 
   String get displayShiftTime {
-    return '${shiftTime.label}: ${shiftTime.from} to ${shiftTime.to}';
+    return '${shiftTime.localizedLabel}: ${shiftTime.localizedFrom} ${Utils.getTranslatedLabel(toKey)} ${shiftTime.localizedTo}';
   }
 
   String get displayRoute {
     if (type.toLowerCase() == 'pickup') {
-      return '${route.name} (Pickup)';
+      return '${route.name} (${Utils.getTranslatedLabel(pickupKey)})';
     } else if (type.toLowerCase() == 'drop') {
-      return '${route.name} (Drop)';
+      return '${route.name} (${Utils.getTranslatedLabel(dropKey)})';
     }
     return route.name;
   }
@@ -118,6 +121,34 @@ class ShiftTime {
     required this.from,
     required this.to,
   });
+
+  // Translates the time-of-day label coming from the API (e.g. "Morning")
+  // through the app's label/JSON localization system.
+  String get localizedLabel {
+    switch (label.toLowerCase()) {
+      case 'morning':
+        return Utils.getTranslatedLabel(morningKey);
+      case 'noon':
+        return Utils.getTranslatedLabel(noonKey);
+      case 'evening':
+        return Utils.getTranslatedLabel(eveningKey);
+      case 'night':
+        return Utils.getTranslatedLabel(nightKey);
+      default:
+        return label;
+    }
+  }
+
+  // Localizes the AM/PM meridiem inside a time string via translation keys
+  // instead of hardcoding language-specific text.
+  String _localizeMeridiem(String time) {
+    return time
+        .replaceAll('AM', Utils.getTranslatedLabel(amKey))
+        .replaceAll('PM', Utils.getTranslatedLabel(pmKey));
+  }
+
+  String get localizedFrom => _localizeMeridiem(from);
+  String get localizedTo => _localizeMeridiem(to);
 
   factory ShiftTime.fromJson(Map<String, dynamic> json) {
     return ShiftTime(

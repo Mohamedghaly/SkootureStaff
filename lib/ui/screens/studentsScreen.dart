@@ -436,7 +436,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                                       ),
                                                       CustomTextContainer(
                                                         textKey:
-                                                            "GR No : ${studentDetails.student?.admissionNo ?? '-'}",
+                                                            "${Utils.getTranslatedLabel(grNoKey)} : ${studentDetails.student?.admissionNo ?? '-'}",
                                                         style: TextStyle(
                                                             color: Theme.of(
                                                                     context)

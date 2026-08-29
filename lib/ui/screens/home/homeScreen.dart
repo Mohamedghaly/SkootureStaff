@@ -4,12 +4,9 @@ import 'package:eschool_saas_staff/cubits/chat/chatParentsUserChatHistoryCubit.d
 import 'package:eschool_saas_staff/cubits/chat/chatStaffsUserChatHistoryCubit.dart';
 import 'package:eschool_saas_staff/cubits/chat/chatStudentsUserChatHistoryCubit.dart';
 import 'package:eschool_saas_staff/cubits/chat/socketSettingsCubit.dart';
-import 'package:eschool_saas_staff/cubits/homeScreenDataCubit.dart';
 import 'package:eschool_saas_staff/cubits/transport/tripsCubit.dart';
 import 'package:eschool_saas_staff/cubits/userDetails/staffAllowedPermissionsAndModulesCubit.dart';
 import 'package:eschool_saas_staff/data/models/bottomNavItem.dart';
-import 'package:eschool_saas_staff/data/models/notificationDetails.dart';
-import 'package:eschool_saas_staff/data/repositories/announcementRepository.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/academicsContainer/academicsContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/appUnderMaintenanceContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/chatContainer/chatContainer.dart';
@@ -30,10 +27,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
-  static Widget getRouteInstance() => BlocProvider(
-        create: (context) => HomeScreenDataCubit(),
-        child: const HomeScreen(),
-      );
+  // HomeScreenDataCubit is provided globally — no local BlocProvider needed.
+  static Widget getRouteInstance() => const HomeScreen();
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -58,15 +53,30 @@ class _HomeScreenState extends State<HomeScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    loadTemporarilyStoredNotifications();
     Future.delayed(Duration.zero, () {
       if (mounted) {
         NotificationUtility.setUpNotificationService();
-        context
-            .read<StaffAllowedPermissionsAndModulesCubit>()
-            .getPermissionAndAllowedModules();
+        final permCubit =
+            context.read<StaffAllowedPermissionsAndModulesCubit>();
+        permCubit.getPermissionAndAllowedModules();
+        // Permissions may already be Success (loaded by splash prefetch).
+        // BlocConsumer listener only fires on state *changes*, so init
+        // the socket here if the state is already loaded.
+        if (permCubit.state is StaffAllowedPermissionsAndModulesFetchSuccess) {
+          _initSocketFromPermissions();
+        }
       }
     });
+  }
+
+  void _initSocketFromPermissions() {
+    final chatModuleEnabled = context
+        .read<StaffAllowedPermissionsAndModulesCubit>()
+        .isModuleEnabled(moduleId: chatModuleId.toString());
+    if (chatModuleEnabled) {
+      final userId = context.read<AuthCubit>().getUserDetails().id ?? 0;
+      context.read<SocketSettingCubit>().init(userId: userId);
+    }
   }
 
   @override
@@ -102,28 +112,18 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  void loadTemporarilyStoredNotifications() {
-    AnnouncementRepository.getTemporarilyStoredNotifications()
-        .then((notifications) {
-      for (var notificationData in notifications) {
-        AnnouncementRepository.addNotification(
-            notificationDetails:
-                NotificationDetails.fromJson(Map.from(notificationData)));
-      }
-
-      if (notifications.isNotEmpty) {
-        AnnouncementRepository.clearTemporarilyNotification();
-      }
-    });
-  }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-
+    // App lifecycle state changed - notifications will be fetched from API when needed
+    // When app resumes from background, recheck notification permissions
+    // This handles the case where user manually enables notifications in Settings
     if (state == AppLifecycleState.resumed) {
-      loadTemporarilyStoredNotifications();
       NotificationUtility.recheckNotificationPermissions();
+
+      // Profile may have been changed from the admin panel while the app was
+      // in the background — re-sync the stored user details.
+      context.read<AuthCubit>().refreshProfile();
 
       // Reconnect WebSocket when app returns from background
       final chatModuleEnabled = context
@@ -214,6 +214,12 @@ class _HomeScreenState extends State<HomeScreen>
         });
       }
     });
+
+    // Profile tab (always the last item for every role) — re-sync the stored
+    // user details so admin-panel changes show as soon as the tab is opened.
+    if (index == _getBottomNavItems().length - 1) {
+      context.read<AuthCubit>().refreshProfile();
+    }
   }
 
   void _refreshMyTripTabIfNeeded() {
@@ -301,6 +307,8 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   Widget _buildBottomNavigationContainer() {
+    final bottomNavItems = _getBottomNavItems();
+
     return Align(
       alignment: Alignment.bottomCenter,
       child: Container(
@@ -319,12 +327,14 @@ class _HomeScreenState extends State<HomeScreen>
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: List.generate(_getBottomNavItems().length, (index) => index)
-              .map((index) => BottomNavItemContainer(
-                  index: index,
-                  bottomNavItem: _getBottomNavItems()[index],
-                  onTap: changeCurrentBottomNavIndex,
-                  selectedBottomNavIndex: _currentSelectedBottomNavIndex))
+          children: List.generate(bottomNavItems.length, (index) => index)
+              .map((index) => Expanded(
+                    child: BottomNavItemContainer(
+                        index: index,
+                        bottomNavItem: bottomNavItems[index],
+                        onTap: changeCurrentBottomNavIndex,
+                        selectedBottomNavIndex: _currentSelectedBottomNavIndex),
+                  ))
               .toList(),
         ),
       ),
@@ -365,18 +375,7 @@ class _HomeScreenState extends State<HomeScreen>
                   listener: (context, state) {
                     if (state
                         is StaffAllowedPermissionsAndModulesFetchSuccess) {
-                      final chatModuleEnabled = context
-                          .read<StaffAllowedPermissionsAndModulesCubit>()
-                          .isModuleEnabled(moduleId: chatModuleId.toString());
-
-                      if (chatModuleEnabled) {
-                        final userId =
-                            context.read<AuthCubit>().getUserDetails().id ?? 0;
-
-                        context.read<SocketSettingCubit>().init(userId: userId);
-                      } else {
-                        // Chat module disabled - handled in _getBottomNavItems()
-                      }
+                      _initSocketFromPermissions();
                     }
                   },
                   builder: (context, state) {

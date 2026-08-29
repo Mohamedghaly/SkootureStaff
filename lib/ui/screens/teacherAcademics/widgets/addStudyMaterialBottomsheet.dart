@@ -105,6 +105,13 @@ class _AddStudyMaterialBottomsheetState
     super.dispose();
   }
 
+  /// Dismisses the soft keyboard if it is currently open.
+  /// Must be called before opening another bottomsheet or the system file
+  /// picker, otherwise the keyboard stays up on top of the new surface.
+  void _dismissKeyboard() {
+    FocusManager.instance.primaryFocus?.unfocus();
+  }
+
   void showErrorMessage(String messageKey) {
     // Remove any existing overlay first
     _currentOverlayEntry?.remove();
@@ -136,7 +143,7 @@ class _AddStudyMaterialBottomsheetState
   }
 
   void addStudyMaterial() {
-    FocusManager.instance.primaryFocus?.unfocus();
+    _dismissKeyboard();
     final pickedStudyMaterialId = _selectedStudyMaterial.id;
 
     if (_fileNameEditingController.text.trim().isEmpty) {
@@ -198,158 +205,167 @@ class _AddStudyMaterialBottomsheetState
   Widget build(BuildContext context) {
     return CustomBottomsheet(
       titleLabelKey: addStudyMaterialKey,
-      child: SingleChildScrollView(
-        child: Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: appContentHorizontalPadding,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                height: 15,
-              ),
-              CustomSelectionDropdownSelectionButton(
-                onTap: () {
-                  Utils.showBottomSheet(
-                    child: FilterSelectionBottomsheet<StudyMaterialTypeItem>(
-                      selectedValue: _selectedStudyMaterial,
-                      showFilterByLabel: false,
-                      titleKey: studyMaterialTypeKey,
-                      values: allStudyMaterialTypeItems,
-                      onSelection: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedStudyMaterial = value;
-
-                            addedFile = null;
-                            addedVideoFile = null;
-                            addedVideoThumbnailFile = null;
-
-                            _fileNameEditingController.clear();
-                            _youtubeLinkEditingController.clear();
-                            _otherLinkEditingController.clear();
-                          });
-                        }
-                        Get.back();
-                      },
-                    ),
-                    context: context,
-                  );
-                },
-                titleKey: _selectedStudyMaterial.title,
-                backgroundColor: Theme.of(context).colorScheme.surface,
-              ),
-              const SizedBox(
-                height: 15,
-              ),
-              CustomTextFieldContainer(
-                hintTextKey: Utils.getTranslatedLabel(studyMaterialNameKey),
-                maxLines: 1,
-                textEditingController: _fileNameEditingController,
-                backgroundColor: Theme.of(context).colorScheme.surface,
-              ),
-              addedFile != null
-                  ? CustomFileContainer(
-                      title: addedFile?.name ?? "",
-                      onDelete: () {
-                        addedFile = null;
-                        setState(() {});
-                      },
-                    )
-                  : addedVideoThumbnailFile != null
-                      ? CustomFileContainer(
-                          title: addedVideoThumbnailFile?.name ?? "",
-                          onDelete: () {
-                            addedVideoThumbnailFile = null;
-                            setState(() {});
-                          },
-                        )
-                      : UploadImageOrFileButton(
-                          uploadFile: true,
-                          customTitleKey:
-                              _selectedStudyMaterial.studyMaterialType ==
-                                      StudyMaterialType.file
-                                  ? selectFileKey
-                                  : selectThumbnailKey,
-                          onTap: () async {
-                            final pickedFile = await Utils.openFilePicker(
-                                context: context,
-                                type:
-                                    _selectedStudyMaterial.studyMaterialType ==
-                                            StudyMaterialType.file
-                                        ? FileType.any
-                                        : FileType.image,
-                                allowMultiple: false);
-
-                            if (pickedFile != null) {
-                              if (context.mounted &&
-                                  _selectedStudyMaterial.studyMaterialType ==
-                                      StudyMaterialType.file) {
-                                addedFile = pickedFile.files.first;
-                              } else {
-                                addedVideoThumbnailFile =
-                                    pickedFile.files.first;
-                              }
-                              setState(() {});
-                            }
-                          },
-                        ),
-              const SizedBox(height: 15),
-              if (_selectedStudyMaterial.studyMaterialType ==
-                  StudyMaterialType.youtubeVideo)
-                CustomTextFieldContainer(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  hintTextKey: youtubeLinkKey,
-                  maxLines: 2,
-                  bottomPadding: 0,
-                  textEditingController: _youtubeLinkEditingController,
-                )
-              else if (_selectedStudyMaterial.studyMaterialType ==
-                  StudyMaterialType.otherLink)
-                CustomTextFieldContainer(
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  hintTextKey: otherLinkKey,
-                  maxLines: 2,
-                  bottomPadding: 0,
-                  textEditingController: _otherLinkEditingController,
-                )
-              else if (_selectedStudyMaterial.studyMaterialType ==
-                      StudyMaterialType.uploadedVideoUrl &&
-                  addedVideoFile != null)
-                CustomFileContainer(
-                  onDelete: () {
-                    addedVideoFile = null;
-                    setState(() {});
-                  },
-                  title: addedVideoFile?.name ?? "",
-                )
-              else if (_selectedStudyMaterial.studyMaterialType ==
-                  StudyMaterialType.uploadedVideoUrl)
-                UploadImageOrFileButton(
-                  uploadFile: true,
-                  customTitleKey: selectVideoKey,
-                  onTap: () async {
-                    final pickedFile = await Utils.openFilePicker(
-                        context: context,
-                        type: FileType.video,
-                        allowMultiple: false);
-
-                    if (pickedFile != null) {
-                      addedVideoFile = pickedFile.files.first;
-                      setState(() {});
-                    }
-                  },
+      child: GestureDetector(
+        // Dismiss the keyboard when tapping outside the text fields.
+        onTap: _dismissKeyboard,
+        behavior: HitTestBehavior.opaque,
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: appContentHorizontalPadding,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  height: 15,
                 ),
-              const SizedBox(height: 15),
-              CustomRoundedButton(
-                onTap: addStudyMaterial,
-                widthPercentage: 0.9,
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                buttonTitle: Utils.getTranslatedLabel(submitKey),
-                showBorder: false,
-              ),
-            ],
+                CustomSelectionDropdownSelectionButton(
+                  onTap: () {
+                    _dismissKeyboard();
+                    Utils.showBottomSheet(
+                      child: FilterSelectionBottomsheet<StudyMaterialTypeItem>(
+                        selectedValue: _selectedStudyMaterial,
+                        showFilterByLabel: false,
+                        titleKey: studyMaterialTypeKey,
+                        values: allStudyMaterialTypeItems,
+                        onSelection: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedStudyMaterial = value;
+
+                              addedFile = null;
+                              addedVideoFile = null;
+                              addedVideoThumbnailFile = null;
+
+                              _fileNameEditingController.clear();
+                              _youtubeLinkEditingController.clear();
+                              _otherLinkEditingController.clear();
+                            });
+                          }
+                          Get.back();
+                        },
+                      ),
+                      context: context,
+                    );
+                  },
+                  titleKey: _selectedStudyMaterial.title,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                ),
+                const SizedBox(
+                  height: 15,
+                ),
+                CustomTextFieldContainer(
+                  hintTextKey: Utils.getTranslatedLabel(studyMaterialNameKey),
+                  maxLines: 1,
+                  textEditingController: _fileNameEditingController,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                ),
+                addedFile != null
+                    ? CustomFileContainer(
+                        title: addedFile?.name ?? "",
+                        onDelete: () {
+                          addedFile = null;
+                          setState(() {});
+                        },
+                      )
+                    : addedVideoThumbnailFile != null
+                        ? CustomFileContainer(
+                            title: addedVideoThumbnailFile?.name ?? "",
+                            onDelete: () {
+                              addedVideoThumbnailFile = null;
+                              setState(() {});
+                            },
+                          )
+                        : UploadImageOrFileButton(
+                            uploadFile: true,
+                            customTitleKey:
+                                _selectedStudyMaterial.studyMaterialType ==
+                                        StudyMaterialType.file
+                                    ? selectFileKey
+                                    : selectThumbnailKey,
+                            onTap: () async {
+                              _dismissKeyboard();
+                              final pickedFile = await Utils.openFilePicker(
+                                  context: context,
+                                  type: _selectedStudyMaterial
+                                              .studyMaterialType ==
+                                          StudyMaterialType.file
+                                      ? FileType.any
+                                      : FileType.image,
+                                  allowMultiple: false);
+
+                              if (pickedFile != null) {
+                                if (context.mounted &&
+                                    _selectedStudyMaterial.studyMaterialType ==
+                                        StudyMaterialType.file) {
+                                  addedFile = pickedFile.files.first;
+                                } else {
+                                  addedVideoThumbnailFile =
+                                      pickedFile.files.first;
+                                }
+                                setState(() {});
+                              }
+                            },
+                          ),
+                const SizedBox(height: 15),
+                if (_selectedStudyMaterial.studyMaterialType ==
+                    StudyMaterialType.youtubeVideo)
+                  CustomTextFieldContainer(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    hintTextKey: youtubeLinkKey,
+                    maxLines: 2,
+                    bottomPadding: 0,
+                    textEditingController: _youtubeLinkEditingController,
+                  )
+                else if (_selectedStudyMaterial.studyMaterialType ==
+                    StudyMaterialType.otherLink)
+                  CustomTextFieldContainer(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    hintTextKey: otherLinkKey,
+                    maxLines: 2,
+                    bottomPadding: 0,
+                    textEditingController: _otherLinkEditingController,
+                  )
+                else if (_selectedStudyMaterial.studyMaterialType ==
+                        StudyMaterialType.uploadedVideoUrl &&
+                    addedVideoFile != null)
+                  CustomFileContainer(
+                    onDelete: () {
+                      addedVideoFile = null;
+                      setState(() {});
+                    },
+                    title: addedVideoFile?.name ?? "",
+                  )
+                else if (_selectedStudyMaterial.studyMaterialType ==
+                    StudyMaterialType.uploadedVideoUrl)
+                  UploadImageOrFileButton(
+                    uploadFile: true,
+                    customTitleKey: selectVideoKey,
+                    onTap: () async {
+                      _dismissKeyboard();
+                      final pickedFile = await Utils.openFilePicker(
+                          context: context,
+                          type: FileType.video,
+                          allowMultiple: false);
+
+                      if (pickedFile != null) {
+                        addedVideoFile = pickedFile.files.first;
+                        setState(() {});
+                      }
+                    },
+                  ),
+                const SizedBox(height: 15),
+                CustomRoundedButton(
+                  onTap: addStudyMaterial,
+                  widthPercentage: 0.9,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  buttonTitle: Utils.getTranslatedLabel(submitKey),
+                  showBorder: false,
+                ),
+              ],
+            ),
           ),
         ),
       ),

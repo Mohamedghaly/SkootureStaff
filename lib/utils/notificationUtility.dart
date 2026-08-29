@@ -23,6 +23,7 @@ class NotificationUtility {
   static String attendanceType = "Attendance";
   static String payrollType = "Payroll";
   static String transportationType = "Transportation";
+  static String taskAssignedType = "task_assigned";
 
   //
 
@@ -232,6 +233,12 @@ class NotificationUtility {
         // Handle transportation notification with dedicated async method
         debugPrint('[Notification] Matched transportation type, navigating...');
         _handleTransportationNotification(notificationData);
+      } else if (type == taskAssignedType.toLowerCase()) {
+        // Handle task assigned notification — navigate to tasks list
+        debugPrint('[Notification] Matched task_assigned type, navigating...');
+        if (Get.currentRoute != Routes.myTasksScreen) {
+          Get.toNamed(Routes.myTasksScreen);
+        }
       } else {
         debugPrint('[Notification] Unknown notification type: $type');
       }
@@ -339,6 +346,9 @@ class NotificationUtility {
 
   static void foregroundMessageListener(RemoteMessage remoteMessage) async {
     final additionalData = remoteMessage.data;
+
+    debugPrint("Broadcast received for message");
+    debugPrint(additionalData.toString());
 
     createLocalNotification(
         dismissable: true,

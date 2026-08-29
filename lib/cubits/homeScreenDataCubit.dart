@@ -70,29 +70,44 @@ class HomeScreenDataCubit extends Cubit<HomeScreenDataState> {
     required bool isTeacher,
     required bool holidayModuleEnabled,
     required bool staffLeaveModuleEnabled,
+    bool forceRefresh = false,
   }) async {
+    // Skip if data already loaded or fetch already running.
+    // Caller passes forceRefresh: true for pull-to-refresh.
+    if (!forceRefresh &&
+        (state is HomeScreenDataFetchSuccess ||
+            state is HomeScreenDataFetchInProgress)) {
+      return;
+    }
     try {
       emit(HomeScreenDataFetchInProgress());
 
-      final statisticsDetails =
-          await _statisticsRepository.getSystemStatistics();
-      final teachers = listTeacherTimetablePermission
-          ? await _teacherRepository.getTeachers()
-          : List<UserDetails>.from([]);
-      final todaysLeave = staffLeaveModuleEnabled
-          ? await _leaveRepository.getLeaves(leaveDayType: LeaveDayType.today)
-          : List<LeaveDetails>.from([]);
-      final holidays = holidayModuleEnabled
-          ? await _settingsRepository.getHolidays()
-          : List<Holiday>.from([]);
+      // Start all independent fetches before awaiting any — true parallelism.
+      // Futures are assigned to typed variables so no dynamic casts needed.
+      final statsFuture = _statisticsRepository.getSystemStatistics();
+      final teachersFuture = listTeacherTimetablePermission
+          ? _teacherRepository.getTeachers()
+          : Future.value(<UserDetails>[]);
+      final leavesFuture = staffLeaveModuleEnabled
+          ? _leaveRepository.getLeaves(leaveDayType: LeaveDayType.today)
+          : Future.value(<LeaveDetails>[]);
+      final holidaysFuture = holidayModuleEnabled
+          ? _settingsRepository.getHolidays()
+          : Future.value(<Holiday>[]);
+
+      final stats = await statsFuture;
+      final teachers = await teachersFuture;
+      final todaysLeave = await leavesFuture;
+      final holidays = await holidaysFuture;
+
       emit(HomeScreenDataFetchSuccess(
           holidays: holidays,
           todaysLeave: todaysLeave,
           teachers: teachers,
-          totalLeaveRequests: statisticsDetails.totalLeaveRequests,
-          totalTeachers: statisticsDetails.totalTeachers,
-          totalStaffs: statisticsDetails.totalStaffs,
-          totalStudents: statisticsDetails.totalStudents));
+          totalLeaveRequests: stats.totalLeaveRequests,
+          totalTeachers: stats.totalTeachers,
+          totalStaffs: stats.totalStaffs,
+          totalStudents: stats.totalStudents));
     } catch (e) {
       emit(HomeScreenDataFetchFailure(e.toString()));
     }
@@ -135,7 +150,6 @@ class HomeScreenDataCubit extends Cubit<HomeScreenDataState> {
 
   List<UserDetails> getTeachers() {
     if (state is HomeScreenDataFetchSuccess) {
-      
       return (state as HomeScreenDataFetchSuccess).teachers;
     }
     return [];

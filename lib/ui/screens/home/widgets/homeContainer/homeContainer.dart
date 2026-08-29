@@ -1,11 +1,14 @@
 import 'package:eschool_saas_staff/cubits/authentication/authCubit.dart';
 import 'package:eschool_saas_staff/cubits/homeScreenDataCubit.dart';
+import 'package:eschool_saas_staff/cubits/task/homeTasksCubit.dart';
 import 'package:eschool_saas_staff/cubits/userDetails/staffAllowedPermissionsAndModulesCubit.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/homeContainer/widgets/holidaysContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/homeContainer/widgets/homeOverviewContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/homeContainer/widgets/leavesContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/homeContainer/widgets/teachersTimeTableContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/homeContainer/widgets/homeContainerAppbar.dart';
+import 'package:eschool_saas_staff/ui/screens/home/widgets/homeShimmerScaffold.dart';
+import 'package:eschool_saas_staff/ui/screens/home/widgets/teacherHomeContainer/widgets/myTasksContainer.dart';
 import 'package:eschool_saas_staff/ui/widgets/customCircularProgressIndicator.dart';
 import 'package:eschool_saas_staff/ui/widgets/errorContainer.dart';
 import 'package:eschool_saas_staff/utils/systemModulesAndPermissions.dart';
@@ -23,7 +26,7 @@ class HomeContainer extends StatefulWidget {
 }
 
 class HomeContainerState extends State<HomeContainer> {
-  void getHomeScreenData() {
+  void getHomeScreenData({bool forceRefresh = false}) {
     context.read<HomeScreenDataCubit>().getHomeScreenData(
         holidayModuleEnabled: context
             .read<StaffAllowedPermissionsAndModulesCubit>()
@@ -34,7 +37,8 @@ class HomeContainerState extends State<HomeContainer> {
         isTeacher: false,
         listTeacherTimetablePermission: context
             .read<StaffAllowedPermissionsAndModulesCubit>()
-            .isPermissionGiven(permission: viewTeachersPermissionKey));
+            .isPermissionGiven(permission: viewTeachersPermissionKey),
+        forceRefresh: forceRefresh);
   }
 
   void updateLeaveRequestCount({required int totalLeaveRequests}) {
@@ -70,7 +74,13 @@ class HomeContainerState extends State<HomeContainer> {
                     color: Theme.of(context).colorScheme.primary,
                     displacement: MediaQuery.of(context).padding.top + 100,
                     onRefresh: () async {
-                      getHomeScreenData();
+                      getHomeScreenData(forceRefresh: true);
+                      context
+                          .read<HomeTasksCubit>()
+                          .getTasks(type: 'my_tasks', forceRefresh: true);
+                      // Re-sync the stored user details so admin-panel
+                      // profile changes show up on pull-to-refresh too.
+                      context.read<AuthCubit>().refreshProfile();
                     },
                     child: SingleChildScrollView(
                       padding: EdgeInsets.only(
@@ -87,6 +97,7 @@ class HomeContainerState extends State<HomeContainer> {
                                           .toString())
                               ? const TeachersTimeTableContainer()
                               : const SizedBox(),
+                          const MyTasksContainer(),
                           const LeavesContainer(),
                           const HolidaysContainer()
                         ],
@@ -110,15 +121,7 @@ class HomeContainerState extends State<HomeContainer> {
                   );
                 }
 
-                return Center(
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                        top: MediaQuery.of(context).size.height * (0.175)),
-                    child: CustomCircularProgressIndicator(
-                      indicatorColor: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                );
+                return const HomeShimmerScaffold();
               });
             }
 

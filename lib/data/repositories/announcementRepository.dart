@@ -1,13 +1,7 @@
-import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:eschool_saas_staff/data/models/announcement.dart';
 import 'package:eschool_saas_staff/data/models/notificationDetails.dart';
-import 'package:eschool_saas_staff/data/repositories/authRepository.dart';
 import 'package:eschool_saas_staff/utils/api.dart';
-import 'package:eschool_saas_staff/utils/hiveBoxKeys.dart';
-import 'package:eschool_saas_staff/utils/labelKeys.dart';
-import 'package:hive/hive.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class AnnouncementRepository {
   Future<
@@ -163,81 +157,6 @@ class AnnouncementRepository {
       });
     } catch (e) {
       throw ApiException(e.toString());
-    }
-  }
-
-  static Future<void> addNotification(
-      {required NotificationDetails notificationDetails}) async {
-    try {
-      await Hive.openBox(notificationsBoxKey);
-      await Hive.box(notificationsBoxKey).put(
-          notificationDetails.createdAt.toString(),
-          notificationDetails.toJson());
-  
-    } catch (e) {
-    
-    }
-  }
-
-  static Future<void> addNotificationTemporarily(
-      {required Map<String, dynamic> data}) async {
-    try {
-      SharedPreferences sharedPreferences =
-          await SharedPreferences.getInstance();
-      await sharedPreferences.reload();
-      List<String> notifications =
-          sharedPreferences.getStringList(temporarilyStoredNotificationsKey) ??
-              List<String>.from([]);
-
-      notifications.add(jsonEncode(data));
-
-      await sharedPreferences.setStringList(
-          temporarilyStoredNotificationsKey, notifications);
-    } catch (_) {}
-  }
-
-  static Future<List<Map<String, dynamic>>>
-      getTemporarilyStoredNotifications() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    await sharedPreferences.reload();
-    List<String> notifications =
-        sharedPreferences.getStringList(temporarilyStoredNotificationsKey) ??
-            List<String>.from([]);
-
-    return notifications
-        .map((notificationData) =>
-            Map<String, dynamic>.from(jsonDecode(notificationData) ?? {}))
-        .toList();
-  }
-
-  static Future<void> clearTemporarilyNotification() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    sharedPreferences.setStringList(temporarilyStoredNotificationsKey, []);
-  }
-
-  Future<List<NotificationDetails>> getLocalNotifications() async {
-    try {
-      Box notificationBox = Hive.box(notificationsBoxKey);
-      List<NotificationDetails> notifications = [];
-
-      for (var notificationKey in notificationBox.keys.toList()) {
-        notifications.add(NotificationDetails.fromJson(
-          Map.from(notificationBox.get(notificationKey) ?? {}),
-        ));
-      }
-
-      final currentUserId = AuthRepository.getUserDetails().id;
-
-      notifications = notifications
-          .where((element) => element.id == currentUserId)
-          .toList();
-
-      notifications.sort(
-          (first, second) => second.createdAt!.compareTo(first.createdAt!));
-
-      return notifications;
-    } catch (e) {
-      throw ApiException(defaultErrorMessageKey);
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
+import 'package:eschool_saas_staff/utils/labelKeys.dart';
 import 'package:flutter/material.dart';
 
 class DiaryStatsContainer extends StatelessWidget {
@@ -70,7 +71,7 @@ class DiaryStatsContainer extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 const CustomTextContainer(
-                  textKey: 'positiveEntries',
+                  textKey: positiveEntriesKey,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
@@ -139,7 +140,7 @@ class DiaryStatsContainer extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 const CustomTextContainer(
-                  textKey: 'negativeEntries',
+                  textKey: negativeEntriesKey,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w500,

@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:eschool_saas_staff/data/models/additionalUserDetails.dart';
 import 'package:eschool_saas_staff/data/models/staffSalary.dart';
 import 'package:eschool_saas_staff/data/models/userDetails.dart';
 import 'package:eschool_saas_staff/data/repositories/authRepository.dart';
@@ -82,6 +85,55 @@ class AuthCubit extends Cubit<AuthState> {
     emit(Unauthenticated());
   }
 
+  bool _isRefreshingProfile = false;
+
+  /// Re-syncs the stored user details with the server (`GET profile`) so
+  /// changes made from the admin panel show up without a re-login.
+  ///
+  /// The profile endpoint doesn't return everything the login response stored
+  /// (the `staff_salary` breakdown and custom fields), so those are carried
+  /// over from the current details. Fails silently — on any error the stored
+  /// details simply stay in use.
+  Future<void> refreshProfile() async {
+    if (state is! Authenticated || _isRefreshingProfile) return;
+    _isRefreshingProfile = true;
+    try {
+      final fresh = await authRepository.getProfile();
+      if (state is! Authenticated) return; // signed out while fetching
+
+      final current = (state as Authenticated).userDetails;
+      final merged = fresh.copyWith(
+        teacher: _withStoredSalaries(fresh.teacher, current.teacher),
+        staff: _withStoredSalaries(fresh.staff, current.staff),
+        customFields: (fresh.customFields ?? []).isEmpty
+            ? current.customFields
+            : fresh.customFields,
+      );
+
+      // Nothing changed — skip the write and the UI rebuild.
+      if (jsonEncode(merged.toJson()) == jsonEncode(current.toJson())) return;
+
+      await authRepository.setUserDetails(merged);
+      emit(Authenticated(userDetails: merged));
+    } catch (_) {
+      // Offline / transient failure — keep showing the stored details.
+    } finally {
+      _isRefreshingProfile = false;
+    }
+  }
+
+  /// The profile API's teacher/staff objects carry no `staff_salary` list
+  /// (only login provides it) — keep the stored breakdown so payroll
+  /// allowances/deductions don't get wiped by a profile re-sync.
+  AdditionalUserDetails? _withStoredSalaries(
+    AdditionalUserDetails? fresh,
+    AdditionalUserDetails? stored,
+  ) {
+    if (fresh == null) return stored;
+    if ((fresh.staffSalaries ?? []).isNotEmpty) return fresh;
+    return fresh.copyWith(staffSalaries: stored?.staffSalaries);
+  }
+
   /// Updates the user details in the auth state and persists to storage
   /// This method ensures all fields including custom fields are properly updated
   void updateuserDetail(UserDetails userdetails) {
@@ -91,6 +143,7 @@ class AuthCubit extends Cubit<AuthState> {
       firstName: userdetails.firstName,
       lastName: userdetails.lastName,
       mobile: userdetails.mobile,
+      countryCode: userdetails.countryCode,
       email: userdetails.email,
       dob: userdetails.dob,
       currentAddress: userdetails.currentAddress,

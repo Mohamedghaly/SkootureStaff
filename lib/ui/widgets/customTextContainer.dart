@@ -20,8 +20,7 @@ class CustomTextContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       textKey.tr,
-      style: style?.copyWith(fontFamily: 'Cairo') ??
-          const TextStyle(fontFamily: 'Cairo'),
+      style: style,
       maxLines: maxLines,
       overflow: overflow,
       textAlign: textAlign,

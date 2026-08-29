@@ -69,6 +69,9 @@ class _DriverHomeContainerState extends State<DriverHomeContainer> {
                       displacement: MediaQuery.of(context).padding.top + 100,
                       onRefresh: () async {
                         getDriverHomeScreenData();
+                        // Re-sync the stored user details so admin-panel
+                        // profile changes show up on pull-to-refresh too.
+                        context.read<AuthCubit>().refreshProfile();
                       },
                       child: SingleChildScrollView(
                         padding: EdgeInsets.only(

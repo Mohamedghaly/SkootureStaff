@@ -539,7 +539,7 @@ class _StudentDiarySelectionScreenState
                                                       const SizedBox(height: 8),
                                                       CustomTextContainer(
                                                         textKey:
-                                                            "GR No : ${studentDetails.student?.admissionNo ?? '-'}",
+                                                            "${Utils.getTranslatedLabel(grNoKey)} : ${studentDetails.student?.admissionNo ?? '-'}",
                                                         style: TextStyle(
                                                           fontSize: 16,
                                                           color:

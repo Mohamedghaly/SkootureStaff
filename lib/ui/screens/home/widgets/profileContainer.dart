@@ -2,18 +2,22 @@ import 'package:eschool_saas_staff/app/routes.dart';
 import 'package:eschool_saas_staff/cubits/appConfigurationCubit.dart';
 import 'package:eschool_saas_staff/cubits/appLocalizationCubit.dart';
 import 'package:eschool_saas_staff/cubits/authentication/authCubit.dart';
+import 'package:eschool_saas_staff/cubits/staff/downloadStaffIdCardCubit.dart';
+import 'package:eschool_saas_staff/cubits/userDetails/staffAllowedPermissionsAndModulesCubit.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/menuTile.dart';
 import 'package:eschool_saas_staff/ui/screens/home/widgets/menusWithTitleContainer.dart';
 import 'package:eschool_saas_staff/ui/screens/leaves/leavesScreen.dart';
 import 'package:eschool_saas_staff/ui/widgets/customAppbar.dart';
 import 'package:eschool_saas_staff/ui/widgets/customBottomsheet.dart';
+import 'package:eschool_saas_staff/ui/widgets/customCircularProgressIndicator.dart';
 import 'package:eschool_saas_staff/ui/widgets/customRoundedButton.dart';
 import 'package:eschool_saas_staff/ui/widgets/customTextContainer.dart';
+import 'package:eschool_saas_staff/ui/widgets/downloadStaffIdCardDialog.dart';
 import 'package:eschool_saas_staff/ui/widgets/filterSelectionTile.dart';
 import 'package:eschool_saas_staff/ui/widgets/profileImageContainer.dart';
-import 'package:eschool_saas_staff/utils/appLanguages.dart';
 import 'package:eschool_saas_staff/utils/constants.dart';
 import 'package:eschool_saas_staff/utils/labelKeys.dart';
+import 'package:eschool_saas_staff/utils/systemModulesAndPermissions.dart';
 import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -72,7 +76,7 @@ class _ProfileContainerState extends State<ProfileContainer> {
             alignment: Alignment.topCenter,
             child: SingleChildScrollView(
               padding: EdgeInsetsDirectional.only(
-                  top: Utils.appContentTopScrollPadding(context: context) + 145,
+                  top: Utils.appContentTopScrollPadding(context: context) + 185,
                   end: appContentHorizontalPadding,
                   start: appContentHorizontalPadding,
                   bottom: 100),
@@ -89,6 +93,21 @@ class _ProfileContainerState extends State<ProfileContainer> {
                           Get.toNamed(Routes.changePasswordScreen);
                         },
                         titleKey: changePasswordKey),
+                    if (!context
+                            .read<AuthCubit>()
+                            .getUserDetails()
+                            .isSchoolAdmin() &&
+                        context
+                            .read<StaffAllowedPermissionsAndModulesCubit>()
+                            .isModuleEnabled(
+                                moduleId:
+                                    certificateGenerationModuleId.toString()))
+                      MenuTile(
+                          iconImageName: "Certificate.svg",
+                          onTap: () {
+                            Get.toNamed(Routes.certificateScreen);
+                          },
+                          titleKey: certificateKey),
                     MenuTile(
                         iconData: Icons.notifications_outlined,
                         onTap: () {
@@ -224,7 +243,6 @@ class _ProfileContainerState extends State<ProfileContainer> {
                       border: Border(
                           bottom: BorderSide(
                               color: Theme.of(context).colorScheme.tertiary))),
-                  height: 120,
                   child: Row(
                     children: [
                       GestureDetector(
@@ -291,7 +309,62 @@ class _ProfileContainerState extends State<ProfileContainer> {
                             textKey:
                                 "${context.read<AuthCubit>().getUserDetails().school?.name ?? "-"} (${context.read<AuthCubit>().getUserDetails().school?.code ?? "-"})",
                             style: const TextStyle(height: 1.5),
-                          )
+                          ),
+                          const SizedBox(
+                            height: 5,
+                          ),
+                          if (!context
+                                  .read<AuthCubit>()
+                                  .getUserDetails()
+                                  .isSchoolAdmin() &&
+                              context
+                                  .read<
+                                      StaffAllowedPermissionsAndModulesCubit>()
+                                  .isModuleEnabled(
+                                      moduleId: certificateGenerationModuleId
+                                          .toString()))
+                            GestureDetector(
+                              onTap: () {
+                                Get.dialog(BlocProvider(
+                                  create: (context) =>
+                                      DownloadStaffIdCardCubit(),
+                                  child: const DownloadStaffIdCardDialog(),
+                                ));
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      Theme.of(context).scaffoldBackgroundColor,
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.school_outlined,
+                                      size: 18,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    CustomTextContainer(
+                                      textKey: idCardKey,
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w900,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .secondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
                         ],
                       )),
                     ],
@@ -315,20 +388,35 @@ class AppLanguagesBottomsheet extends StatelessWidget {
         titleLabelKey: changeLanguageKey,
         child: BlocBuilder<AppLocalizationCubit, AppLocalizationState>(
           builder: (context, state) {
+            final currentLanguageCode =
+                context.read<AppLocalizationCubit>().currentLanguageCode;
             return Padding(
               padding: EdgeInsets.all(appContentHorizontalPadding),
               child: Column(
-                children: appLanguages
-                    .map((language) => FilterSelectionTile(
-                        onTap: () {
-                          context
-                              .read<AppLocalizationCubit>()
-                              .changeLanguage(language.languageCode);
-                        },
-                        isSelected: state.language.languageCode ==
-                            language.languageCode,
-                        title: language.languageName))
-                    .toList(),
+                children: [
+                  ...state.availableLanguages
+                      .map((language) => FilterSelectionTile(
+                          onTap: () {
+                            if (state.languageChangeInProgress) {
+                              return;
+                            }
+                            context
+                                .read<AppLocalizationCubit>()
+                                .changeLanguage(language.languageCode);
+                          },
+                          isSelected:
+                              currentLanguageCode == language.languageCode,
+                          title: language.languageName,
+                          showLeadingImage: true,
+                          leadingImageUrl: language.imageUrl)),
+                  if (state.languageChangeInProgress)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 5, bottom: 10),
+                      child: CustomCircularProgressIndicator(
+                        indicatorColor: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                ],
               ),
             );
           },
@@ -347,12 +435,12 @@ class LogoutConfirmationDialog extends StatelessWidget {
       ),
       actions: [
         CupertinoButton(
-            child: const CustomTextContainer(textKey: yesKey),
+            child: Text(Utils.getTranslatedLabel(yesKey)),
             onPressed: () {
               Get.back(result: true);
             }),
         CupertinoButton(
-            child: const CustomTextContainer(textKey: noKey),
+            child: Text(Utils.getTranslatedLabel(noKey)),
             onPressed: () {
               Get.back(result: false);
             }),
