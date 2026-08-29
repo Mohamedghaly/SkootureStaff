@@ -1,44 +1,58 @@
 # Progress & Memory Report - Skooture-Staff
 
-**Date:** Wednesday, May 6, 2026
-**Status:** Completed Font Migration, Fullscreen UI Fix, and Language Restriction.
+**Date:** Saturday, August 29, 2026  
+**Status:** Completed eschool-saas-staff v2 Features Merge, App Icon Remake, and Version Bump to v1.3.0+1.
 
 ---
 
-## 1. Font Migration: Cairo Font
-- **Objective:** Replace GoogleFonts (Poppins) with local Cairo font for offline support and branding.
-- **Actions:**
-    - Moved all `.ttf` files from `AI/Fonts/` to `assets/fonts/cairo/`.
-    - Registered the **Cairo** family in `pubspec.yaml` with weights: 200, 300, 400 (Regular), 500, 600, 700 (Bold), 800, 900.
-    - Removed `google_fonts` package dependency and asset folder.
-    - Updated `lib/app/app.dart` to apply Cairo globally using `textTheme.apply(fontFamily: 'Cairo')` and `primaryTextTheme.apply(fontFamily: 'Cairo')`.
-- **Note:** `ThemeData.copyWith` does not take `fontFamily` directly; it must be applied to the TextThemes.
-
-## 2. Fullscreen UI & Edge-to-Edge Fix
-- **Objective:** Remove "black areas" and make the app occupy the device's full screen height.
-- **Actions:**
-    - **Global SafeArea Removal:** Removed the `builder` in `GetMaterialApp` (lib/app/app.dart) that wrapped the entire app in a `SafeArea(bottom: true)`.
-    - **System UI Styling:** Updated `SystemUiOverlayStyle` to set status and navigation bars to `transparent` and disabled contrast enforcement (`systemNavigationBarContrastEnforced: false`).
-    - **Android Native Update:** Modified `android/app/src/main/res/values/styles.xml` to set `windowOptOutEdgeToEdgeEnforcement` to `false`.
-- **Result:** Content now draws behind system bars, filling the screen as shown in design screenshots.
-
-## 3. Language & Localization
-- **Objective:** Restrict app to Arabic, English, and French; fix missing translations from UI screenshots.
-- **Actions:**
-    - **Restriction:** Commented out Turkish, Urdu, Russian, and Hindi in `lib/utils/appLanguages.dart`.
-    - **Image-based Localization:** Updated `ar.json` and `fr.json` with missing keys from `AI/IMG_7732.PNG` and `AI/IMG_7733.PNG`:
-        - `totalPresent`, `totalAbsent`
-        - `transportation`, `continue`
-        - `selectPickDropPoint`, `selectShift`, `selectDuration`
-        - `noDataFound` (Missing in dropdowns)
-        - Various validation prompts (`pleaseSelect...`).
+## 1. eschool-saas-staff v2 Feature Merge (v1.3.0+1)
+- **Objective:** Surgically merge all new feature modules, screens, and cubits from `eschool-saas-staff` while strictly preserving Skooture branding, Cairo font, biometrics, and compliance settings.
+- **Key Modules & Features Added (34 new files):**
+    - **Staff Task Management:** Create, assign, edit, filter, delete, and track tasks (`lib/cubits/task/`, `lib/ui/screens/tasksScreen/`, `lib/data/models/staffTask.dart`, `taskRepository.dart`).
+    - **Student Certificates:** View and generate/download certificates (`lib/cubits/certificate/`, `lib/ui/screens/certificate/`, `certificateRepository.dart`).
+    - **Online Classes:** Live/upcoming class scheduling, repeat rules, in-app webview integration (`lib/data/models/onlineClass/`, `lib/ui/screens/onlineClass/`, `onlineClassRepository.dart`, `flutter_inappwebview: ^6.1.5`).
+    - **Staff Profiles & ID Cards:** Staff details, task assignment from profile, download staff ID card (`lib/ui/screens/staffProfile/`, `lib/cubits/staff/downloadStaffIdCardCubit.dart`).
+    - **Transport Plan History:** Dedicated plan renewal and history screen (`lib/cubits/transport/transportPlanHistoryCubit.dart`, `transportPlanHistoryScreen.dart`).
+    - **Dynamic Localization & Country Code Picker:** Server-driven label overlay, RTL flags support, country code picker for profiles (`lib/cubits/countryCodesCubit.dart`, `countryCodePickerBottomsheet.dart`).
+    - **Dashboard Enhancements:** Shimmer loaders and interactive task cards on dashboard.
 
 ---
 
-## Technical Debt / Future Considerations
-- **SafeArea Management:** Since the global `SafeArea` was removed, individual screens are now responsible for their own padding if they need to avoid notches/home indicators. Most existing screens already have their own `SafeArea` widgets.
-- **Unused Fonts:** The `AI/Fonts/` folder remains as a source, but the active fonts are in `assets/fonts/cairo/`.
-- **Translations:** Any new features should only be added to `en.json`, `ar.json`, and `fr.json`.
+## 2. Preserved Skooture-Specific Customizations
+- **Font:** Preserved local **Cairo** font family across text themes and Cupertino theme.
+- **Edge-to-Edge UI:** Maintained transparent status and navigation bars with `systemNavigationBarContrastEnforced: false` and native Android `windowOptOutEdgeToEdgeEnforcement: false`.
+- **Authentication & Biometrics:** Maintained FaceID/Fingerprint login flow with cached credentials in `loginScreen.dart`.
+- **Permissions & Compliance:** Maintained modern photo picker without legacy `READ_EXTERNAL_STORAGE` / `READ_MEDIA_IMAGES` for Play Store compliance.
+- **File Opening:** Standardized all file downloads and viewing to `open_filex`.
+- **Identity & Firebase:** Maintained package name `com.skooture.staff.app`, `Skooture-Staff` app name, and Firebase configurations.
 
 ---
-**Report generated by Gemini CLI.**
+
+## 3. Localization & Translations
+- **New Keys Added:** 184 new translation keys added and localized across all language files:
+    - Arabic (`assets/languages/ar.json`)
+    - English (`assets/languages/en.json`)
+    - French (`assets/languages/fr.json`)
+    - Russian, Turkish, Hindi, Urdu (`ru.json`, `tr.json`, `hi.json`, `ur.json`)
+
+---
+
+## 4. App Icon Remake & Enhancement
+- **Objective:** Enhance app icon by removing white borders/corners from `AI/logo.jpg` and generating full-bleed assets.
+- **Actions:**
+    - Removed surrounding white square background and extended brand teal (`#266b6e`) across the full 1024x1024 canvas.
+    - Centered the 3D embossed white brain circuit and open book emblem.
+    - Generated density-specific Android launcher icons across all mipmap folders (`mdpi`, `hdpi`, `xhdpi`, `xxhdpi`, `xxxhdpi`) for `launcher_icon`, `ic_launcher`, `ic_launcher_round`, and `ic_launcher_squircle`.
+    - Generated complete iOS `AppIcon.appiconset` ranging from `20x20` to `1024x1024`.
+
+---
+
+## 5. Verification & Build
+- **Static Analysis:** `flutter analyze` completed with **0 errors**.
+- **Android Build:** `flutter build apk --debug` built successfully (`✓ Built build/app/outputs/flutter-apk/app-debug.apk`).
+- **Version:** Bumped to **`1.3.0+1`** in `pubspec.yaml`.
+- **Git Branch:** `feature/addNewUpdates` pushed and synced with remote.
+
+---
+**Report generated by Antigravity Assistant.**
+
