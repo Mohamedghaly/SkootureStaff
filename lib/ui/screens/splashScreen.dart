@@ -10,6 +10,7 @@ import 'package:eschool_saas_staff/ui/widgets/errorContainer.dart';
 import 'package:eschool_saas_staff/utils/systemModulesAndPermissions.dart';
 import 'package:eschool_saas_staff/utils/utils.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get/route_manager.dart';
 
@@ -121,45 +122,56 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.primary,
-      body: BlocConsumer<AppConfigurationCubit, AppConfigurationState>(
-        listener: (context, state) {
-          if (state is AppConfigurationFetchSuccess) {
-            _prefetchAndNavigate();
-          }
-        },
-        builder: (context, state) {
-          final height = MediaQuery.of(context).size.height * 0.45;
-          final width = MediaQuery.of(context).size.width * 0.8;
-          if (state is AppConfigurationFetchFailure) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarContrastEnforced: false,
+        systemStatusBarContrastEnforced: false,
+      ),
+      child: Scaffold(
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        body: BlocConsumer<AppConfigurationCubit, AppConfigurationState>(
+          listener: (context, state) {
+            if (state is AppConfigurationFetchSuccess) {
+              _prefetchAndNavigate();
+            }
+          },
+          builder: (context, state) {
+            final height = MediaQuery.of(context).size.height * 0.45;
+            final width = MediaQuery.of(context).size.width * 0.8;
+            if (state is AppConfigurationFetchFailure) {
+              return Center(
+                child: ErrorContainer(
+                  errorMessage: state.errorMessage,
+                  onTapRetry: () {
+                    _navigationStarted = false;
+                    context.read<AppLocalizationCubit>().syncRemoteLocalization();
+                    context.read<AppConfigurationCubit>().fetchAppConfiguration();
+                  },
+                  retryButtonTextColor: Theme.of(context).colorScheme.onSurface,
+                ),
+              );
+            }
             return Center(
-              child: ErrorContainer(
-                errorMessage: state.errorMessage,
-                onTapRetry: () {
-                  _navigationStarted = false;
-                  context.read<AppLocalizationCubit>().syncRemoteLocalization();
-                  context.read<AppConfigurationCubit>().fetchAppConfiguration();
-                },
-                retryButtonTextColor: Theme.of(context).colorScheme.onSurface,
+              child: SizedBox(
+                height: height,
+                width: width,
+                child: AnimatedBuilder(
+                  animation: _fadeAnimation,
+                  builder: (context, child) => Opacity(
+                    opacity: _fadeAnimation.value,
+                    child: child,
+                  ),
+                  child: Image.asset(Utils.getImagePath("staff.png")),
+                ),
               ),
             );
-          }
-          return Center(
-            child: SizedBox(
-              height: height,
-              width: width,
-              child: AnimatedBuilder(
-                animation: _fadeAnimation,
-                builder: (context, child) => Opacity(
-                  opacity: _fadeAnimation.value,
-                  child: child,
-                ),
-                child: Image.asset(Utils.getImagePath("staff.png")),
-              ),
-            ),
-          );
-        },
+          },
+        ),
       ),
     );
   }
