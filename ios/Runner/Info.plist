@@ -40,7 +40,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Teachers may upload the images/files to create study materials</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Why is my app authenticating using face id?</string>
+	<string>we use Face ID to enable quick and secure biometric authentication to sign in to your account.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
