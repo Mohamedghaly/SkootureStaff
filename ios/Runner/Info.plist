@@ -32,15 +32,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>We need access to the camera to upload photos</string>
+	<string>We need access to the camera to allow teachers and staff to capture photos for profile pictures, study materials, announcements, and task attachments.</string>
 	<key>NSDocumentsFolderUsageDescription</key>
-	<string>We need access to your documents for file selection</string>
+	<string>We need access to your documents to allow teachers and staff to select and upload files for study materials, assignments, leave requests, and expense receipts.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Teachers may upload the images/files to create study materials</string>
+	<string>We need access to the microphone to enable audio communication and participation during live online classes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Teachers may upload the images/files to create study materials</string>
+	<string>We need access to your photo library to allow teachers and staff to select and upload photos for profile pictures, study materials, assignments, and announcements.</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>we use Face ID to enable quick and secure biometric authentication to sign in to your account.</string>
+	<string>We need access to Face ID to enable quick and secure biometric authentication to sign in to your account.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>

@@ -1,7 +1,7 @@
 # Progress & Memory Report - Skooture-Staff
 
-**Date:** Wednesday, September 2, 2026  
-**Status:** Completed eschool-saas-staff v2 Features Merge, App Icon Remake, Splash Screen Teal #006B6E, Android 16 (API 36) Targeting, Version Bump to v1.3.0+5, and iOS Face ID Usage Description update.
+**Date:** Friday, September 4, 2026  
+**Status:** Completed eschool-saas-staff v2 Features Merge, App Icon Remake, Splash Screen Teal #006B6E, Android 16 (API 36) Targeting, Version Bump to v1.3.0+6, and iOS Privacy Permissions Descriptions update for App Store compliance.
 
 ---
 
@@ -79,9 +79,19 @@
 
 ---
 
-## 8. iOS Privacy & App Store Compliance
-- **Face ID Usage Description:** Updated `NSFaceIDUsageDescription` ("Privacy - Face ID Usage Description") in [`ios/Runner/Info.plist`](ios/Runner/Info.plist) to:
-  > *"Skooture-Staff uses Face ID to enable quick and secure biometric authentication to sign in to your account."*
+## 8. iOS Privacy & App Store Compliance (v1.3.0+6)
+- **Privacy Permission Descriptions:** Reviewed and rewritten all usage description strings in [`ios/Runner/Info.plist`](ios/Runner/Info.plist) into clear, descriptive explanations starting with `"We need"`:
+  - **Camera (`NSCameraUsageDescription`):**
+    > *"We need access to the camera to allow teachers and staff to capture photos for profile pictures, study materials, announcements, and task attachments."*
+  - **Documents (`NSDocumentsFolderUsageDescription`):**
+    > *"We need access to your documents to allow teachers and staff to select and upload files for study materials, assignments, leave requests, and expense receipts."*
+  - **Microphone (`NSMicrophoneUsageDescription`):**
+    > *"We need access to the microphone to enable audio communication and participation during live online classes."*
+  - **Photo Library (`NSPhotoLibraryUsageDescription`):**
+    > *"We need access to your photo library to allow teachers and staff to select and upload photos for profile pictures, study materials, assignments, and announcements."*
+  - **Face ID (`NSFaceIDUsageDescription`):**
+    > *"We need access to Face ID to enable quick and secure biometric authentication to sign in to your account."*
+- **Version Bump:** Bumped version to **`1.3.0+6`** across `pubspec.yaml`, `android/local.properties`, and `ios/Runner.xcodeproj/project.pbxproj` (`CURRENT_PROJECT_VERSION = 6;`).
 - **Lint Verification:** Validated plist integrity with `plutil -lint`.
 
 ---
